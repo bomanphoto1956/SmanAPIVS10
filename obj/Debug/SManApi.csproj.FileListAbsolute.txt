@@ -1,0 +1,5 @@
+H:\Git\ServManAppServer\SManApi\SManApi\bin\SManApi.dll.config
+H:\Git\ServManAppServer\SManApi\SManApi\bin\SManApi.dll
+H:\Git\ServManAppServer\SManApi\SManApi\bin\SManApi.pdb
+H:\Git\ServManAppServer\SManApi\SManApi\obj\Debug\SManApi.dll
+H:\Git\ServManAppServer\SManApi\SManApi\obj\Debug\SManApi.pdb

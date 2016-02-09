@@ -1,0 +1,6 @@
+H:\Git\ServManAppServer\SManApi\SManApi\bin\SManApi.dll.config
+H:\Git\ServManAppServer\SManApi\SManApi\bin\SManApi.dll
+H:\Git\ServManAppServer\SManApi\SManApi\bin\SManApi.pdb
+H:\Git\ServManAppServer\SManApi\SManApi\obj\Release\SManApi.csprojResolveAssemblyReference.cache
+H:\Git\ServManAppServer\SManApi\SManApi\obj\Release\SManApi.dll
+H:\Git\ServManAppServer\SManApi\SManApi\obj\Release\SManApi.pdb

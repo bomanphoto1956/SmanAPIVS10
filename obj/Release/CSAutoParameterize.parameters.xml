@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<parameters>
+  <parameter name="ffServManCS-Web.config Connection String" description="ffServManCS Connection String used in web.config by the application to access the database." defaultValue="Server=127.0.0.1;Database=ffServMan;Port=16000;Native=True;Embedded=False;Username=;Password=;Timeout=10000;BlockReadSize=0;NativeTransportType=TCP/IPV4;SecureTransportKey=" tags="SqlConnectionString">
+    <parameterEntry kind="XmlFile" scope="H:\\Git\\ServManAppServer\\SManApi\\SManApi\\obj\\Release\\Package\\PackageTmp\\Web\.config$" match="/configuration/connectionStrings/add[@name='ffServManCS']/@connectionString" />
+  </parameter>
+</parameters>
