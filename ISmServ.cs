@@ -190,6 +190,65 @@ namespace SManApi
         [OperationContract]
         List<PnCL> getPn(string ident);
 
+        /// <summary>
+        /// Get a list of artikel for displaying purposes
+        /// </summary>
+        /// <param name="ident">Identity</param>
+        /// <param name="ArtnrFilter">Artnr or part of..</param>
+        /// <param name="ArtnamnFilter">ArtNamn or part of..</param>
+        /// <returns></returns>
+        // 2016-02-09 KJBO 
+        [OperationContract]
+        List<ArtikelCL> getArtList(string ident, string ArtnrFilter, string ArtnamnFilter);
+
+
+        /// <summary>
+        /// Return one artikel
+        /// </summary>
+        /// <param name="ident">Ident</param>
+        /// <param name="Artnr">Artnr</param>
+        /// <returns></returns>
+        // 2016-02-10 KJBO
+        [OperationContract]
+        ArtikelCL getArtikel(string ident, string Artnr);
+        
+        /// <summary>
+        /// Return a list of reservdel for one servicerad
+        /// </summary>
+        /// <param name="ident">Ident</param>
+        /// <param name="VartOrdernr">VartOrdernr</param>
+        /// <param name="RadNr">Radnr</param>
+        /// <returns>List of reservdel or one row with error</returns>
+        // 2016-02-10 KJBO
+        [OperationContract]
+        List<ReservdelCL> getReservdelsForServiceRad(string ident, string VartOrdernr, int RadNr);
+
+        /// <summary>
+        /// Get one reservdel identified by primary key
+        /// </summary>
+        /// <param name="ident">identity</param>
+        /// <param name="VartOrdernr"></param>
+        /// <param name="RadNr"></param>
+        /// <param name="ReservNr"></param>
+        /// <returns>The reservdel or an error</returns>
+        //  2016-02-10 KJBO Pergas AB
+        [OperationContract]
+        ReservdelCL getReservdel(string ident, string VartOrdernr, int RadNr, int ReservNr);
+
+        /// <summary>
+        /// Saves a reservdel to database.
+        /// If ReservNr = 0 then the method
+        /// assumes that this is a new row to be added
+        /// Otherwise an update is issued
+        /// </summary>
+        /// <param name="ident">Identity</param>
+        /// <param name="reservdel">ReservdelCL</param>
+        /// <returns>The new created or updated reservdel</returns>
+        //  2016-02-10 KJBO
+        [OperationContract]
+        ReservdelCL saveReservdel(string ident, ReservdelCL reservdel);
+
+
 
 
 
@@ -663,8 +722,116 @@ namespace SManApi
         [DataMember]
         public string ErrMessage
         { get; set; }
-
-
     }
+
+
+    /// <summary>
+    /// Artikel is for display only
+    /// When the reparator will add reservdelar
+    /// to the serviceorder he/she will select
+    /// from a list of artikel
+    /// </summary>
+    [DataContract]
+    public class ArtikelCL
+    {
+        [DataMember]
+        public string Artnr  // 16
+        { get; set; }
+
+        [DataMember]
+        public string Artnamn  // 40
+        { get; set; }
+
+        [DataMember]
+        public string LevID  // 16
+        { get; set; }
+
+        [DataMember]
+        public string LevNamn  // 50
+        { get; set; }
+
+        [DataMember]
+        public string Anm1  // 60
+        { get; set; }
+
+        [DataMember]
+        public string Anm2  // 60
+        { get; set; }
+
+        [DataMember]
+        public int ErrCode
+        { get; set; }
+
+        [DataMember]
+        public string ErrMessage
+        { get; set; }
+    }
+
+
+    /// <summary>
+    /// Class reservdelCL is connected to a ServiceOrder
+    /// by VartOrdernr and radnr
+    /// The primary key is VartOrdernr, Radnr, and ReservNr
+    /// If a new ReservdelCL is sent to the API the ReservNr shall be 0
+    /// and VartOdernr and Radnr must exist.
+    /// The user can enter anything in artnr and artnamn, but if a artnr
+    /// exists in the ArtikelCL class the Artnamn shall default to the
+    /// Artnamn in artikel and also the levID from artikel. 
+    /// The reservdelCL is not in any way (other then described above)
+    /// related to Artikel.
+    /// 
+    /// </summary>
+        [DataContract]
+        public class ReservdelCL
+        {
+            [DataMember]
+            public string VartOrdernr // 10
+            { get; set; }
+
+            [DataMember]
+            public int Radnr
+            { get; set; }
+
+            [DataMember]
+            public int ReservNr
+            { get; set; }
+
+            [DataMember]
+            public decimal Antal
+            { get; set; }
+
+            [DataMember]
+            public string Artnr // 20
+            { get; set; }
+
+            [DataMember]
+            public string ArtNamn // 40
+            { get; set; }
+
+            [DataMember]
+            public bool Faktureras
+            { get; set; }
+
+            [DataMember]
+            public string LevID // 16
+            { get; set; }
+
+            [DataMember]
+            public string Enhet // 5 (usualy set to st but can also be m for Meter or whatever the user wants)
+            { get; set; }
+
+            [DataMember]
+            public int ErrCode
+            { get; set; }
+
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
+
+        }
+
+
+
+
 
 }

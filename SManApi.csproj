@@ -75,6 +75,7 @@
     <Compile Include="CDB.cs" />
     <Compile Include="CKund.cs" />
     <Compile Include="CReparator.cs" />
+    <Compile Include="CReservdel.cs" />
     <Compile Include="CServiceHuvud.cs" />
     <Compile Include="CServRad.cs" />
     <Compile Include="CVentil.cs" />

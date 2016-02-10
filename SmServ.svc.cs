@@ -117,6 +117,87 @@ namespace SManApi
             return cc.getPn(ident);
 
         }
+
+
+        /// <summary>
+        /// Get a list of artikel for displaying purposes
+        /// </summary>
+        /// <param name="ident">Identity</param>
+        /// <param name="ArtnrFilter">Artnr or part of..</param>
+        /// <param name="ArtnamnFilter">ArtNamn or part of..</param>
+        /// <returns></returns>
+        // 2016-02-09 KJBO  
+        public List<ArtikelCL> getArtList(string ident, string ArtnrFilter, string ArtnamnFilter)
+        {
+            CReservdel cr = new CReservdel();
+
+            return cr.getArtList(ident, ArtnrFilter, ArtnamnFilter);
+        }
+
+
+        /// <summary>
+        /// Return one artikel
+        /// </summary>
+        /// <param name="ident">Ident</param>
+        /// <param name="Artnr">Artnr</param>
+        /// <returns></returns>
+        // 2016-02-10 KJBO
+        public ArtikelCL getArtikel(string ident, string Artnr)
+        {
+            CReservdel cr = new CReservdel();
+
+            return cr.getArtikel(ident, Artnr);
+        }
+
+        /// <summary>
+        /// Return a list of reservdel for one servicerad
+        /// </summary>
+        /// <param name="ident">Ident</param>
+        /// <param name="VartOrdernr">VartOrdernr</param>
+        /// <param name="RadNr">Radnr</param>
+        /// <returns>List of reservdel or one row with error</returns>
+        // 2016-02-10 KJBO Pergas AB
+        public List<ReservdelCL> getReservdelsForServiceRad(string ident, string VartOrdernr, int RadNr)
+        {
+            CReservdel cr = new CReservdel();
+
+            return cr.getReservdelsForServiceRad(ident, VartOrdernr, RadNr);
+        }
+
+        /// <summary>
+        /// Get one reservdel identified by primary key
+        /// </summary>
+        /// <param name="ident">identity</param>
+        /// <param name="VartOrdernr"></param>
+        /// <param name="RadNr"></param>
+        /// <param name="ReservNr"></param>
+        /// <returns>The reservdel or an error</returns>
+        //  2016-02-10 KJBO Pergas AB
+        public ReservdelCL getReservdel(string ident, string VartOrdernr, int RadNr, int ReservNr)
+        {
+            CReservdel cr = new CReservdel();
+
+            return cr.getReservdel(ident, VartOrdernr, RadNr, ReservNr);
+        }
+
+
+        /// <summary>
+        /// Saves a reservdel to database.
+        /// If ReservNr = 0 then the method
+        /// assumes that this is a new row to be added
+        /// Otherwise an update is issued
+        /// </summary>
+        /// <param name="ident">Identity</param>
+        /// <param name="reservdel">ReservdelCL</param>
+        /// <returns>The new created or updated reservdel</returns>
+        //  2016-02-10 KJBO
+        public ReservdelCL saveReservdel( string ident, ReservdelCL reservdel)
+        {
+            CReservdel cr = new CReservdel();
+            return cr.saveReservdel(ident, reservdel);
+        }
+
+ 
     
     
 
