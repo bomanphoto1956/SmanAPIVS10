@@ -166,7 +166,7 @@ namespace SManApi
 
             if (errText == "" && dt.Rows.Count == 0)
             {
-                errText = "Artikelrn : " + Artnr + " finns ej ";
+                errText = "Artikeln finns ej ";
                 errCode = 0;
             }
 
@@ -227,14 +227,6 @@ namespace SManApi
         }
 
 
-        /// <summary>
-        /// Return a list of reservdel for one servicerad
-        /// </summary>
-        /// <param name="ident">Ident</param>
-        /// <param name="VartOrdernr">VartOrdernr</param>
-        /// <param name="RadNr">Radnr</param>
-        /// <returns>List of reservdel or one row with error</returns>
-        // 2016-02-10 KJBO
 
         /// <summary>
         /// General hub for retrieving reservdel
@@ -289,7 +281,7 @@ namespace SManApi
                 if (ReservNr == -1)
                     errText = "Det finns inga reservdelar i aktuellt urval ";
                 else
-                    errText = "Reservdel med ID VartOrdernr : " + VartOrdernr + ", RadNr : " + RadNr.ToString() + ", ReservNr : " + ReservNr.ToString() + ".";
+                    errText = "Reservdel med ID VartOrdernr : " + VartOrdernr + ", RadNr : " + RadNr.ToString() + ", ReservNr : " + ReservNr.ToString() + " finns ej.";
                 errCode = 0;
             }
 

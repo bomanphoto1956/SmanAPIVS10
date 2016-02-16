@@ -249,10 +249,62 @@ namespace SManApi
         ReservdelCL saveReservdel(string ident, ReservdelCL reservdel);
 
 
+        /// <summary>
+        /// Returns a list of valid dates for
+        /// registry of time for one ServiceRow
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="SrAltKey">Alternate key</param>
+        /// <returns>List of dates or an error message</returns>
+        //  2016-02-14
+        [OperationContract]
+        List<OpenDateCL> getOpenDates(string ident, string SrAltKey);
+
+        /// <summary>
+        /// Get a specific TidRed record identified by ID (PK)
+        /// </summary>
+        /// <param name="ident">Identity</param>
+        /// <param name="ID">ID of the ServRadRepTid</param>
+        /// <returns>One instance of the ServRadRepTidCL class or one row with an error</returns>
+        // 2016-02-15 KJBO Pergas AB
+        [OperationContract]
+        ServRadRepTidCL getServRadRepTid(string ident, int ID);
+
+
+        /// <summary>
+        /// Returns all registered time (all rows)
+        /// for a specific service row (identified by srAltKey)
+        /// and a specific user (identifiec by ident)
+        /// </summary>
+        /// <param name="ident">Identity</param>
+        /// <param name="srAltKey">AlternateKey for servicerad</param>
+        /// <returns>List of registered time or one row with error message</returns>
+        // 2016-02-15 KJBO Pergas AB
+        [OperationContract]
+        List<ServRadRepTidCL> getServRadRepTidForServiceRad(string ident, string srAltKey);
+
+        /// <summary>
+        /// Validates one ServRadRepTid
+        /// If the ID is 0 then this method
+        /// assumes that this is a new row
+        /// Returns the validated and stored
+        /// row with the new ID (if its a new row)
+        /// If an error occurs then an error is returne
+        /// in the ServRadTidRep return row
+        /// </summary>
+        /// <param name="ident">Identity</param>
+        /// <param name="srt">ServRadTidRepCL</param>
+        /// <returns>The saved row or an error</returns>
+        //  2016-02-15 KJBO Pergas AB
+        [OperationContract]
+        ServRadRepTidCL saveServRadRepTid(string ident, ServRadRepTidCL srt);
+
 
 
 
     }
+
+    
 
 
 
@@ -411,7 +463,7 @@ namespace SManApi
         { get; set; }
 
         [DataMember]
-        public int Radnr
+        public int Radnr // Om radnr sätts till 0 indikerar detta att det är en ny rad
         { get; set; }
 
         [DataMember]
@@ -827,11 +879,65 @@ namespace SManApi
             [DataMember]
             public string ErrMessage
             { get; set; }
-
         }
 
 
+        [DataContract]
+        public class ServRadRepTidCL
+        {
+            [DataMember]
+            public int ID 
+            { get; set; }
 
+            [DataMember]
+            public string SrAltKey // 40 (Alternativ unik nyckel till servicerad)
+            { get; set; }
+
+            [DataMember]
+            public string AnvID // 10
+            { get; set; }
+
+            [DataMember]
+            public DateTime Datum // 
+            { get; set; }
+
+            [DataMember]
+            public Decimal Tid  // Arbetad tid i timmar 
+            { get; set; }
+
+
+
+            [DataMember]
+            public int ErrCode
+            { get; set; }
+
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
+
+        }
+
+        /// <summary>
+        /// Class for returning available
+        /// time registration dates for a
+        /// ServiceOrderRow
+        /// </summary>
+        [DataContract]
+        public class OpenDateCL
+        {
+            [DataMember]
+            public DateTime Datum
+            { get; set; }
+
+            [DataMember]
+            public int ErrCode
+            { get; set; }
+
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
+
+        }
 
 
 }

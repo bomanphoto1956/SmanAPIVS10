@@ -838,13 +838,23 @@ namespace SManApi
 
             int errCode = -100;
 
+            // If not error and no rows exists.......
             if (errText == "" && dt.Rows.Count == 0)
             {
+                CServiceHuvud cs = new CServiceHuvud();
+                int countOrder = cs.validateVartOrdernr(vartOrdernr, ref errText);
+                // .... return empty recordset if ordernr exists.....
+                if (errText == "" && countOrder == 1)
+                    return srl;
+                
+            }
+
+            //... otherwise return felaktigt ordernr
+            if (errText == "" && dt.Rows.Count == 0)
+            {                                
                 errText = "Felaktigt Ordernr";
                 errCode = 0;
             }
-
-
 
 
             if (errText != "")
@@ -986,6 +996,22 @@ namespace SManApi
 
 
             }
+
+
+        }
+
+        public DataTable validateServRad(string srAltKey)
+        {
+            string sSql = " select vart_ordernr, radnr "
+                        + " from servicerad "
+                        + " where alternateKey = :srAltKey ";
+
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("srAltKey", srAltKey);
+
+            string err = "";
+
+            return cdb.getData(sSql, ref err, pc);
 
 
         }

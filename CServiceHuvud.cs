@@ -146,7 +146,7 @@ namespace SManApi
             int errCode = -100;
             if (errText == "" && dt.Rows.Count == 0)
             {
-                errText = "Ordern finns ej";
+                errText = "Det finns inga tillgängliga order för aktuell användare";
                 errCode = -10;
             }
 
@@ -194,6 +194,22 @@ namespace SManApi
 
             return Convert.ToInt16(dt.Rows[0][0]);           
         }
+
+        public DataTable validateOrderOpenGodkand(string vart_ordernr)
+        {
+            string sSql = " select OpenForApp, Godkand "
+                        + " from ServiceHuvud "
+                        + " where vart_ordernr = :vart_ordernr ";
+
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", vart_ordernr);
+
+            string err = "";
+
+            return cdb.getData(sSql, ref err, pc);
+
+        }
+
 
 
     }

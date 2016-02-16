@@ -153,7 +153,7 @@ namespace SManApi
 
             if (errText == "" && dt.Rows.Count == 0)
             {
-                errText = "Felaktigt Ordernr";
+                errText = "Felaktigt ventilID";
                 errCode = 0;
             }
 

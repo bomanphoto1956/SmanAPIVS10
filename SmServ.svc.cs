@@ -197,7 +197,71 @@ namespace SManApi
             return cr.saveReservdel(ident, reservdel);
         }
 
- 
+        /// <summary>
+        /// Returns a list of valid dates for
+        /// registry of time for one ServiceRow
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="SrAltKey">Alternate key</param>
+        /// <returns>List of dates or an error message</returns>
+        public List<OpenDateCL> getOpenDates(string ident, string SrAltKey)
+        {
+            CTidRed ct = new CTidRed();
+
+            return ct.getOpenDates(ident, SrAltKey);
+        }
+
+
+        /// <summary>
+        /// Get a specific TidRed record identified by ID (PK)
+        /// </summary>
+        /// <param name="ident">Identity</param>
+        /// <param name="ID">ID of the ServRadRepTid</param>
+        /// <returns>One instance of the ServRadRepTidCL class or one row with an error</returns>
+        // 2016-02-15 KJBO Pergas AB
+        public ServRadRepTidCL getServRadRepTid(string ident, int ID)
+        {
+            CTidRed ct = new CTidRed();
+            return ct.getServRadRepTid(ident, ID);
+        }
+
+        /// <summary>
+        /// Returns all registered time (all rows)
+        /// for a specific service row (identified by srAltKey)
+        /// and a specific user (identifiec by ident)
+        /// </summary>
+        /// <param name="ident">Identity</param>
+        /// <param name="srAltKey">AlternateKey for servicerad</param>
+        /// <returns>List of registered time or one row with error message</returns>
+        // 2016-02-15 Pergas AB KJBO
+        public List<ServRadRepTidCL> getServRadRepTidForServiceRad(string ident, string srAltKey)
+        {
+            CTidRed ct = new CTidRed();
+
+            return ct.getServRadRepTidForServiceRad(ident, srAltKey);
+        }
+
+
+        /// <summary>
+        /// Validates one ServRadRepTid
+        /// If the ID is 0 then this method
+        /// assumes that this is a new row
+        /// Returns the validated and stored
+        /// row with the new ID (if its a new row)
+        /// If an error occurs then an error is returne
+        /// in the ServRadTidRep return row
+        /// </summary>
+        /// <param name="ident">Identity</param>
+        /// <param name="srt">ServRadTidRepCL</param>
+        /// <returns>The saved row or an error</returns>
+        //  2016-02-15 KJBO Pergas AB
+        public ServRadRepTidCL saveServRadRepTid(string ident, ServRadRepTidCL srt)
+        {
+            CTidRed ct = new CTidRed();
+
+            return ct.saveServRadRepTid(ident, srt);
+        }
+
     
     
 
