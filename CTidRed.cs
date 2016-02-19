@@ -15,6 +15,20 @@ namespace SManApi
             cdb = new CDB(); 
         }
 
+        /// <summary>
+        /// Returns a list of valid dates for
+        /// registry of time for one ServiceRow
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="SrAltKey">Alternate key</param>
+        /// <returns>List of dates or an error message</returns>
+
+        public List<OpenDateCL> getOpenDates(string ident, string SrAltKey)
+        {
+            return getOpenDates(ident, SrAltKey, true);
+        }
+
+
 
         /// <summary>
         /// Returns a list of valid dates for
@@ -23,22 +37,25 @@ namespace SManApi
         /// <param name="ident"></param>
         /// <param name="SrAltKey">Alternate key</param>
         /// <returns>List of dates or an error message</returns>
-        public List<OpenDateCL> getOpenDates(string ident, string SrAltKey)
+        private List<OpenDateCL> getOpenDates(string ident, string SrAltKey, bool bValidate)
         {
             
             List<OpenDateCL> dateList = new List<OpenDateCL>();
 
-            CReparator cr = new CReparator();
-
-            int identOK = cr.checkIdent(ident);
-
-            if (identOK == -1)
+            if (bValidate)
             {
-                OpenDateCL d = new OpenDateCL();
-                d.ErrCode = -10;
-                d.ErrMessage = "Ogiltigt login";
-                dateList.Add(d);
-                return dateList;
+                CReparator cr = new CReparator();
+
+                int identOK = cr.checkIdent(ident);
+
+                if (identOK == -1)
+                {
+                    OpenDateCL d = new OpenDateCL();
+                    d.ErrCode = -10;
+                    d.ErrMessage = "Ogiltigt login";
+                    dateList.Add(d);
+                    return dateList;
+                }
             }
 
             CServRad crv = new CServRad();
@@ -56,32 +73,36 @@ namespace SManApi
             string vart_ordernr = dt.Rows[0]["vart_ordernr"].ToString();
             int radnr = Convert.ToInt32(dt.Rows[0]["radnr"]);
 
-            CServiceHuvud ch = new CServiceHuvud();
-
-            dt = ch.validateOrderOpenGodkand(vart_ordernr);
-
-            bool bOpenForApp = Convert.ToBoolean(dt.Rows[0]["OpenForApp"]);
-            bool bGodkand = Convert.ToBoolean(dt.Rows[0]["Godkand"]);
-
-            if (!bOpenForApp)
+            if (bValidate)
             {
-                OpenDateCL d = new OpenDateCL();
-                d.ErrCode = -10;
-                d.ErrMessage = "Aktuell order är stängd för inmatning";
-                dateList.Add(d);
-                return dateList;
-            }
+
+                CServiceHuvud ch = new CServiceHuvud();
+
+                dt = ch.validateOrderOpenGodkand(vart_ordernr);
+
+                bool bOpenForApp = Convert.ToBoolean(dt.Rows[0]["OpenForApp"]);
+                bool bGodkand = Convert.ToBoolean(dt.Rows[0]["Godkand"]);
+
+                if (!bOpenForApp)
+                {
+                    OpenDateCL d = new OpenDateCL();
+                    d.ErrCode = -10;
+                    d.ErrMessage = "Aktuell order är stängd för inmatning";
+                    dateList.Add(d);
+                    return dateList;
+                }
 
 
-            if (bGodkand)
-            {
-                OpenDateCL d = new OpenDateCL();
-                d.ErrCode = -10;
-                d.ErrMessage = "Aktuell order är godkänd. Ändring ej tillåten ";
-                dateList.Add(d);
-                return dateList;
+                if (bGodkand)
+                {
+                    OpenDateCL d = new OpenDateCL();
+                    d.ErrCode = -10;
+                    d.ErrMessage = "Aktuell order är godkänd. Ändring ej tillåten ";
+                    dateList.Add(d);
+                    return dateList;
+                }
             }
-            // First validate the srAltKey exists
+            
 
             string sSql = "";
             for (int i = 1; i <= 7; i++)
@@ -145,7 +166,7 @@ namespace SManApi
         // 2016-02-15 KJBO Pergas AB
         public ServRadRepTidCL getServRadRepTid(string ident, int ID)
         {
-            List<ServRadRepTidCL> srrList = getServRadRepTidForServiceRad(ident, "", ID);
+            List<ServRadRepTidCL> srrList = getServRadRepTidForServiceRad(ident, "", ID, "");
             return srrList[0];
         }
 
@@ -153,15 +174,28 @@ namespace SManApi
         /// <summary>
         /// Returns all registered time (all rows)
         /// for a specific service row (identified by srAltKey)
-        /// and a specific user (identifiec by ident)
+        /// and a specific user (identified by AnvID)
         /// </summary>
         /// <param name="ident">Identity</param>
         /// <param name="srAltKey">AlternateKey for servicerad</param>
         /// <returns>List of registered time or one row with error message</returns>
         // 2016-02-15 Pergas AB KJBO
-        public List<ServRadRepTidCL> getServRadRepTidForServiceRad(string ident, string srAltKey)
+
+
+
+        /// <summary>
+        /// Returns all registered time(all rows)
+        /// for a specific service row (identified by srAltKey)
+        /// and for a specific user (identified by AnvID)
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="AnvID"></param>
+        /// <param name="srAltKey"></param>
+        /// <returns></returns>
+        //  2016-02-15 Pergas AB KJBO
+        public List<ServRadRepTidCL> getServRadRepTidForServiceRad(string ident, string AnvID, string srAltKey)
         {
-            return getServRadRepTidForServiceRad(ident, srAltKey, 0);
+            return getServRadRepTidForServiceRad(ident, srAltKey, 0, AnvID);
         }
 
         
@@ -175,7 +209,7 @@ namespace SManApi
         /// <param name="ID">Primary key</param>
         /// <returns>List of ServRadTidRepCL or one row with error message</returns>
         //  2016-02-15 KJBO Pergas AB
-        private List<ServRadRepTidCL> getServRadRepTidForServiceRad(string ident, string srAltKey, int ID)
+        private List<ServRadRepTidCL> getServRadRepTidForServiceRad(string ident, string srAltKey, int ID, string AnvID)
         {
             List<ServRadRepTidCL> srrRows = new List<ServRadRepTidCL>();
 
@@ -192,13 +226,12 @@ namespace SManApi
             }
 
             string sSql = " SELECT srrt.ID, srrt.srAltKey, srrt.anvID, srrt.tid, srrt.datum "
-                        + " FROM ServradRepTid srrt "
-                        + " join Authenticate a on srrt.anvID = a.anvID ";
+                        + " FROM ServradRepTid srrt ";
             if (ID != 0)
                 sSql += " where srrt.ID = :ID ";
             else
                 sSql += " where srrt.srAltKey = :srAltKey "
-                     + " and a.Ident = :Ident ";
+                     + " and srrt.anvID = :anvID ";
 
 
             NxParameterCollection pc = new NxParameterCollection();
@@ -207,7 +240,7 @@ namespace SManApi
             else
             {
                 pc.Add("srAltKey", srAltKey);
-                pc.Add("Ident", ident);
+                pc.Add("anvID", AnvID);
             }
             
 
@@ -312,7 +345,7 @@ namespace SManApi
 
         private int validateDatum( ServRadRepTidCL srt, string ident)
         {
-            List<OpenDateCL> dateList = getOpenDates(ident, srt.SrAltKey);
+            List<OpenDateCL> dateList = getOpenDates(ident, srt.SrAltKey, false);
 
             OpenDateCL dateToCheck = new OpenDateCL();
 
@@ -406,7 +439,7 @@ namespace SManApi
         /// assumes that this is a new row
         /// Returns the validated and stored
         /// row with the new ID (if its a new row)
-        /// If an error occurs then an error is returne
+        /// If an error occurs then an error is returned
         /// in the ServRadTidRep return row
         /// </summary>
         /// <param name="ident">Identity</param>
@@ -426,6 +459,8 @@ namespace SManApi
                 retSrt.ErrMessage = "Ogiltigt login";
                 return retSrt;
             }
+
+
 
             string err = "";
             int valid = validateServRadRepTid(srt, ident, ref err);
@@ -464,6 +499,28 @@ namespace SManApi
                 retSrt.ErrMessage = "Det finns redan tid redovisat för aktuell dag och ventil";
                 return retSrt;
             }
+
+
+            CServRad crs = new CServRad();
+
+            DataTable dtsr = crs.validateServRad(srt.SrAltKey);
+
+            string sVartOrdernr = dtsr.Rows[0]["vart_ordernr"].ToString();
+
+            CServiceHuvud ch = new CServiceHuvud();
+            string sOpen = ch.isOpen(ident, sVartOrdernr);
+            if (sOpen != "1")
+            {
+                {
+                    retSrt.ErrCode = -10;
+                    if (sOpen == "-1")
+                        retSrt.ErrMessage = "Order är stängd för inmatning";
+                    else
+                        retSrt.ErrMessage = sOpen;
+                    return retSrt;
+                }
+            }
+
 
             string sSql = "";
 

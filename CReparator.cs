@@ -80,12 +80,21 @@ namespace SManApi
             // If there are one entry for the current anvandare
             if (dt.Rows.Count > 0)
             {
-                // Get the current identity string
-                Ident = dt.Rows[0]["Ident"].ToString();
+                // 2016-02-16 KJBO
+                DateTime savedValidUntil = Convert.ToDateTime(dt.Rows[0]["ValidUntil"]);
+                
+
+                if (savedValidUntil < DateTime.Now)                
+                    Ident = Guid.NewGuid().ToString(); 
+                else
+                    Ident = dt.Rows[0]["Ident"].ToString();
+
+                pc.Add("ident", Ident);
 
                 // Update the validUntil (give 24 hours from now)
                 sSql = " update Authenticate "
                     + " set validUntil = :pValidUntil "
+                    + " , ident = :ident "
                     + " where anvID = :pAnvID ";
                 // Update the database
                 string errStr = "";
@@ -296,9 +305,149 @@ namespace SManApi
             if (dt.Rows.Count > 0)
                 return 1;
             return -1;
+        }
+
+
+        /// <summary>
+        /// Get a list of all reparators assigned to one 
+        /// servicehuvud identified by vartOrdernr
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <returns>A list of reparators or error</returns>
+        public List<ReparatorCL> getReparatorsForServiceHuvud( string ident, string vartOrdernr)
+        {
+
+
+            int identOK = checkIdent(ident);
+            List<ReparatorCL> repList = new List<ReparatorCL>();
+
+            ReparatorCL rep = new ReparatorCL();
+            if (identOK == -1)
+            {
+                rep.Reparator = "";
+                rep.AnvID = "";
+                rep.RepKatID = "";
+                rep.ErrCode = -10;
+                rep.ErrMessage = "Ogiltigt login";
+                repList.Add(rep);
+                return repList;
+            }
+
+            string sSql = " select Coalesce(allRep,false) allRep,  Coalesce(OpenForApp,false) OpenforApp "
+                        + " from servicehuvud "
+                        + " where vart_ordernr = :vart_ordernr ";
+
+            NxParameterCollection np = new NxParameterCollection();
+            np.Add("vart_ordernr", vartOrdernr);
+            
+            string errSt = "";
+            DataTable dt = cdb.getData(sSql, ref errSt, np);
+
+            int errCode = -100;
+
+            if (errSt == "" && dt.Rows.Count == 0)
+            {
+                errSt = "Vårt ordernr är felaktigt";
+                errCode = 0;
+            }
+            
+
+            if (errSt != "")
+            {
+                if (errSt.Length > 2000)
+                    errSt = errSt.Substring(1, 2000);
+                rep.ErrCode = errCode;
+                rep.ErrMessage = errSt;
+                repList.Add(rep);
+                return repList;
+            }
+
+            if (Convert.ToBoolean(dt.Rows[0]["OpenforApp"]) == false)
+            {
+                rep.ErrCode = errCode;
+                rep.ErrMessage = "Ordern är stängd för AppAnvändning";
+                repList.Add(rep);
+                return repList;
+            }
+
+
+            if (Convert.ToBoolean(dt.Rows[0]["allRep"]) == true)
+            {
+                sSql = " select r.anvID, r.Reparator, r.Rep_kat_id "
+                        + " from reparator r "
+                        + " where r.visas = true ";
+
+
+            }
+            else
+            {
+                sSql = " select r.anvID, r.Reparator, r.Rep_kat_id "
+                       + " from reparator r "
+                       + " join servicehuvud s on r.anvID = s.OrderAdmin "
+                       + " where s.vart_ordernr = :vart_ordernr "
+                       + " and r.visas = true "
+                       + " union "
+                       + " select r.anvID, r.Reparator, r.Rep_kat_id "
+                       + " from reparator r "
+                       + " join shReparator shr on r.anvID = shr.anvID "
+                       + " join servicehuvud sh on shr.vart_ordernr = sh.vart_ordernr "
+                       + " where sh.vart_ordernr = :vart_ordernr "
+                       + " and r.visas = true ";
+            }
+
+
+            errSt = "";
+            dt = cdb.getData(sSql, ref errSt, np);
+
+            errCode = -100;
+
+            if (errSt == "" && dt.Rows.Count == 0)
+            {
+                errSt = "Det finns inga reparatörer med behörighet till aktuell order";
+                errCode = 0;
+            }
+
+
+            if (errSt != "")
+            {
+                if (errSt.Length > 2000)
+                    errSt = errSt.Substring(1, 2000);
+                rep.ErrCode = errCode;
+                rep.ErrMessage = errSt;
+                repList.Add(rep);
+                return repList;
+            }
+
+            foreach (DataRow dr in dt.Rows)
+            {
+                ReparatorCL r = new ReparatorCL();            
+                r.AnvID = dr["anvID"].ToString();
+                r.Reparator = dr["Reparator"].ToString();
+                r.RepKatID = dr["Rep_kat_id"].ToString();
+                r.ErrCode = 0;
+                r.ErrMessage = "";
+                repList.Add(r);
+            }
+
+            return repList;
 
 
         }
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     }

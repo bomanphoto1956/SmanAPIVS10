@@ -24,24 +24,6 @@ namespace SManApi
         }
 
 
-        /// <summary>
-        /// Add a % sign to the end of the string
-        /// if the last character is not already %
-        /// </summary>
-        /// <param name="s"></param>
-        /// <returns>The new string</returns>
-        /// 2016-02-01 KJBO Pergas AB
-        private string addWildCard( string s)
-        {
-            if (s.Length > 0)
-            {
-                if (s.Substring(s.Length - 1) != "%")
-                    s += "%";
-            }
-            else
-                s = "%";
-            return s;
-        }
 
 
         /// <summary>
@@ -80,8 +62,8 @@ namespace SManApi
 
             // Add parameter list
             NxParameterCollection np = new NxParameterCollection();
-            np.Add("artnr", addWildCard(ArtnrFilter));
-            np.Add("artnamn", addWildCard(ArtnamnFilter));
+            np.Add("artnr", CCommonFunc.addWildCard(ArtnrFilter));
+            np.Add("artnamn", CCommonFunc.addWildCard(ArtnamnFilter));
 
             // Init variable
             string errText = "";
@@ -448,6 +430,22 @@ namespace SManApi
                 retRes.ErrMessage = "Ogiltigt login";
                 return retRes;
             }
+
+            // Validate that order is open for editing
+            CServiceHuvud ch = new CServiceHuvud();
+            string sOpen = ch.isOpen(ident, reservdel.VartOrdernr);
+            if (sOpen != "1")
+            {
+                {
+                    retRes.ErrCode = -10;
+                    if (sOpen == "-1")
+                        retRes.ErrMessage = "Order är stängd för inmatning";
+                    else
+                        retRes.ErrMessage = sOpen;
+                    return retRes;
+                }
+            }
+
 
             int valid = validateReservdel(reservdel);
             if (valid == -1)

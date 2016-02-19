@@ -209,6 +209,65 @@ namespace SManApi
             return cdb.getData(sSql, ref err, pc);
 
         }
+        
+
+
+        /// <summary>
+        /// Check if an order is open for editing
+        /// The return value is a string, 1 = open, -1 = closed or an error message
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="VartOrdernr"></param>
+        /// <returns>1 - Open -1 - Closed or an error message</returns>
+        public string isOpen(string ident, string VartOrdernr)
+        {
+
+            CReparator cr = new CReparator();
+
+            int identOK = cr.checkIdent(ident);
+
+            if (identOK == -1)            
+                return "Ogiltigt login";            
+
+
+            string sSql = " select Coalesce(OpenForApp, false) as OpenForApp, "
+                        + " Coalesce(Godkand, true) as Godkand "
+                        + " from servicehuvud "
+                        + " where vart_ordernr = :vart_ordernr ";
+
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", VartOrdernr);
+
+            string errText = "";
+            DataTable dt = cdb.getData(sSql, ref errText, pc);
+
+            int errCode = -100;
+            if (errText == "" && dt.Rows.Count == 0)
+            {
+                errText = "Det finns ingen order med aktuellt ordernr";
+                errCode = -10;
+                return errText;
+            }
+
+            if (errText != "")
+            {
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                ServiceHuvudCL sh = new ServiceHuvudCL();
+                sh.ErrCode = errCode;
+                sh.ErrMessage = errText;                
+            }
+
+
+            DataRow dr = dt.Rows[0];
+            Boolean bOpenForApp = Convert.ToBoolean(dr["OpenForApp"]);
+            Boolean bGodkand = Convert.ToBoolean(dr["Godkand"]);
+
+            if (bOpenForApp && !bGodkand)
+                return "1";
+            return "-1";
+        }
+        
 
 
 

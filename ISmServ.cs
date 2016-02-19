@@ -130,7 +130,7 @@ namespace SManApi
         /// <returns>List of ventiCL</returns>
         //  2016-02-08 KJBO Pergas AB
         [OperationContract]
-        List<VentilCL> getVentilsForCust(string ident, string KundID);
+        List<VentilCL> getVentilsForCust(string ident, string KundID, string position, string IDnr, string ventiltyp, string fabrikat, string anlaggningsnr);
 
 
 
@@ -272,17 +272,18 @@ namespace SManApi
 
 
         /// <summary>
-        /// Returns all registered time (all rows)
+        /// Returns all registered time(all rows)
         /// for a specific service row (identified by srAltKey)
-        /// and a specific user (identifiec by ident)
+        /// and for a specific user (identified by AnvID)
         /// </summary>
-        /// <param name="ident">Identity</param>
-        /// <param name="srAltKey">AlternateKey for servicerad</param>
-        /// <returns>List of registered time or one row with error message</returns>
-        // 2016-02-15 KJBO Pergas AB
+        /// <param name="ident"></param>
+        /// <param name="AnvID"></param>
+        /// <param name="srAltKey"></param>
+        /// <returns></returns>
+        //  2016-02-18 Pergas AB KJBO
         [OperationContract]
-        List<ServRadRepTidCL> getServRadRepTidForServiceRad(string ident, string srAltKey);
-
+        List<ServRadRepTidCL> getServRadRepTidForServiceRad(string ident, string AnvID, string srAltKey);
+        
         /// <summary>
         /// Validates one ServRadRepTid
         /// If the ID is 0 then this method
@@ -298,6 +299,30 @@ namespace SManApi
         //  2016-02-15 KJBO Pergas AB
         [OperationContract]
         ServRadRepTidCL saveServRadRepTid(string ident, ServRadRepTidCL srt);
+
+
+        /// <summary>
+        /// Check if an order is open for editing
+        /// The return value is a string, 1 = open, -1 = closed or an error message
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="VartOrdernr"></param>
+        /// <returns>1-Open -1-Closed or an error message</returns>
+        //  2016-02-15 KJBO Pergas AB
+        [OperationContract]
+        string isOpen(string ident, string VartOrdernr);
+
+
+        /// <summary>
+        /// Get a list of all reparators assigned to one 
+        /// servicehuvud identified by vartOrdernr
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <returns>A list of reparators or error</returns>
+        //  2016-02-18 KJBO Pergas AB
+        [OperationContract]
+        List<ReparatorCL> getReparatorsForServiceHuvud(string ident, string vartOrdernr);
 
 
 

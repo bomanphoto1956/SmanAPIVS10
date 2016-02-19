@@ -308,6 +308,20 @@ namespace SManApi
                 return lSr;
             }
 
+            CServiceHuvud ch = new CServiceHuvud();
+            string sOpen = ch.isOpen(ident, sr.VartOrdernr);
+            if (sOpen != "1")
+            {
+                {
+                    lSr.ErrCode = -10;
+                    if (sOpen == "-1")
+                        lSr.ErrMessage = "Order är stängd för inmatning";
+                    else
+                        lSr.ErrMessage = sOpen;
+                    return lSr;
+                }
+            }
+
             // Get reparator identified by ident
             ReparatorCL reparator = cr.getReparator(ident);
 

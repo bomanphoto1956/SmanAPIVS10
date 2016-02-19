@@ -22,7 +22,14 @@ namespace SManApi
             return getVentil(ident, ventilID, true);
         }
 
-        public List<VentilCL> getVentilsForCust(string ident, string KundID)
+
+        /// <summary>
+        /// Get all ventils for one customer
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="KundID"></param>
+        /// <returns></returns>
+        public List<VentilCL> getVentilsForCust(string ident, string KundID, string position, string IDnr, string ventiltyp, string fabrikat, string anlaggningsnr)
         {
             List<VentilCL> vl = new List<VentilCL>();
 
@@ -46,10 +53,20 @@ namespace SManApi
                         + "  v.forra_comment, vk.ventilkategori as ventilkategori_namn "
                         + " FROM ventil v "
                         + " join ventilkategori vk on v.ventilkategori = vk.ventilkat_id "
-                        + " where v.kund_id = :pKundID ";
+                        + " where v.kund_id = :pKundID "
+                        + " and upper(coalesce(v.\"position\",'')) like upper(:position) "
+                        + " and upper(coalesce(v.id_nr,'')) like upper(:id_nr) "
+                        + " and upper(coalesce(v.ventiltyp,'')) like upper(:ventiltyp) "
+                        + " and upper(coalesce(v.fabrikat,'')) like upper(:fabrikat) "
+                        + " and upper(coalesce(v.anlaggningsnr,'')) like upper(:anlaggningsnr) ";
 
             NxParameterCollection np = new NxParameterCollection();
             np.Add("pKundID", KundID);
+            np.Add("position", CCommonFunc.addWildCard(position));
+            np.Add("ID_nr", CCommonFunc.addWildCard(IDnr));
+            np.Add("ventiltyp", CCommonFunc.addWildCard(ventiltyp));
+            np.Add("fabrikat", CCommonFunc.addWildCard(fabrikat));
+            np.Add("anlaggningsnr", CCommonFunc.addWildCard(anlaggningsnr));
 
             string errText = "";
 
