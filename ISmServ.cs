@@ -716,6 +716,16 @@ namespace SManApi
         { get; set; }
 
         [DataMember]
+        public string Plan // 40 
+        { get; set; }
+
+        [DataMember]
+        public string Rum // 20 
+        { get; set; }
+
+
+
+        [DataMember]
         public int ErrCode
         { get; set; }
 

@@ -291,9 +291,9 @@ namespace SManApi
         private string getInsertSQL()
         {
             string sSql = " insert into ServradRepTid (  anvID, datum, regdat, srAltKey "
-                         + " , tid)  "
+                         + " , tid, attesterad)  "
                         + "  values ( :anvID, :datum, :regdat, :srAltKey "
-                        + " , :tid )";
+                        + " , :tid, false )";
 
             return sSql;
         }

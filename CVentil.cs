@@ -51,6 +51,7 @@ namespace SManApi
                         + " v.oppningstryck, v.stalldonstyp, v.stalldon_id_nr, v.stalldon_fabrikat, v.stalldon_artnr, v.lagesstallartyp, "
                         + " v.lagesstall_id_nr, v.lagesstall_fabrikat, v.avdelning, v.anlaggningsnr,  "
                         + "  v.forra_comment, vk.ventilkategori as ventilkategori_namn "
+                        + ", v.plan, v.rum "
                         + " FROM ventil v "
                         + " join ventilkategori vk on v.ventilkategori = vk.ventilkat_id "
                         + " where v.kund_id = :pKundID "
@@ -119,6 +120,8 @@ namespace SManApi
                 vr.LagesstallFabrikat = dr["lagesstall_fabrikat"].ToString();
                 vr.Avdelning = dr["avdelning"].ToString();
                 vr.Anlaggningsnr = dr["anlaggningsnr"].ToString();
+                vr.Plan = dr["plan"].ToString();
+                vr.Rum = dr["rum"].ToString();
                 vr.ErrCode = 0;
                 vr.ErrMessage = "";
 
@@ -155,6 +158,7 @@ namespace SManApi
                         + " v.oppningstryck, v.stalldonstyp, v.stalldon_id_nr, v.stalldon_fabrikat, v.stalldon_artnr, v.lagesstallartyp, "
                         + " v.lagesstall_id_nr, v.lagesstall_fabrikat, v.avdelning,  v.anlaggningsnr,  "
                         + " v.forra_comment, vk.ventilkategori as ventilkategori_namn "
+                        + " , plan, rum "
                         + " FROM ventil v "
                         + " join ventilkategori vk on v.ventilkategori = vk.ventilkat_id "
                         + " where ventil_id = :pVentilID ";
@@ -211,7 +215,9 @@ namespace SManApi
             vr.Lagesstallartyp = dr["lagesstallartyp"].ToString();
             vr.LagesstallIDNr = dr["lagesstall_id_nr"].ToString();
             vr.LagesstallFabrikat = dr["lagesstall_fabrikat"].ToString();
-            vr.Avdelning = dr["avdelning"].ToString();            
+            vr.Avdelning = dr["avdelning"].ToString();
+            vr.Plan = dr["plan"].ToString();
+            vr.Rum = dr["rum"].ToString();
             vr.ErrCode = 0;
             vr.ErrMessage = "";
 
@@ -319,13 +325,13 @@ namespace SManApi
                     + " , dn2, oppningstryck, stalldonstyp, stalldon_id_nr, stalldon_fabrikat "
                     + " , stalldon_artnr, lagesstallartyp, lagesstall_id_nr, lagesstall_fabrikat, avdelning "
                     + " , anlaggningsnr, reg, regdat "
-                    + " , changed)  "
+                    + " , changed, plan, rum )  "
                     + "  values ( :pventil_id, :pventilkategori, :pkund_id, :pposition, :pfabrikat "
                     + " , :pventiltyp, :pid_nr, :ppn, :ppn2, :pdn "
                     + " , :pdn2, :poppningstryck, :pstalldonstyp, :pstalldon_id_nr, :pstalldon_fabrikat "
                     + " , :pstalldon_artnr, :plagesstallartyp, :plagesstall_id_nr, :plagesstall_fabrikat, :pavdelning "
                     + " , :panlaggningsnr, :preg, :pregdat "
-                    + " , :pchanged )";  
+                    + " , :pchanged, :pplan, :prum )";  
 
 
 
@@ -360,6 +366,8 @@ namespace SManApi
                          + ", Uppdaterat = :pUppdaterat "
                          + ", Uppdat_dat = :pUppdat_dat "
                          + ", changed = :pchanged "
+                         + ", plan = :pplan "
+                         + ", rum = :prum "
                          + " where ventil_id = :pventil_id ";
             return sSql;
 
@@ -430,7 +438,9 @@ namespace SManApi
                 DateTime ldtNow = System.DateTime.Now;
                 np.Add("pUppdat_dat", ldtNow);
             }            
-            np.Add("pchanged", System.DateTime.Now); 
+            np.Add("pchanged", System.DateTime.Now);
+            np.Add("pplan", v.Plan);
+            np.Add("prum", v.Rum);
         }
 
 
