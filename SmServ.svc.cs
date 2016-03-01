@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.Text;
+using System.IO;
 
 namespace SManApi
 {
@@ -77,10 +78,10 @@ namespace SManApi
             return cv.getVentil(ident, ventilID);
         }
 
-        public List<VentilCL> getVentilsForCust(string ident, string KundID)
+        public List<VentilCL> getVentilsForCust(string ident, string KundID, string position, string IDnr, string ventiltyp, string fabrikat, string anlaggningsnr)
         {
             CVentil cv = new CVentil();
-            return cv.getVentilsForCust(ident, KundID);
+            return cv.getVentilsForCust(ident, KundID, position, IDnr, ventiltyp, fabrikat, anlaggningsnr);
         }
 
         public VentilCL saveVentil(string ident, VentilCL v)
@@ -226,19 +227,20 @@ namespace SManApi
         }
 
         /// <summary>
-        /// Returns all registered time (all rows)
+        /// Returns all registered time(all rows)
         /// for a specific service row (identified by srAltKey)
-        /// and a specific user (identifiec by ident)
+        /// and for a specific user (identified by AnvID)
         /// </summary>
-        /// <param name="ident">Identity</param>
-        /// <param name="srAltKey">AlternateKey for servicerad</param>
-        /// <returns>List of registered time or one row with error message</returns>
-        // 2016-02-15 Pergas AB KJBO
-        public List<ServRadRepTidCL> getServRadRepTidForServiceRad(string ident, string srAltKey)
+        /// <param name="ident"></param>
+        /// <param name="AnvID"></param>
+        /// <param name="srAltKey"></param>
+        /// <returns></returns>
+        //  2016-02-15 Pergas AB KJBO
+        public List<ServRadRepTidCL> getServRadRepTidForServiceRad(string ident, string AnvID, string srAltKey)
         {
             CTidRed ct = new CTidRed();
 
-            return ct.getServRadRepTidForServiceRad(ident, srAltKey);
+            return ct.getServRadRepTidForServiceRad(ident, AnvID, srAltKey);
         }
 
 
@@ -262,7 +264,66 @@ namespace SManApi
             return ct.saveServRadRepTid(ident, srt);
         }
 
-    
+
+        /// <summary>
+        /// Check if an order is open for editing
+        /// The return value is a string, 1 = open, -1 = closed or an error message
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="VartOrdernr"></param>
+        /// <returns>1 - Open -1 - Closed or an error message</returns>
+        public string isOpen(string ident, string VartOrdernr)
+        {
+            CServiceHuvud cs = new CServiceHuvud();
+
+            return cs.isOpen(ident, VartOrdernr);
+        }
+
+        /// <summary>
+        /// Get a list of all reparators assigned to one 
+        /// servicehuvud identified by vartOrdernr
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <returns>A list of reparators or error</returns>
+        public List<ReparatorCL> getReparatorsForServiceHuvud(string ident, string vartOrdernr)
+        {
+            CReparator cr = new CReparator();
+            return cr.getReparatorsForServiceHuvud(ident, vartOrdernr);
+        }
+
+        /// <summary>
+        /// Returns the alternate key for a serviceRow
+        /// </summary>
+        /// <param name="vartOrdernr"></param>
+        /// <param name="radnr"></param>
+        /// <returns>If ident is invalid the function returns "-10"</returns>
+        /// <returns>If a database error occurs then the return is "-1" followed by the database error description"</returns>        
+        /// <returns>If no row is found by the provided primary key then the result is an empty string</returns>
+        /// <returns>In the normal case (identity is OK and the primary key exists) the function return the alternate key</returns>
+        //  2016-02-29 Pergas AB KJBO
+        public string getAlternateKey(string ident, string vartOrdernr, int radnr)
+        {
+            CServRad cr = new CServRad();
+
+            return cr.getAlternateKey(ident, vartOrdernr, radnr);
+        }
+
+
+        /// <summary>
+        /// Saves a picture to the database
+        /// </summary>
+        /// <param name="ident">Identity</param>
+        /// <param name="p">PictueCL class</param>
+        /// <returns>The stored picture or an error message</returns>
+        //  2016-02-29 Pergas AB KJBO
+        public PictureCL savePicture(string ident, PictureCL p)
+        {
+            CPicture cp = new CPicture();
+
+            return cp.savePicture(ident, p);
+        }
+           
     
 
 

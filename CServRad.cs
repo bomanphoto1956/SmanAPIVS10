@@ -1030,6 +1030,72 @@ namespace SManApi
 
         }
 
+        public int validateServRad(string VartOrdernr, int radnr)
+        {
+            string sSql = " select count(*) as antal "
+                        + " from servicerad "
+                        + " where vart_ordernr = :vart_ordernr "
+                        + " and radnr = :radnr";
+
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", VartOrdernr);
+            pc.Add("radnr", radnr);
+
+            string err = "";
+
+            DataTable dt = cdb.getData(sSql, ref err, pc);
+
+            if (dt.Rows.Count == 0)
+                return 0;
+            return Convert.ToInt32(dt.Rows[0]["antal"]);
+        }
+
+
+
+
+
+        /// <summary>
+        /// Returns the alternate key for a serviceRow
+        /// </summary>
+        /// <param name="vartOrdernr"></param>
+        /// <param name="radnr"></param>
+        /// <returns>If ident is invalid the function returns "-10"</returns>
+        /// <returns>If a database error occurs then the return is "-1" followed by the database error description"</returns>        
+        /// <returns>If no row is found by the provided primary key then the result is an empty string</returns>
+        /// <returns>In the normal case (identity is OK and the primary key exists) the function return the alternate key</returns>
+        //  2016-02-29 Pergas AB KJBO
+        public string getAlternateKey( string ident, string vartOrdernr, int radnr)
+        {
+
+            CReparator cr = new CReparator();
+
+            int identOK = cr.checkIdent(ident);
+
+            if (identOK == -1)            
+                return "-10";            
+
+            string sSql = " select alternateKey "            
+                        + " from servicerad "
+                        + " where vart_ordernr = :vart_ordernr "
+                        + " and radnr = :radnr ";
+
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", vartOrdernr);
+            pc.Add("radnr", radnr);            
+
+            string err = "";
+
+            DataTable dt = cdb.getData(sSql, ref err, pc);
+
+            if (err != "")
+                return "-100 " + err;
+
+            if (dt.Rows.Count == 0)
+                return "";
+            return dt.Rows[0]["alternateKey"].ToString();
+
+        }
+
 
 
     }

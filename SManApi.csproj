@@ -71,9 +71,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CComboValues.cs" />
+    <Compile Include="CCommonFunc.cs" />
     <Compile Include="CConfig.cs" />
     <Compile Include="CDB.cs" />
     <Compile Include="CKund.cs" />
+    <Compile Include="CPictUpload.cs" />
+    <Compile Include="CPicture.cs" />
     <Compile Include="CReparator.cs" />
     <Compile Include="CReservdel.cs" />
     <Compile Include="CServiceHuvud.cs" />
@@ -92,6 +95,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="Uploads\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Properties\PublishProfiles\SmanAPI.pubxml" />

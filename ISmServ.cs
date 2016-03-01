@@ -4,6 +4,8 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.Text;
+using System.IO;
+using System.ServiceModel.Web;
 
 namespace SManApi
 {
@@ -84,8 +86,8 @@ namespace SManApi
         [OperationContract]
         List<ServiceRadListCL> getAllServRad(string ident, string vartOrdernr);
 
-        
-        
+
+
         /// <summary>
         /// Use this function to retieve one row in order to
         /// updat the fields
@@ -106,7 +108,7 @@ namespace SManApi
         /// <returns>The updated servicerow or an error on the first row</returns>
         // 2016-02-08 KJBO Pergas AB
         [OperationContract]
-        ServiceRadCL saveServRad(string ident, ServiceRadCL sr );
+        ServiceRadCL saveServRad(string ident, ServiceRadCL sr);
 
         /// <summary>
         /// Use this function to retrieve one ventil
@@ -211,7 +213,7 @@ namespace SManApi
         // 2016-02-10 KJBO
         [OperationContract]
         ArtikelCL getArtikel(string ident, string Artnr);
-        
+
         /// <summary>
         /// Return a list of reservdel for one servicerad
         /// </summary>
@@ -283,7 +285,7 @@ namespace SManApi
         //  2016-02-18 Pergas AB KJBO
         [OperationContract]
         List<ServRadRepTidCL> getServRadRepTidForServiceRad(string ident, string AnvID, string srAltKey);
-        
+
         /// <summary>
         /// Validates one ServRadRepTid
         /// If the ID is 0 then this method
@@ -325,549 +327,571 @@ namespace SManApi
         List<ReparatorCL> getReparatorsForServiceHuvud(string ident, string vartOrdernr);
 
 
+        /// <summary>
+        /// Returns the alternate key for a serviceRad
+        /// </summary>
+        /// <param name="vartOrdernr"></param>
+        /// <param name="radnr"></param>
+        /// <returns>If ident is invalid the function returns "-10"</returns>
+        /// <returns>If a database error occurs then the return is "-1" followed by the database error description"</returns>        
+        /// <returns>If no row is found by the provided primary key then the result is an empty string</returns>
+        /// <returns>In the normal case (identity is OK and the primary key exists) the function return the alternate key</returns>
+        //  2016-02-29 Pergas AB KJBO
+        [OperationContract]
+        string getAlternateKey(string ident, string vartOrdernr, int radnr);
 
 
-    }
 
-    
-
-
-
-
-    // Use a data contract as illustrated in the sample below to add composite types to service operations.
-
-
-    // Class ReparatorCL is only for reading and listing. 
-    // No changes are allowed in this version of the API
-    [DataContract]
-    public class ReparatorCL
-    {
-        [DataMember]
-        public string AnvID
-        { get; set; }
-
-        [DataMember]
-        public string Reparator
-        { get; set; }
-
-        [DataMember]
-        public string RepKatID
-        { get; set; }
-
-        [DataMember]
-        public int ErrCode
-        { get; set; }
-
-        [DataMember]
-        public string ErrMessage
-        { get; set; }
+        /// <summary>
+        /// Saves a picture to the database
+        /// </summary>
+        /// <param name="ident">Identity</param>
+        /// <param name="p">PictueCL class</param>
+        /// <returns>The stored picture or an error message</returns>
+        //  2016-02-29 Pergas AB KJBO
+        [OperationContract]
+        PictureCL savePicture(string ident, PictureCL p);
 
 
-    }
-
-    // Class ServiceHuvudCL is only for reading and listing. 
-    // No changes are allowed in this version of the API
-    [DataContract]
-    public class ServiceHuvudCL
-    {
-        [DataMember]
-        public string VartOrdernr
-        { get; set; }
-
-        [DataMember]
-        public string ErtOrdernr
-        { get; set; }
-
-        [DataMember]
-        public string Kund
-        { get; set; }
-
-        [DataMember]
-        public string KundNamn
-        { get; set; }
-
-        [DataMember]
-        public DateTime OrderDatum
-        { get; set; }
-
-        [DataMember]
-        public string OrderAdminID
-        { get; set; }
-
-        [DataMember]
-        public string OrderAdminNamn
-        { get; set; }
-
-        [DataMember]
-        public int ErrCode
-        { get; set; }
-
-        [DataMember]
-        public string ErrMessage
-        { get; set; }
 
 
     }
 
 
-    [DataContract]
-    public class ServiceRadListCL
-    {
-        [DataMember]
-        public string VartOrdernr
-        { get; set; }
-
-        [DataMember]
-        public int RadNr
-        { get; set; }
-
-        [DataMember]
-        public string Anlaggningsnr
-        { get; set; }
-
-        [DataMember]
-        public string IdNr
-        { get; set; }
-
-        [DataMember]
-        public string Avdelning
-        { get; set; }
-
-        [DataMember]
-        public string KundensPosNr
-        { get; set; }
-
-        [DataMember]
-        public string VentilKategori
-        { get; set; }
-
-        [DataMember]
-        public string Ventiltyp
-        { get; set; }
-
-        [DataMember]
-        public string Fabrikat
-        { get; set; }
-
-        [DataMember]
-        public string Dn
-        { get; set; }
-
-        [DataMember]
-        public string Pn
-        { get; set; }
-
-
-
-        [DataMember]
-        public int ErrCode
-        { get; set; }
-
-        [DataMember]
-        public string ErrMessage
-        { get; set; }
-
-
-    }
-
-    /// <summary>
-    /// For updating row
-    /// These are the properties that the
-    /// reparator shall update.
-    /// String length are defined after each
-    /// If no lenght is written then there is a blob field storing
-    /// the data
-    /// property
-    /// </summary>
-    /// 2016-02-03 KJBO Pergas AB
-    [DataContract]
-    public class ServiceRadCL
-    {
-        [DataMember]
-        public string VartOrdernr // 10
-        { get; set; }
+        // Use a data contract as illustrated in the sample below to add composite types to service operations.
 
-        [DataMember]
-        public int Radnr // Om radnr sätts till 0 indikerar detta att det är en ny rad
-        { get; set; }
 
-        [DataMember]
-        public string Kontroll
-        { get; set; }
+        // Class ReparatorCL is only for reading and listing. 
+        // No changes are allowed in this version of the API
+        [DataContract]
+        public class ReparatorCL
+        {
+            [DataMember]
+            public string AnvID
+            { get; set; }
 
-        [DataMember]
-        public string Arbete
-        { get; set; }
+            [DataMember]
+            public string Reparator
+            { get; set; }
 
-        [DataMember]
-        public string Anmarkning
-        { get; set; }
+            [DataMember]
+            public string RepKatID
+            { get; set; }
 
-        [DataMember]
-        public string Reservdelar
-        { get; set; }
+            [DataMember]
+            public int ErrCode
+            { get; set; }
 
-
-        [DataMember]
-        public string Reparator //10 do not update
-        { get; set; }
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
 
-        [DataMember]
-        public string Reparator2 //10 do not update
-        { get; set; }
 
-        [DataMember]
-        public string Reparator3 // 10 do not update
-        { get; set; }
+        }
 
-        [DataMember]
-        public string StalldonKontroll
-        { get; set; }
+        // Class ServiceHuvudCL is only for reading and listing. 
+        // No changes are allowed in this version of the API
+        [DataContract]
+        public class ServiceHuvudCL
+        {
+            [DataMember]
+            public string VartOrdernr
+            { get; set; }
 
-        [DataMember]
-        public string StalldonArbete
-        { get; set; }
+            [DataMember]
+            public string ErtOrdernr
+            { get; set; }
 
-        [DataMember]
-        public string StalldonDelar
-        { get; set; }
+            [DataMember]
+            public string Kund
+            { get; set; }
 
-        [DataMember]
-        public string LagesstallKontroll
-        { get; set; }
+            [DataMember]
+            public string KundNamn
+            { get; set; }
 
-        [DataMember]
-        public string LagesstallArbete
-        { get; set; }
+            [DataMember]
+            public DateTime OrderDatum
+            { get; set; }
 
-        [DataMember]
-        public string LagesstallDelar
-        { get; set; }
+            [DataMember]
+            public string OrderAdminID
+            { get; set; }
 
-        [DataMember]
-        public int AntalBoxpack
-        { get; set; }
+            [DataMember]
+            public string OrderAdminNamn
+            { get; set; }
 
-        [DataMember]
-        public string Boxpackning //25
-        { get; set; }
+            [DataMember]
+            public int ErrCode
+            { get; set; }
 
-        [DataMember]
-        public string BoxpackMaterial //40
-        { get; set; }
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
 
-        [DataMember]
-        public int AntalBrostpack
-        { get; set; }
 
-        [DataMember]
-        public string Brostpackning //25
-        { get; set; }
+        }
 
-        [DataMember]
-        public string BrostpackMaterial //40
-        { get; set; }
 
-        [DataMember]
-        public string OvrKomment
-        { get; set; }
+        [DataContract]
+        public class ServiceRadListCL
+        {
+            [DataMember]
+            public string VartOrdernr
+            { get; set; }
 
-        [DataMember]
-        public string VentilID //40 (GUID)
-        { get; set; }
+            [DataMember]
+            public int RadNr
+            { get; set; }
 
-        [DataMember]
-        public string AlternateKey //40 (GUID)
-        { get; set; }
+            [DataMember]
+            public string Anlaggningsnr
+            { get; set; }
 
+            [DataMember]
+            public string IdNr
+            { get; set; }
 
-        [DataMember]
-        public int ErrCode 
-        { get; set; }
+            [DataMember]
+            public string Avdelning
+            { get; set; }
 
-        [DataMember]
-        public string ErrMessage
-        { get; set; }
+            [DataMember]
+            public string KundensPosNr
+            { get; set; }
 
-    }
+            [DataMember]
+            public string VentilKategori
+            { get; set; }
 
+            [DataMember]
+            public string Ventiltyp
+            { get; set; }
 
-    /// <summary>
-    /// This class is for comboboxes
-    /// where the user selects the suitable
-    /// ventilkategori. 
-    /// </summary>
-    [DataContract]
-    public class VentilKategoriCL
-    {
+            [DataMember]
+            public string Fabrikat
+            { get; set; }
 
-        [DataMember]
-        public int VentilkatID // PK
-        { get; set; }
+            [DataMember]
+            public string Dn
+            { get; set; }
 
-        [DataMember]
-        public string Ventilkategori
-        { get; set; }
+            [DataMember]
+            public string Pn
+            { get; set; }
 
-        [DataMember]
-        public int ErrCode
-        { get; set; }
 
-        [DataMember]
-        public string ErrMessage
-        { get; set; }
 
+            [DataMember]
+            public int ErrCode
+            { get; set; }
 
-    }
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
 
+
+        }
 
+        /// <summary>
+        /// For updating row
+        /// These are the properties that the
+        /// reparator shall update.
+        /// String length are defined after each
+        /// If no lenght is written then there is a blob field storing
+        /// the data
+        /// property
+        /// </summary>
+        /// 2016-02-03 KJBO Pergas AB
+        [DataContract]
+        public class ServiceRadCL
+        {
+            [DataMember]
+            public string VartOrdernr // 10
+            { get; set; }
 
+            [DataMember]
+            public int Radnr // Om radnr sätts till 0 indikerar detta att det är en ny rad
+            { get; set; }
 
-    [DataContract]
-    public class VentilCL
-    {
-        [DataMember]
-        public string VentilID // 40
-        { get; set; }
+            [DataMember]
+            public string Kontroll
+            { get; set; }
 
-        [DataMember]
-        public int VentilkatID // Foreign key to ventilkategoriCL
-        { get; set; }
+            [DataMember]
+            public string Arbete
+            { get; set; }
 
-        [DataMember]
-        public string Ventilkategori // Only for display purposes (value taken from ventilkategori table)
-        { get; set; }
+            [DataMember]
+            public string Anmarkning
+            { get; set; }
 
+            [DataMember]
+            public string Reservdelar
+            { get; set; }
 
-        [DataMember]
-        public string KundID //20
 
-        { get; set; }
-        [DataMember]
-        public string Position //50
-        { get; set; }
+            [DataMember]
+            public string Reparator //10 do not update
+            { get; set; }
 
-        [DataMember]
-        public string Fabrikat // 20
-        { get; set; }
+            [DataMember]
+            public string Reparator2 //10 do not update
+            { get; set; }
 
-        [DataMember]
-        public string Ventiltyp // 40
-        { get; set; }
+            [DataMember]
+            public string Reparator3 // 10 do not update
+            { get; set; }
 
-        [DataMember]
-        public string IdNr // 20
-        { get; set; }
+            [DataMember]
+            public string StalldonKontroll
+            { get; set; }
 
-        [DataMember]
-        public string Pn //10
-        { get; set; }
+            [DataMember]
+            public string StalldonArbete
+            { get; set; }
 
-        [DataMember]
-        public string Pn2 // 10
-        { get; set; }
+            [DataMember]
+            public string StalldonDelar
+            { get; set; }
 
-        [DataMember]
-        public string Dn // 10
-        { get; set; }
+            [DataMember]
+            public string LagesstallKontroll
+            { get; set; }
 
-        [DataMember]
-        public string Dn2 // 10
-        { get; set; }
+            [DataMember]
+            public string LagesstallArbete
+            { get; set; }
 
-        [DataMember]
-        public decimal Oppningstryck // 10.3
-        { get; set; }
+            [DataMember]
+            public string LagesstallDelar
+            { get; set; }
 
-        [DataMember]
-        public string Stalldonstyp // 20
-        { get; set; }
+            [DataMember]
+            public int AntalBoxpack
+            { get; set; }
 
-        [DataMember]
-        public string StalldonIDNr // 20
-        { get; set; }
+            [DataMember]
+            public string Boxpackning //25
+            { get; set; }
 
-        [DataMember]
-        public string StalldonFabrikat // 20
-        { get; set; }
+            [DataMember]
+            public string BoxpackMaterial //40
+            { get; set; }
 
-        [DataMember]
-        public string StalldonArtnr // 20
-        { get; set; }
+            [DataMember]
+            public int AntalBrostpack
+            { get; set; }
 
-        [DataMember]
-        public string Lagesstallartyp // 20
-        { get; set; }
+            [DataMember]
+            public string Brostpackning //25
+            { get; set; }
 
-        [DataMember]
-        public string LagesstallIDNr // 20
-        { get; set; }
+            [DataMember]
+            public string BrostpackMaterial //40
+            { get; set; }
 
-        [DataMember]
-        public string LagesstallFabrikat // 20
-        { get; set; }
+            [DataMember]
+            public string OvrKomment
+            { get; set; }
 
-        [DataMember]
-        public string Avdelning // 20 
-        { get; set; }
+            [DataMember]
+            public string VentilID //40 (GUID)
+            { get; set; }
 
-        [DataMember]
-        public string Anlaggningsnr // 20 
-        { get; set; }
+            [DataMember]
+            public string AlternateKey //40 (GUID)
+            { get; set; }
 
-        [DataMember]
-        public string Plan // 40 
-        { get; set; }
 
-        [DataMember]
-        public string Rum // 20 
-        { get; set; }
+            [DataMember]
+            public int ErrCode
+            { get; set; }
 
-
-
-        [DataMember]
-        public int ErrCode
-        { get; set; }
-
-        [DataMember]
-        public string ErrMessage
-        { get; set; }
-    }
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
 
+        }
 
-    /// <summary>
-    /// Class to feed comboboxes when selecting fabrikat
-    /// on ventil, stalldon and lagesstallare.
-    /// The single Fabrikat property acts as both
-    /// ID and value and can be seen as a way to
-    /// prevent the user from entering different values
-    /// for the same fabrikat
-    /// </summary>
-    /// 2016-02-04 KJBO Pergas AB
-    [DataContract]
-    public class FabrikatCL
-    {
-        [DataMember]
-        public string Fabrikat // 20
-        { get; set; }
 
-
-        [DataMember]
-        public int ErrCode
-        { get; set; }
+        /// <summary>
+        /// This class is for comboboxes
+        /// where the user selects the suitable
+        /// ventilkategori. 
+        /// </summary>
+        [DataContract]
+        public class VentilKategoriCL
+        {
 
-        [DataMember]
-        public string ErrMessage
-        { get; set; }
-
-
-    }
-
-    /// Class to feed comboboxes when selecting dn/dn2
-    /// on ventil.
-    /// The single dn property acts as both
-    /// ID and value and can be seen as a way to
-    /// prevent the user from entering different values
-    /// for the same dn.
-    /// 2016-02-04 KJBO Pergas AB
-    [DataContract]
-    public class DnCL
-    {
-        [DataMember]
-        public string Dn // 10
-        { get; set; }
-
-
-        [DataMember]
-        public int ErrCode
-        { get; set; }
-
-        [DataMember]
-        public string ErrMessage
-        { get; set; }
-
-    }
-
-    /// Class to feed comboboxes when selecting pn/pn2
-    /// on ventil.
-    /// The single dn property acts as both
-    /// ID and value and can be seen as a way to
-    /// prevent the user from entering different values
-    /// for the same pn.
-    /// 2016-02-04 KJBO Pergas AB
-    [DataContract]
-    public class PnCL
-    {
-        [DataMember]
-        public string Pn // 10
-        { get; set; }
-
-        [DataMember]
-        public int ErrCode
-        { get; set; }
-
-        [DataMember]
-        public string ErrMessage
-        { get; set; }
-    }
-
-
-    /// <summary>
-    /// Artikel is for display only
-    /// When the reparator will add reservdelar
-    /// to the serviceorder he/she will select
-    /// from a list of artikel
-    /// </summary>
-    [DataContract]
-    public class ArtikelCL
-    {
-        [DataMember]
-        public string Artnr  // 16
-        { get; set; }
-
-        [DataMember]
-        public string Artnamn  // 40
-        { get; set; }
-
-        [DataMember]
-        public string LevID  // 16
-        { get; set; }
-
-        [DataMember]
-        public string LevNamn  // 50
-        { get; set; }
-
-        [DataMember]
-        public string Anm1  // 60
-        { get; set; }
-
-        [DataMember]
-        public string Anm2  // 60
-        { get; set; }
-
-        [DataMember]
-        public int ErrCode
-        { get; set; }
-
-        [DataMember]
-        public string ErrMessage
-        { get; set; }
-    }
-
-
-    /// <summary>
-    /// Class reservdelCL is connected to a ServiceOrder
-    /// by VartOrdernr and radnr
-    /// The primary key is VartOrdernr, Radnr, and ReservNr
-    /// If a new ReservdelCL is sent to the API the ReservNr shall be 0
-    /// and VartOdernr and Radnr must exist.
-    /// The user can enter anything in artnr and artnamn, but if a artnr
-    /// exists in the ArtikelCL class the Artnamn shall default to the
-    /// Artnamn in artikel and also the levID from artikel. 
-    /// The reservdelCL is not in any way (other then described above)
-    /// related to Artikel.
-    /// 
-    /// </summary>
+            [DataMember]
+            public int VentilkatID // PK
+            { get; set; }
+
+            [DataMember]
+            public string Ventilkategori
+            { get; set; }
+
+            [DataMember]
+            public int ErrCode
+            { get; set; }
+
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
+
+
+        }
+
+
+
+
+        [DataContract]
+        public class VentilCL
+        {
+            [DataMember]
+            public string VentilID // 40
+            { get; set; }
+
+            [DataMember]
+            public int VentilkatID // Foreign key to ventilkategoriCL
+            { get; set; }
+
+            [DataMember]
+            public string Ventilkategori // Only for display purposes (value taken from ventilkategori table)
+            { get; set; }
+
+
+            [DataMember]
+            public string KundID //20
+
+            { get; set; }
+            [DataMember]
+            public string Position //50
+            { get; set; }
+
+            [DataMember]
+            public string Fabrikat // 20
+            { get; set; }
+
+            [DataMember]
+            public string Ventiltyp // 40
+            { get; set; }
+
+            [DataMember]
+            public string IdNr // 20
+            { get; set; }
+
+            [DataMember]
+            public string Pn //10
+            { get; set; }
+
+            [DataMember]
+            public string Pn2 // 10
+            { get; set; }
+
+            [DataMember]
+            public string Dn // 10
+            { get; set; }
+
+            [DataMember]
+            public string Dn2 // 10
+            { get; set; }
+
+            [DataMember]
+            public decimal Oppningstryck // 10.3
+            { get; set; }
+
+            [DataMember]
+            public string Stalldonstyp // 20
+            { get; set; }
+
+            [DataMember]
+            public string StalldonIDNr // 20
+            { get; set; }
+
+            [DataMember]
+            public string StalldonFabrikat // 20
+            { get; set; }
+
+            [DataMember]
+            public string StalldonArtnr // 20
+            { get; set; }
+
+            [DataMember]
+            public string Lagesstallartyp // 20
+            { get; set; }
+
+            [DataMember]
+            public string LagesstallIDNr // 20
+            { get; set; }
+
+            [DataMember]
+            public string LagesstallFabrikat // 20
+            { get; set; }
+
+            [DataMember]
+            public string Avdelning // 20 
+            { get; set; }
+
+            [DataMember]
+            public string Anlaggningsnr // 20 
+            { get; set; }
+
+            [DataMember]
+            public string Plan // 40 
+            { get; set; }
+
+            [DataMember]
+            public string Rum // 20 
+            { get; set; }
+
+
+
+            [DataMember]
+            public int ErrCode
+            { get; set; }
+
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
+        }
+
+
+        /// <summary>
+        /// Class to feed comboboxes when selecting fabrikat
+        /// on ventil, stalldon and lagesstallare.
+        /// The single Fabrikat property acts as both
+        /// ID and value and can be seen as a way to
+        /// prevent the user from entering different values
+        /// for the same fabrikat
+        /// </summary>
+        /// 2016-02-04 KJBO Pergas AB
+        [DataContract]
+        public class FabrikatCL
+        {
+            [DataMember]
+            public string Fabrikat // 20
+            { get; set; }
+
+
+            [DataMember]
+            public int ErrCode
+            { get; set; }
+
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
+
+
+        }
+
+        /// Class to feed comboboxes when selecting dn/dn2
+        /// on ventil.
+        /// The single dn property acts as both
+        /// ID and value and can be seen as a way to
+        /// prevent the user from entering different values
+        /// for the same dn.
+        /// 2016-02-04 KJBO Pergas AB
+        [DataContract]
+        public class DnCL
+        {
+            [DataMember]
+            public string Dn // 10
+            { get; set; }
+
+
+            [DataMember]
+            public int ErrCode
+            { get; set; }
+
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
+
+        }
+
+        /// Class to feed comboboxes when selecting pn/pn2
+        /// on ventil.
+        /// The single dn property acts as both
+        /// ID and value and can be seen as a way to
+        /// prevent the user from entering different values
+        /// for the same pn.
+        /// 2016-02-04 KJBO Pergas AB
+        [DataContract]
+        public class PnCL
+        {
+            [DataMember]
+            public string Pn // 10
+            { get; set; }
+
+            [DataMember]
+            public int ErrCode
+            { get; set; }
+
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
+        }
+
+
+        /// <summary>
+        /// Artikel is for display only
+        /// When the reparator will add reservdelar
+        /// to the serviceorder he/she will select
+        /// from a list of artikel
+        /// </summary>
+        [DataContract]
+        public class ArtikelCL
+        {
+            [DataMember]
+            public string Artnr  // 16
+            { get; set; }
+
+            [DataMember]
+            public string Artnamn  // 40
+            { get; set; }
+
+            [DataMember]
+            public string LevID  // 16
+            { get; set; }
+
+            [DataMember]
+            public string LevNamn  // 50
+            { get; set; }
+
+            [DataMember]
+            public string Anm1  // 60
+            { get; set; }
+
+            [DataMember]
+            public string Anm2  // 60
+            { get; set; }
+
+            [DataMember]
+            public int ErrCode
+            { get; set; }
+
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
+        }
+
+
+        /// <summary>
+        /// Class reservdelCL is connected to a ServiceOrder
+        /// by VartOrdernr and radnr
+        /// The primary key is VartOrdernr, Radnr, and ReservNr
+        /// If a new ReservdelCL is sent to the API the ReservNr shall be 0
+        /// and VartOdernr and Radnr must exist.
+        /// The user can enter anything in artnr and artnamn, but if a artnr
+        /// exists in the ArtikelCL class the Artnamn shall default to the
+        /// Artnamn in artikel and also the levID from artikel. 
+        /// The reservdelCL is not in any way (other then described above)
+        /// related to Artikel.
+        /// 
+        /// </summary>
         [DataContract]
         public class ReservdelCL
         {
@@ -921,7 +945,7 @@ namespace SManApi
         public class ServRadRepTidCL
         {
             [DataMember]
-            public int ID 
+            public int ID
             { get; set; }
 
             [DataMember]
@@ -974,5 +998,38 @@ namespace SManApi
 
         }
 
+        /// <summary>
+        /// Class for returning available
+        /// time registration dates for a
+        /// ServiceOrderRow
+        /// </summary>
+        [DataContract]
+        public class PictureCL
+        {
+            [DataMember]
+            public string VartOrdernr // 10
+            { get; set; }
 
+            [DataMember]
+            public int Radnr
+            { get; set; }
+
+            [DataMember]
+            public int BildNr
+            { get; set; }
+
+            [DataMember]
+            public byte[] Bild
+            { get; set; }
+
+            [DataMember]
+            public int ErrCode
+            { get; set; }
+
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
+
+        }
+    
 }
