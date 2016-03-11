@@ -1051,6 +1051,30 @@ namespace SManApi
         }
 
 
+        public int validteServRadBild(string VartOrdernr, int radnr, int bildNr)
+        {
+
+            string sSql = " select count(*) as antal "
+            + " from servrad_bild "
+            + " where vart_ordernr = :vart_ordernr "
+            + " and radnr = :radnr "
+            + " and bild_nr = :bild_nr ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", VartOrdernr);
+            pc.Add("radnr", radnr);
+            pc.Add("bild_nr", bildNr);
+
+            string err = "";
+
+            DataTable dt = cdb.getData(sSql, ref err, pc);
+
+            if (dt.Rows.Count == 0)
+                return 0;
+            return Convert.ToInt32(dt.Rows[0]["antal"]);
+
+        }
+
+
 
 
 

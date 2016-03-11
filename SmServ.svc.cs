@@ -310,21 +310,154 @@ namespace SManApi
         }
 
 
-        /// <summary>
-        /// Saves a picture to the database
+
+         /// <summary>
+        /// Stores a picture or an image to the
+        /// local directory "UpLoads"
+        /// The name of the picture is a GUID
+        /// which is returned to the caller on success
         /// </summary>
-        /// <param name="ident">Identity</param>
-        /// <param name="p">PictueCL class</param>
-        /// <returns>The stored picture or an error message</returns>
-        //  2016-02-29 Pergas AB KJBO
-        public PictureCL savePicture(string ident, PictureCL p)
+        /// <param name="sPict">Picture as stream</param>
+        /// <returns>The name of the picture (that has to be referred in
+        /// future calls when this picture shall be stored with metadata
+        /// If an error occurs then the return string is -1 followed by an
+        /// error message</returns>
+        //  2016-03-03 KJBO
+        public string uploadPict(Stream sPict)
         {
             CPicture cp = new CPicture();
 
+            return cp.uploadPict(sPict);
+        }
+
+
+        /// <summary>
+        /// Saves a picture to the database
+        /// This method shall be called directory after
+        /// a call to UploadPict
+        /// The UploadPict gives you (upon success)
+        /// an identity (=filename) to the upoaded file
+        /// This identity is provided to this function
+        /// in the PictureCL class
+        /// Note that the BildNr field in the PictureClass
+        /// shall always be 0 indicating that this is a
+        /// new picture to be stored. There is no way
+        /// to update a picture. In that case you need to delete
+        /// the picture and, after that, add a new one
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        //  2016-03-07 KJBO
+        public PictureCL savePicture(string ident, PictureCL p)
+        {
+            CPicture cp = new CPicture();
             return cp.savePicture(ident, p);
         }
-           
-    
+
+
+
+
+        /// <summary>
+        /// Get a picture from the database identified by
+        /// primary key (vartOrdernr, radnr, bildNr)
+        /// Returns a PictCL object with the pictIdent
+        /// field with a file name to the file being extracted
+        /// by the server.
+        /// If the fileName is empty or begins with -1 then
+        /// there is an error while extracting the picture from
+        /// the database to the temporary storage
+        /// 
+        /// After this function is called there has to be a call
+        /// to downloadPicture with the pictIdent as parameter
+        /// This function returns the picture to the caller as
+        /// a memoryStream
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <param name="radnr"></param>
+        /// <param name="bildNr"></param>
+        /// <returns></returns>
+        /// 2016-03-09 KJBO
+        public PictureCL getPicture( string ident, string vartOrdernr, int radnr, int bildNr)
+        {
+            CPicture cp = new CPicture();
+            return cp.getPicture(ident, vartOrdernr, radnr, bildNr);
+        }
+
+
+        /// <summary>
+        /// The downLoadPict method accept a pictIdent parameter as well
+        /// as a reference to an error string
+        /// The method returns a memorystream to the caller. If an
+        /// error occurs then the stream is nukll and en error is 
+        /// message is written to the error parameter
+        /// 
+        /// This method shall be called after a call to getPicture. When getPicture
+        /// is called it will store a copy of the picture on the server and also return
+        /// a pictureCL object with the pictIdent. This identity is used when this 
+        /// method is called.
+        /// </summary>
+        /// <param name="pictIdent"></param>
+        /// <param name="error"></param>
+        /// <returns></returns>
+        /// 2016-03-10 KJBO Pergas AB
+        public Stream downLoadPict( string pictIdent )
+        {
+            string error = "";
+            CPicture cp = new CPicture();
+            return cp.downLoadPict(pictIdent, ref error);
+        }
+
+        /// <summary>
+        /// Delete a picture from the database identified by
+        /// values provided in the PictureCL parameter
+        /// vartOrdernr
+        /// radnr
+        /// bildNr
+        /// 
+        /// Note that the pictIdent parameter doesnt need to
+        /// be filled in this case.
+        ///         
+        /// The method returns an empty picture class if 
+        /// everything is OK
+        /// If anything goes wrong the errCode and the errMessage
+        /// will give further information. 
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        /// 2016-03-11 Pergas AB KJBO
+        public PictureCL deletePicture(string ident, PictureCL p)
+        {
+            CPicture cp = new CPicture();
+            return cp.deletePicture(ident, p);
+        }
+
+        /// <summary>
+        /// This method returns all pictures for one servicerad
+        /// Note that you dont get the actual picture nor the
+        /// pictIdent. Instead you use this method for getting a
+        /// list of available pictures (and also gets the picture
+        /// description).
+        /// After that you have to call GetPicture and download picture
+        /// in turn in order to get each individual picture.
+        /// The reason for this is performance. This method gives
+        /// a fast list of available pictures only.
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <param name="radnr"></param>
+        /// <returns></returns>
+        /// 2016-03-11 Pergas AB kjbo
+        public List<PictureCL> getPicturesForServiceRad(string ident, string vartOrdernr, int radnr)
+        {
+            CPicture cp = new CPicture();
+            return cp.getPicturesForServiceRad(ident, vartOrdernr, radnr);
+        }
+
+
+
 
 
     }

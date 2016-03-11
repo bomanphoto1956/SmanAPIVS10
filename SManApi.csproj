@@ -67,7 +67,9 @@
   <ItemGroup>
     <Content Include="Service1.svc" />
     <Content Include="SmServ.svc" />
-    <Content Include="Web.config" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CComboValues.cs" />
@@ -75,7 +77,6 @@
     <Compile Include="CConfig.cs" />
     <Compile Include="CDB.cs" />
     <Compile Include="CKund.cs" />
-    <Compile Include="CPictUpload.cs" />
     <Compile Include="CPicture.cs" />
     <Compile Include="CReparator.cs" />
     <Compile Include="CReservdel.cs" />
