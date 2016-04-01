@@ -456,6 +456,18 @@ namespace SManApi
             return cp.getPicturesForServiceRad(ident, vartOrdernr, radnr);
         }
 
+        /// <summary>
+        /// Returns all standardtext
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <returns></returns>
+        public List<StandardTextCL> getAllSttText(string ident)
+        {
+            CStdText cs = new CStdText();
+            return cs.getAllSttText(ident);
+        }
+
+
 
 
 

@@ -56,34 +56,34 @@ namespace SManApi
         /// <param name="p"></param>
         /// <param name="err"></param>
         /// <returns></returns>
-        private int validatePicture(PictureCL p, bool validateBildnr, ref string err)
+        private int validatePicture(PictureCL p, bool forDelete, ref string err)
         {
             CServRad cs = new CServRad();
             if (p.VartOrdernr == "")
                 return -1;
             if (p.Radnr == 0)
-                return -1;
-            if (validateBildnr)
+                return -2;
+            if (forDelete)
             {
                 if (p.BildNr == 0)
-                    return -1;
+                    return -3;
             }
-            if (validateBildnr)
+            if (forDelete || p.BildNr > 0 )
             {
                 int antal = cs.validteServRadBild(p.VartOrdernr, p.Radnr, p.BildNr);
                 if (antal == 0)
-                    return -1;
+                    return -4;
             }
-            else
+            else if (p.BildNr == 0)
             {
                 int antal = cs.validateServRad(p.VartOrdernr, p.Radnr);
                 if (antal == 0)
-                    return -1;
+                    return -5;
             }
-            if (!validateBildnr)
+            if (!forDelete)
             {
                 if (!validatePictIdent(p.PictIdent))
-                    return -2;
+                    return -6;
             }
             return 1;
         }
@@ -95,10 +95,25 @@ namespace SManApi
         /// <returns></returns>
         private string getInsertSQL()
         {
-            string sSql = " insert into servrad_bild ( bild, bild_nr, radnr, vart_ordernr,pictDescript )  "
-                         + "  values ( :bild, :bild_nr, :radnr, :vart_ordernr, :pictDescript )";  
+            string sSql = " insert into servrad_bild ( bild, bild_nr, radnr, vart_ordernr,pictDescript, pictSize, pictType )  "
+                         + "  values ( :bild, :bild_nr, :radnr, :vart_ordernr, :pictDescript, :pictSize, :pictType )";  
 
             return sSql;
+        }
+
+
+        private string getUpdateSQL()
+        {
+            string sSql = " update servrad_bild "
+                        + " set  pictType = :pictType "                                                 
+                         + ", pictSize = :pictSize "                         
+                         + ", bild = :bild "
+                         + ", PictDescript = :PictDescript "
+                         + " where vart_ordernr = :vart_ordernr "
+                         + " and radnr = :radnr "
+                         + " and bild_nr = :bild_nr ";
+            return sSql;
+
         }
 
 
@@ -116,9 +131,11 @@ namespace SManApi
         }
 
 
-        private byte[] getPhoto(string pictIdent)
+        private byte[] getPhoto(string pictIdent, ref long fileSize)
         {
             string filePath = getUploadDirectory(pictIdent);
+            FileInfo f = new FileInfo(filePath);
+            fileSize = f.Length;
             FileStream stream = new FileStream(
                 filePath, FileMode.Open, FileAccess.Read);
             BinaryReader reader = new BinaryReader(stream);
@@ -141,7 +158,7 @@ namespace SManApi
         /// </summary>
         /// <param name="m"></param>
         /// <returns></returns>
-        private string savePictToToFile(MemoryStream m, ref string error)
+        private string savePictToToFile(MemoryStream m, ref string error, ref long fileSize)
         {
             string path = "";
             string fileName = "";
@@ -159,6 +176,8 @@ namespace SManApi
                     file.Write(bytes, 0, bytes.Length);
                     m.Close();
                 }
+                FileInfo f = new FileInfo(path);
+                fileSize = f.Length;
             }
             catch (Exception ex)
             {
@@ -180,12 +199,17 @@ namespace SManApi
         /// <param name="p"></param>
         private void setParameters(NxParameterCollection np, PictureCL p, Boolean retrievePhoto)
         {
+            long fileSize = 0;
             if (retrievePhoto)
-                np.Add("bild", getPhoto(p.PictIdent));             
+                np.Add("bild", getPhoto(p.PictIdent, ref fileSize));             
              np.Add("bild_nr", p.BildNr);                             
              np.Add("radnr", p.Radnr);               
              np.Add("vart_ordernr", p.VartOrdernr);
              np.Add("pictDescript", p.Description);
+             np.Add("pictSize", fileSize);
+             np.Add("pictType", "jpg");
+             p.pictSize = fileSize;
+             p.pictType = "jpg";
         }
 
 
@@ -285,7 +309,7 @@ namespace SManApi
             }
 
             
-            string sSql = " SELECT vart_ordernr, radnr, bild_nr, bild, pictDescript "
+            string sSql = " SELECT vart_ordernr, radnr, bild_nr, bild, pictDescript, pictSize, pictType "
                          + " FROM servrad_bild "
                          + " where vart_ordernr = :vart_ordernr "
                          + " and radnr = :radnr "
@@ -324,11 +348,12 @@ namespace SManApi
             p.ErrCode = 0;
             p.ErrMessage = "";
             string error = "";
+            long fileSize = 0;
             if (dr["bild"] != DBNull.Value)
             {
                 byte[] data = (byte[])dr["bild"];
                 MemoryStream ms = new MemoryStream(data);
-                p.PictIdent = savePictToToFile(ms, ref error);
+                p.PictIdent = savePictToToFile(ms, ref error, ref fileSize);
             } 
             if (error != "")
             {                
@@ -340,8 +365,8 @@ namespace SManApi
             p.Radnr = Convert.ToInt32(dr["radnr"]);
             p.BildNr = Convert.ToInt32(dr["bild_nr"]);
             p.Description = dr["pictDescript"].ToString();
-                           
-
+            p.pictSize = Convert.ToInt64(dr["pictSize"]);
+            p.pictType = dr["pictType"].ToString();
             return p;
 
         }
@@ -368,11 +393,9 @@ namespace SManApi
         /// an identity (=filename) to the upoaded file
         /// This identity is provided to this function
         /// in the PictureCL class
-        /// Note that the BildNr field in the PictureClass
-        /// shall always be 0 indicating that this is a
-        /// new picture to be stored. There is no way
-        /// to update a picture. In that case you need to delete
-        /// the picture and, after that, add a new one
+        /// If PictureCL.bildnr = 0 indicates new picture
+        /// Otherwise providing picture number indicates update
+        /// 
         /// </summary>
         /// <param name="ident"></param>
         /// <param name="p"></param>
@@ -396,14 +419,22 @@ namespace SManApi
             // Init variable
             string err = "";
             int valid = validatePicture(p, false, ref err);
-            if (valid == -1)
+            if (valid == -1 || valid == -2 || valid == -5)
             {
                 deletePict(p.PictIdent);
                 pN.ErrCode = -1;
-                pN.ErrMessage = "Felaktig servicerad";
+                pN.ErrMessage = "Kan ej hitta order";
                 return pN;
             }
-            if (valid == -2)
+            if (valid == -4)
+            {
+                deletePict(p.PictIdent);
+                pN.ErrCode = -1;
+                pN.ErrMessage = "Bildnummer saknas för aktuell servicerad";
+                return pN;
+            }
+
+            if (valid == -6)
             {                
                 pN.ErrCode = -1;
                 pN.ErrMessage = "Bild saknas i uppladdningbiblioteket";
@@ -426,12 +457,16 @@ namespace SManApi
             }
 
             string sSql = "";
-            
-            // This is a new bild
-            p.BildNr = getNextBildNr(p);
 
-            sSql = getInsertSQL();
-                
+            if (p.BildNr == 0)
+            {
+                // This is a new bild
+                p.BildNr = getNextBildNr(p);
+
+                sSql = getInsertSQL();
+            }
+            else
+                sSql = getUpdateSQL();
             NxParameterCollection np = new NxParameterCollection();
             setParameters(np, p, true);
             
@@ -493,7 +528,7 @@ namespace SManApi
             // Init variable
             string err = "";
             int valid = validatePicture(p, true, ref err);
-            if (valid == -1)
+            if (valid == -4 || valid == -3)
             {                
                 pN.ErrCode = -1;
                 pN.ErrMessage = "Det finns ingen bild lagrad för vårt ordernr : " + p.VartOrdernr + ", radnr : " + p.Radnr.ToString() + " bild nr : " + p.BildNr.ToString();
@@ -680,7 +715,7 @@ namespace SManApi
             }
 
 
-            string sSql = " SELECT vart_ordernr, radnr, bild_nr, bild, pictDescript "
+            string sSql = " SELECT vart_ordernr, radnr, bild_nr, bild, pictDescript, pictSize, pictType "
                          + " FROM servrad_bild "
                          + " where vart_ordernr = :vart_ordernr "
                          + " and radnr = :radnr ";           
@@ -724,6 +759,8 @@ namespace SManApi
                 p.Radnr = Convert.ToInt32(dr["radnr"]);
                 p.BildNr = Convert.ToInt32(dr["bild_nr"]);
                 p.Description = dr["pictDescript"].ToString();
+                p.pictSize = Convert.ToInt64(dr["pictSize"]);
+                p.pictType = dr["pictType"].ToString();
                 pList.Add(p);
             }
 

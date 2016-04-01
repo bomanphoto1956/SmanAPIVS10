@@ -388,9 +388,9 @@ namespace SManApi
 
         private int validateTid( Decimal tid, ref string err)
         {
-            if (tid <= 0)
+            if (tid < 0)
             {
-                err = "Registrerad tid måste vara större än 0";
+                err = "Registrerad tid får inte vara negativ";
                 return 0;
             }
             if (tid > 24)

@@ -428,8 +428,7 @@ namespace SManApi
         /// The downLoadPict method accept a pictIdent parameter as well
         /// as a reference to an error string
         /// The method returns a memorystream to the caller. If an
-        /// error occurs then the stream is nukll and en error is 
-        /// message is written to the error parameter
+        /// error occurs then the stream is null        
         /// 
         /// This method shall be called after a call to getPicture. When getPicture
         /// is called it will store a copy of the picture on the server and also return
@@ -488,6 +487,15 @@ namespace SManApi
 
 
 
+        /// <summary>
+        /// Returns all standardtext
+        /// See details in the StandardTextCL class below 
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <returns></returns>
+        [OperationContract]
+        List<StandardTextCL> getAllSttText(string ident);
+        
 
 
 
@@ -886,6 +894,15 @@ namespace SManApi
             public string Rum // 20 
             { get; set; }
 
+            [DataMember]
+            public bool forceSave // Boolean value that indicates to ignore duplicate position for a customer
+            { get; set; }         // If you try to save a ventil with the same position as another ventil
+                                  // for the same customer. Normally you set this value to false and then get
+                                  // a warning by ErrCode 101 and a warning text. If you still want to save the
+                                  // ventil with the same position then you just try again with forceSave to true.
+                                  // If a customer has changed a ventil at a certain position it's perfectly normal
+                                  // to have duplicate position. But if there is a typing error the appUser has to
+                                  // change position and try to save again with forceSave to false 2016-03-21 KJBO 
 
 
             [DataMember]
@@ -1165,6 +1182,14 @@ namespace SManApi
             public string Description // 100
             { get; set; }
 
+            [DataMember]
+            public long pictSize // long
+            { get; set; }
+
+            [DataMember]
+            public string pictType // 10
+            { get; set; }
+
 
             [DataMember]
             public int ErrCode
@@ -1174,6 +1199,39 @@ namespace SManApi
             public string ErrMessage
             { get; set; }
 
+        }
+
+        [DataContract]
+        public class StandardTextCL
+        {
+            [DataMember]
+            public string StdTextID // 10
+            { get; set; }
+
+            [DataMember]
+            public string Text // This is the text that shall be duplicated in the textbox
+            { get; set; }
+
+            [DataMember]
+            public int Kategori // This value is used to filter out only the currently availabe texts
+            { get; set; }       // for each stage in the entering of values. The easiest way to see this
+                                // is to try the Sman10 application and see what happens. For the moment
+                                // only kategories 2, 3 and 5 are used
+            [DataMember]
+            public string KategoriBeskr // Description of the above categories
+            { get; set; }
+
+            [DataMember]
+            public int ventilkatID // For filtering only the current ventilkategori. 
+            { get; set; }          // 0 represents all ventilkategories. Normaly you show all
+                                   // of category 0 and also the rows matching the current category of the ventil 
+            [DataMember]
+            public int ErrCode
+            { get; set; }
+
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
         }
     
 }

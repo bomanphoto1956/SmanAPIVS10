@@ -305,6 +305,34 @@ namespace SManApi
             return Convert.ToInt16(dt.Rows[0][0]); 
         }
 
+        private int duplicateExists(VentilCL v)
+        {
+
+            string sSql = " select count(*) as antal "
+                        + " from ventil "
+                        + " where kund_id = :kund_id "
+                        + " and \"position\" = :position ";
+            if (v.VentilID != null)
+                sSql += " and ventil_id <> :ventil_id ";
+
+            NxParameterCollection np = new NxParameterCollection();
+            np.Add("kund_id", v.KundID);
+            np.Add("position", v.Position);
+            if (v.VentilID != null)
+                np.Add("ventil_id", v.VentilID);
+
+            string err = "";
+            DataTable dt = cdb.getData(sSql, ref err, np);
+
+            if (dt.Rows.Count == 0)
+                return 0;
+
+            return Convert.ToInt32(dt.Rows[0]["antal"]);
+
+        }
+
+
+
 
         private int validateVentil(VentilCL v)
         {
@@ -314,6 +342,11 @@ namespace SManApi
             CKund cKund = new CKund();
             if (cKund.validateKund(v.KundID) == 0)
                 return -2;
+            if (v.forceSave == false)
+            {
+                if (duplicateExists(v) > 0)
+                    return -3;
+            }
             return 1;                       
         }
 
@@ -469,6 +502,14 @@ namespace SManApi
             {
                 vc.ErrCode = -1;
                 vc.ErrMessage = "Felaktigt kundID";
+                return vc;
+            }
+
+            if (iRes == -3)
+            {
+                vc.ErrCode = 101;
+                vc.ErrMessage = "Det finns redan en ventil på denna position. Vill du ändå lagra på denna position?";
+                return vc;
             }
 
             ReparatorCL r = cr.getReparator(ident);

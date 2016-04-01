@@ -82,6 +82,7 @@
     <Compile Include="CReservdel.cs" />
     <Compile Include="CServiceHuvud.cs" />
     <Compile Include="CServRad.cs" />
+    <Compile Include="CStdText.cs" />
     <Compile Include="CTidRed.cs" />
     <Compile Include="CVentil.cs" />
     <Compile Include="ISmServ.cs" />
