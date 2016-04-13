@@ -1120,6 +1120,54 @@ namespace SManApi
 
         }
 
+        public int getOrdernrRadnrFromAltKey(string alternateKey, ref string vartOrdernr, ref int radnr)
+        {
+            string sSql = " select vart_ordernr, radnr "
+                        + " from servicerad "
+                        + " where alternatekey = :alternatekey ";
+
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("alternatekey", alternateKey);
+
+            string err = "";
+
+            DataTable dt = cdb.getData(sSql, ref err, pc);
+
+            if (err != "")
+                return -1;
+
+            if (dt.Rows.Count == 0)
+                return 0;
+            vartOrdernr = dt.Rows[0]["vart_ordernr"].ToString();
+            radnr = Convert.ToInt32(dt.Rows[0]["radnr"]);
+            return 1;
+           
+        }
+
+
+
+        /// <summary>
+        /// This method is called from CTidRed class to ensure that
+        /// a reparator that register time on an order row also is registered
+        /// as a reparator on that row.
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="srAltKey"></param>
+        /// <param name="anvID"></param>
+        public void ensureReparatorExists(string ident, string srAltKey, string anvID)
+        {
+            string vartOrdernr = "";
+            int radnr = 0;
+            if (getOrdernrRadnrFromAltKey(srAltKey, ref vartOrdernr, ref radnr) == 1)
+            {
+                // Get a reparator from ident
+                CReparator cr = new CReparator();
+                ReparatorCL rep = cr.getReparator(ident);
+                storeReparator(rep, vartOrdernr, radnr);
+                storeReparator2(rep, srAltKey);
+            }
+        }
+
 
 
     }

@@ -551,7 +551,12 @@ namespace SManApi
             }
 
             if (bNew)
+            {
                 srt.ID = getLastInserted(srt.AnvID);
+
+                // 2016-04-04 KJBO
+                crs.ensureReparatorExists(ident, srt.SrAltKey, srt.AnvID);
+            }
 
             return getServRadRepTid(ident, srt.ID);
 

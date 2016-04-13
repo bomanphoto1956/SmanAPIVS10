@@ -50,6 +50,29 @@ namespace SManApi
         }
 
 
+        private bool validatePictCategory(PictureCL p)
+        {
+            if (p.PictCatID == 0)
+                return false;
+
+            string sSql = " select count(*) antal "
+                        + " from PictCategory "
+                        + " where pictCatID = :pictCatID ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("pictCatID", p.PictCatID);
+            
+
+            string err = "";
+
+            DataTable dt = cdb.getData(sSql, ref err, pc);
+
+            if (dt.Rows.Count == 0)
+                return false;
+
+            return (Convert.ToInt32(dt.Rows[0]["antal"]) == 1);               
+        }
+
+
         /// <summary>
         /// Private function to validate entered data
         /// </summary>
@@ -85,6 +108,11 @@ namespace SManApi
                 if (!validatePictIdent(p.PictIdent))
                     return -6;
             }
+            if (!forDelete)
+            {
+                if (!validatePictCategory(p))
+                    return -7;
+            }
             return 1;
         }
 
@@ -95,8 +123,8 @@ namespace SManApi
         /// <returns></returns>
         private string getInsertSQL()
         {
-            string sSql = " insert into servrad_bild ( bild, bild_nr, radnr, vart_ordernr,pictDescript, pictSize, pictType )  "
-                         + "  values ( :bild, :bild_nr, :radnr, :vart_ordernr, :pictDescript, :pictSize, :pictType )";  
+            string sSql = " insert into servrad_bild ( bild, bild_nr, radnr, vart_ordernr,pictDescript, pictSize, pictType, pictCatID )  "
+                         + "  values ( :bild, :bild_nr, :radnr, :vart_ordernr, :pictDescript, :pictSize, :pictType, :pictCatID )";  
 
             return sSql;
         }
@@ -109,6 +137,7 @@ namespace SManApi
                          + ", pictSize = :pictSize "                         
                          + ", bild = :bild "
                          + ", PictDescript = :PictDescript "
+                         + ", pictCatID = :pictCatID "
                          + " where vart_ordernr = :vart_ordernr "
                          + " and radnr = :radnr "
                          + " and bild_nr = :bild_nr ";
@@ -210,6 +239,7 @@ namespace SManApi
              np.Add("pictType", "jpg");
              p.pictSize = fileSize;
              p.pictType = "jpg";
+             np.Add("pictCatID", p.PictCatID);
         }
 
 
@@ -309,7 +339,7 @@ namespace SManApi
             }
 
             
-            string sSql = " SELECT vart_ordernr, radnr, bild_nr, bild, pictDescript, pictSize, pictType "
+            string sSql = " SELECT vart_ordernr, radnr, bild_nr, bild, pictDescript, pictSize, pictType, pictCatID "
                          + " FROM servrad_bild "
                          + " where vart_ordernr = :vart_ordernr "
                          + " and radnr = :radnr "
@@ -367,6 +397,9 @@ namespace SManApi
             p.Description = dr["pictDescript"].ToString();
             p.pictSize = Convert.ToInt64(dr["pictSize"]);
             p.pictType = dr["pictType"].ToString();
+            p.PictCatID = 0;
+            if (dr["pictCatID"] != DBNull.Value)
+                p.PictCatID = Convert.ToInt32(dr["pictCatID"]);
             return p;
 
         }
@@ -438,6 +471,14 @@ namespace SManApi
             {                
                 pN.ErrCode = -1;
                 pN.ErrMessage = "Bild saknas i uppladdningbiblioteket";
+                return pN;
+            }
+
+            
+            if (valid == -7)
+            {
+                pN.ErrCode = -1;
+                pN.ErrMessage = "Felaktig bildkategori (PictCatID) ";
                 return pN;
             }
 
@@ -582,6 +623,7 @@ namespace SManApi
             p.ErrCode = 0;
             p.ErrMessage = "";
             p.Description = "";
+            p.PictCatID = 0;
             return p;                    
 
         }
@@ -715,7 +757,7 @@ namespace SManApi
             }
 
 
-            string sSql = " SELECT vart_ordernr, radnr, bild_nr, bild, pictDescript, pictSize, pictType "
+            string sSql = " SELECT vart_ordernr, radnr, bild_nr, bild, pictDescript, pictSize, pictType, pictCatID "
                          + " FROM servrad_bild "
                          + " where vart_ordernr = :vart_ordernr "
                          + " and radnr = :radnr ";           
@@ -761,10 +803,99 @@ namespace SManApi
                 p.Description = dr["pictDescript"].ToString();
                 p.pictSize = Convert.ToInt64(dr["pictSize"]);
                 p.pictType = dr["pictType"].ToString();
+                p.PictCatID = 0;
+                if (dr["pictCatID"] != DBNull.Value)
+                p.PictCatID = Convert.ToInt32(dr["pictCatID"]);
                 pList.Add(p);
             }
 
             return pList;
+
+        }
+
+
+
+
+        /// <summary>
+        /// Function to get a list of picture categories
+        /// The step parameter indicates the step in the
+        /// documentation where the different categories are available
+        /// as follows
+        /// 1 : Check before service
+        /// 2 : Service job done
+        /// 3 : Other remarks
+        /// 4 : Spare parts
+        /// 0 : Anywhere (no matter where the picture is taken i the process)
+        /// 
+        /// If Step is set to 0 you get all possible categories in return
+        /// Otherwise you get the categories for the current step as well as
+        /// category all categories with step 0.
+        /// Note that it is required with 2 pictures (of differend categories)
+        /// for step no 1 in the process
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="Step"></param>
+        /// <returns></returns>
+        public List<PictCatCL> getPictCategories(string ident, int Step)
+        {
+            List<PictCatCL> pcl = new List<PictCatCL>();
+            CReparator cr = new CReparator();
+            int identOK = cr.checkIdent(ident);
+
+            if (identOK == -1)
+            {
+                PictCatCL p = new PictCatCL();                
+                p.ErrCode = -10;
+                p.ErrMessage = "Ogiltigt login";
+                pcl.Add(p);
+                return pcl;
+            }
+
+            NxParameterCollection pc = new NxParameterCollection();
+
+            // if argument Step = 0 then return all rows
+            // otherwise return all rows matching the current step
+            // and all steps with value of 0
+            string sSql = " SELECT PictCatID, PictCatName, Step "
+                        + " FROM PictCategory ";
+            if (Step > 0)
+            {
+                sSql += " where step = :step "
+                    + " or step = 0 ";
+
+                
+                pc.Add("step", Step);
+
+            }
+
+
+            string errText = "";
+
+            DataTable dt = cdb.getData(sSql, ref errText, pc);
+
+            if (errText != "")
+            {
+                PictCatCL p = new PictCatCL();                                
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                p.ErrCode = -100;
+                p.ErrMessage = errText;
+                pcl.Add(p);
+                return pcl;
+            }
+
+            foreach (DataRow dr in dt.Rows)
+            {
+                PictCatCL p = new PictCatCL();
+                p.PictCatID = Convert.ToInt32(dr["PictCatID"]);
+                p.PictCatName = dr["PictCatName"].ToString();
+                p.Step = Convert.ToInt16(dr["Step"]);
+                p.ErrCode = 0;
+                p.ErrMessage = "";
+                pcl.Add(p);
+            }
+
+            return pcl;
 
         }
 

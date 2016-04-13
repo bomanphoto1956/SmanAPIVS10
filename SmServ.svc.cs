@@ -468,6 +468,35 @@ namespace SManApi
         }
 
 
+        /// <summary>
+        /// Function to get a list of picture categories
+        /// The step parameter indicates the step in the
+        /// documentation where the different categories are available
+        /// as follows
+        /// 1 : Check before service
+        /// 2 : Service job done
+        /// 3 : Other remarks
+        /// 4 : Spare parts
+        /// 0 : Anywhere (no matter where the picture is taken i the process)
+        /// 
+        /// If Step is set to 0 you get all possible categories in return
+        /// Otherwise you get the categories for the current step as well as
+        /// category all categories with step 0.
+        /// Note that it is required with 2 pictures (of differend categories)
+        /// for step no 1 in the process
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="Step"></param>
+        /// <returns></returns>
+        /// 
+        public List<PictCatCL> getPictCategories(string ident, int Step)
+        {
+            CPicture cp = new CPicture();
+
+            return cp.getPictCategories(ident, Step);
+        }
+
+
 
 
 

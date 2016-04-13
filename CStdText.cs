@@ -89,7 +89,7 @@ namespace SManApi
                 int kategori = Convert.ToInt32(dr["kategori"]); 
                 StandardTextCL st = new StandardTextCL();
                 st.StdTextID = dr["stdtext_id"].ToString();
-                st.Text = dr["stdtext_id"].ToString();
+                st.Text = dr["text"].ToString();
                 st.Kategori = kategori;
                 st.KategoriBeskr = getKatName(kategori);
                 st.ventilkatID = 0;
