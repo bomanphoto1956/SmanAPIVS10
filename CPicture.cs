@@ -79,7 +79,7 @@ namespace SManApi
         /// <param name="p"></param>
         /// <param name="err"></param>
         /// <returns></returns>
-        private int validatePicture(PictureCL p, bool forDelete, ref string err)
+        private int validatePicture(PictureCL p, bool forDelete, bool forUpdateMeta, ref string err)
         {
             CServRad cs = new CServRad();
             if (p.VartOrdernr == "")
@@ -113,6 +113,12 @@ namespace SManApi
                 if (!validatePictCategory(p))
                     return -7;
             }
+            if (forUpdateMeta)
+            {
+                if (!validatePictCategory(p))
+                    return -7;
+            }
+
             return 1;
         }
 
@@ -123,20 +129,23 @@ namespace SManApi
         /// <returns></returns>
         private string getInsertSQL()
         {
-            string sSql = " insert into servrad_bild ( bild, bild_nr, radnr, vart_ordernr,pictDescript, pictSize, pictType, pictCatID )  "
-                         + "  values ( :bild, :bild_nr, :radnr, :vart_ordernr, :pictDescript, :pictSize, :pictType, :pictCatID )";  
+            string sSql = " insert into servrad_bild ( bild, bild_nr, radnr, vart_ordernr,pictDescript, pictSize, pictType, pictCatID, selected )  "
+                         + "  values ( :bild, :bild_nr, :radnr, :vart_ordernr, :pictDescript, :pictSize, :pictType, :pictCatID, false )";  
 
             return sSql;
         }
 
 
-        private string getUpdateSQL()
+        private string getUpdateSQL(bool imageUpdate)
         {
             string sSql = " update servrad_bild "
-                        + " set  pictType = :pictType "                                                 
-                         + ", pictSize = :pictSize "                         
-                         + ", bild = :bild "
-                         + ", PictDescript = :PictDescript "
+                        + " set  pictType = :pictType ";
+            if (imageUpdate)
+            {
+                sSql += ", pictSize = :pictSize "
+                      + ", bild = :bild ";
+            }                         
+                    sSql += ", PictDescript = :PictDescript "
                          + ", pictCatID = :pictCatID "
                          + " where vart_ordernr = :vart_ordernr "
                          + " and radnr = :radnr "
@@ -230,14 +239,16 @@ namespace SManApi
         {
             long fileSize = 0;
             if (retrievePhoto)
-                np.Add("bild", getPhoto(p.PictIdent, ref fileSize));             
+            {
+                np.Add("bild", getPhoto(p.PictIdent, ref fileSize));
+                np.Add("pictSize", fileSize);
+                p.pictSize = fileSize;
+            }
              np.Add("bild_nr", p.BildNr);                             
              np.Add("radnr", p.Radnr);               
              np.Add("vart_ordernr", p.VartOrdernr);
-             np.Add("pictDescript", p.Description);
-             np.Add("pictSize", fileSize);
-             np.Add("pictType", "jpg");
-             p.pictSize = fileSize;
+             np.Add("pictDescript", p.Description);             
+             np.Add("pictType", "jpg");             
              p.pictType = "jpg";
              np.Add("pictCatID", p.PictCatID);
         }
@@ -407,8 +418,95 @@ namespace SManApi
 
 
 
+        /// <summary>
+        /// Updates the picture metadata.
+        /// Note that the picture must exist, identified
+        /// by the following properties in the picture class:
+        /// VartOrdernr, Radnr, BidlNr.
+        /// For performance reason this method does not evaluate
+        /// the picture size.
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        public PictureCL updatePictMetadata(string ident, PictureCL p)
+        {
+            CReparator cr = new CReparator();
+            int identOK = cr.checkIdent(ident);
+
+            // Creates a class to return an error
+            PictureCL pN = new PictureCL();
+            if (identOK == -1)
+            {
+                deletePict(p.PictIdent);
+                pN.ErrCode = -10;
+                pN.ErrMessage = "Ogiltigt login";
+                return pN;
+            }
+
+            // Init variable
+            string err = "";
+            int valid = validatePicture(p, true, true, ref err);
+            if (valid == -1 || valid == -2 || valid == -3)
+            {                
+                pN.ErrCode = -1;
+                pN.ErrMessage = "Kan ej hitta order";
+                return pN;
+            }
+            if (valid == -4)
+            {
+                deletePict(p.PictIdent);
+                pN.ErrCode = -1;
+                pN.ErrMessage = "Bildnummer saknas för aktuell servicerad";
+                return pN;
+            }
 
 
+
+            if (valid == -7)
+            {
+                pN.ErrCode = -1;
+                pN.ErrMessage = "Felaktig bildkategori (PictCatID) ";
+                return pN;
+            }
+
+            CServiceHuvud ch = new CServiceHuvud();
+            string sOpen = ch.isOpen(ident, p.VartOrdernr);
+            if (sOpen != "1")
+            {
+                {
+                    pN.ErrCode = -10;
+                    if (sOpen == "-1")
+                        pN.ErrMessage = "Order är stängd för inmatning";
+                    else
+                        pN.ErrMessage = sOpen;
+                    return pN;
+                }
+            }
+
+
+            string sSql = "";
+
+            sSql = getUpdateSQL(false);
+            NxParameterCollection np = new NxParameterCollection();
+            setParameters(np, p, false);
+
+            string errText = "";
+
+            int iRc = cdb.updateData(sSql, ref errText, np);
+
+            if (errText != "")
+            {
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                pN.ErrCode = -100;
+                pN.ErrMessage = errText;
+                return pN;
+            }
+            
+            return p;
+
+        }
 
 
 
@@ -451,7 +549,7 @@ namespace SManApi
 
             // Init variable
             string err = "";
-            int valid = validatePicture(p, false, ref err);
+            int valid = validatePicture(p, false, false, ref err);
             if (valid == -1 || valid == -2 || valid == -5)
             {
                 deletePict(p.PictIdent);
@@ -507,7 +605,7 @@ namespace SManApi
                 sSql = getInsertSQL();
             }
             else
-                sSql = getUpdateSQL();
+                sSql = getUpdateSQL(true);
             NxParameterCollection np = new NxParameterCollection();
             setParameters(np, p, true);
             
@@ -568,7 +666,7 @@ namespace SManApi
 
             // Init variable
             string err = "";
-            int valid = validatePicture(p, true, ref err);
+            int valid = validatePicture(p, true, false, ref err);
             if (valid == -4 || valid == -3)
             {                
                 pN.ErrCode = -1;

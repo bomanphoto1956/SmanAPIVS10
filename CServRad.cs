@@ -32,12 +32,12 @@ namespace SManApi
             string sSql = " insert into servicerad ( ventil_id, vart_ordernr, radnr, kontroll, arbete "
                          + " , anmarkning, reservdelar, stalldon_kontroll, stalldon_arbete, stalldon_delar "
                          + " , lagesstall_kontroll, lagesstall_arbete, lagesstall_delar, antal_boxpack, boxpackning "
-                         + " , boxpack_material, antal_brostpack, brostpackning, brostpack_material, ovr_komment, alternatekey "
+                         + " , boxpack_material, antal_brostpack, brostpackning, brostpack_material, ovr_komment, alternatekey, arbetsordernr "
                          + " )  "
                          + "  values ( :pventil_id, :pvart_ordernr, :pradnr, :pkontroll, :parbete "
                          + " , :panmarkning, :preservdelar, :pstalldon_kontroll, :pstalldon_arbete, :pstalldon_delar "
                          + " , :plagesstall_kontroll, :plagesstall_arbete, :plagesstall_delar, :pantal_boxpack, :pboxpackning "
-                         + " , :pboxpack_material, :pantal_brostpack, :pbrostpackning, :pbrostpack_material, :povr_komment, :palternatekey "
+                         + " , :pboxpack_material, :pantal_brostpack, :pbrostpackning, :pbrostpack_material, :povr_komment, :palternatekey, :parbetsordernr "
                          + "  )";  
             return sSql;
         }
@@ -71,6 +71,7 @@ namespace SManApi
                          + ", brostpack_material = :pbrostpack_material "
                          + ", ovr_komment = :povr_komment "                         
                          + ", alternatekey = :palternatekey "
+                         + ", arbetsordernr = :parbetsordernr "
                          + " where vart_ordernr =  :pvart_ordernr"
                          + " and radnr = :pradnr ";
 
@@ -151,6 +152,8 @@ namespace SManApi
                 sSql += getDelimiter(ref bFirst) + " ovr_komment = :povr_komment ";
             if (sr.AlternateKey != orig.AlternateKey)
                 sSql += getDelimiter(ref bFirst) + " alternatekey = :palternatekey ";
+            if (sr.Arbetsordernr != orig.Arbetsordernr)
+                sSql += getDelimiter(ref bFirst) + " arbetsordernr = :parbetsordernr ";
             sSql += " where vart_ordernr =  :pvart_ordernr"
                   + " and radnr = :pradnr ";
             return sSql;
@@ -211,6 +214,8 @@ namespace SManApi
             sVar = sr.OvrKomment;            
             np.Add("povr_komment", sVar);
             np.Add("palternatekey", sr.AlternateKey);
+            sVar = sr.Arbetsordernr;
+            np.Add("parbetsordernr", sVar);
 
         }
 
@@ -714,7 +719,7 @@ namespace SManApi
                         + " sr.reparator, sr.reparator2, sr.reparator3, sr.stalldon_kontroll, sr.stalldon_arbete, sr.stalldon_delar "
                         + " , sr.lagesstall_kontroll, sr.lagesstall_arbete, sr.lagesstall_delar, sr.antal_boxpack, sr.boxpackning "
                         + " , sr.boxpack_material, sr.antal_brostpack, sr.brostpackning, sr.brostpack_material, sr.ovr_komment, "
-                        + " sr.ventil_id, sr.alternatekey ";
+                        + " sr.ventil_id, sr.alternatekey, sr.arbetsordernr ";
             if (AnvID == "")
                 sSql += " from servicerad sr ";
             else
@@ -799,6 +804,7 @@ namespace SManApi
             sr.OvrKomment = dr["ovr_komment"].ToString();
             sr.VentilID = dr["ventil_id"].ToString();
             sr.AlternateKey = dr["alternatekey"].ToString();
+            sr.Arbetsordernr = dr["arbetsordernr"].ToString();
             sr.ErrCode = 0;
             sr.ErrMessage = "";
 

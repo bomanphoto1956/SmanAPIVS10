@@ -497,6 +497,26 @@ namespace SManApi
         }
 
 
+        /// <summary>
+        /// Updates the picture metadata.
+        /// Note that the picture must exist, identified
+        /// by the following properties in the picture class:
+        /// VartOrdernr, Radnr, BidlNr.
+        /// For performance reason this method does not evaluate
+        /// the picture size.
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        public PictureCL updatePictMetadata(string ident, PictureCL p)
+        {
+            CPicture cp = new CPicture();
+
+            return cp.updatePictMetadata(ident, p);
+        }
+
+
+
 
 
 

@@ -521,6 +521,21 @@ namespace SManApi
         List<PictCatCL> getPictCategories(string ident, int Step);
 
 
+        /// <summary>
+        /// Updates the picture metadata.
+        /// Note that the picture must exist, identified
+        /// by the following properties in the picture class:
+        /// VartOrdernr, Radnr, BidlNr.
+        /// For performance reason this method does not evaluate
+        /// the picture size.
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        [OperationContract]
+        PictureCL updatePictMetadata(string ident, PictureCL p);
+
+
 
 
 
@@ -673,6 +688,7 @@ namespace SManApi
         /// property
         /// </summary>
         /// 2016-02-03 KJBO Pergas AB
+        /// 2016-05-27 KJBO Added Arbetsordernr according to meeting with Ventilteknik
         [DataContract]
         public class ServiceRadCL
         {
@@ -771,6 +787,10 @@ namespace SManApi
 
             [DataMember]
             public string AlternateKey //40 (GUID)
+            { get; set; }
+
+            [DataMember]
+            public string Arbetsordernr //50
             { get; set; }
 
 
