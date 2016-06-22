@@ -58,7 +58,7 @@ namespace SManApi
                         + " left outer join leverantor l on a.lev_id = l.lev_id "
                         + " where upper(a.artnr) like upper(:artnr) "
                         + " and upper(a.artnamn) like upper(:artnamn) "
-                        + " and visas = true ";
+                        + " and a.visas = true ";
 
             // Add parameter list
             NxParameterCollection np = new NxParameterCollection();

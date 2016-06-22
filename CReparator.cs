@@ -147,6 +147,8 @@ namespace SManApi
             string errSt = "";
             DataTable dt = cdb.getData(sSql, ref errSt, pc);
 
+            if (errSt != "")
+                return "-1" + errSt;
 
             if (dt.Rows.Count == 1)
                 return UpdateAuthenticate(AnvID);                
@@ -213,6 +215,53 @@ namespace SManApi
             }
             return null;
         }
+
+
+
+        /// <summary>
+        /// Get a reparator class from anvID
+        /// </summary>
+        /// <param name="AnvID">ID=PK</param>
+        /// <returns>One reparator</returns>
+        /// 
+        public ReparatorCL getReparatorFromID(string anvID)
+        {
+
+
+
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("pAnvID", anvID);
+
+            string sSql = "SELECT r.reparator, r.rep_kat_id, r.AnvID "
+                        + " FROM reparator r"
+                        + " where r.AnvID = :pAnvID "
+                        + " and r.visas = true ";
+            string errTxt = "";
+            DataTable dt = cdb.getData(sSql, ref errTxt, pc);
+
+            if (errTxt != "")
+            {
+                ReparatorCL r = new ReparatorCL();
+                r.Reparator = "";
+                r.AnvID = "";
+                r.RepKatID = "";
+                r.ErrCode = -1;
+                r.ErrMessage = "Databasfel : " + errTxt;
+                return r;
+            }
+
+
+            if (dt.Rows.Count == 1)
+            {
+                ReparatorCL r = new ReparatorCL();
+                r.Reparator = dt.Rows[0]["reparator"].ToString();
+                r.AnvID = dt.Rows[0]["AnvID"].ToString();
+                r.RepKatID = dt.Rows[0]["rep_kat_id"].ToString();
+                return r;
+            }
+            return null;
+        }
+
 
 
         /// <summary>
@@ -302,8 +351,14 @@ namespace SManApi
             string errSt = "";
             DataTable dt = cdb.getData(sSql, ref errSt, pColl);
 
+            CLog cl = new CLog();
             if (dt.Rows.Count > 0)
+            {
+                string anvID = dt.Rows[0]["AnvID"].ToString();
+                cl.log("Authenticating identity : " + anvID + " (" + ident + ")", "1");
                 return 1;
+            }
+            cl.log("Authenticating identity : " + ident, "-1");
             return -1;
         }
 

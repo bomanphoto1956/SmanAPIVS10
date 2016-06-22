@@ -535,6 +535,26 @@ namespace SManApi
         [OperationContract]
         PictureCL updatePictMetadata(string ident, PictureCL p);
 
+        /// <summary>
+        /// Returns database and API versions
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <returns></returns>
+        [OperationContract]
+        VersionCL getVersion(string ident);
+
+
+        /// <summary>
+        /// Sum all registered hours for one servicerad
+        /// </summary>
+        /// <param name="ident">ident</param>
+        /// <param name="srAltKey">alternate key for servicerad</param>
+        /// <param name="AnvID">UserID or empty string for all users</param>
+        /// <returns>Number of hours or -1 if error occurs</returns>
+        /// 2016-06-17 KJBO
+        [OperationContract]
+        Decimal SumHoursForServRad(string ident, string srAltKey, string AnvID);
+
 
 
 
@@ -1305,5 +1325,28 @@ namespace SManApi
             public string ErrMessage
             { get; set; }
         }
-    
+
+
+        [DataContract]
+        public class VersionCL
+        {
+            [DataMember]
+            public int dbVersion // 10
+            { get; set; }
+
+            [DataMember]
+            public string APIVersion // 10
+            { get; set; }
+
+            [DataMember]
+            public int ErrCode
+            { get; set; }
+
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
+
+
+
+        }    
 }

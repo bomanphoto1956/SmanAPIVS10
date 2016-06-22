@@ -313,6 +313,13 @@ namespace SManApi
 
         }
 
+        private string getDeleteSQL()
+        {
+            string sSql = " delete from ServradRepTid "
+                        + " where ID = :ID ";
+            return sSql;
+        }
+
 
         private void setParameters( NxParameterCollection np, ServRadRepTidCL sr)
         {
@@ -449,6 +456,8 @@ namespace SManApi
         public ServRadRepTidCL saveServRadRepTid(string ident, ServRadRepTidCL srt)
         {
             bool bNew = false;
+            // 2016-06-17
+            bool bDeleted = false;
             CReparator cr = new CReparator();
             int identOK = cr.checkIdent(ident);
 
@@ -493,6 +502,7 @@ namespace SManApi
                 return retSrt;
             }
 
+            // 2016-06-17 added clause
             if (valid == -5)
             {
                 retSrt.ErrCode = -1;
@@ -524,11 +534,21 @@ namespace SManApi
 
             string sSql = "";
 
+            // Nothing to save... 2016-06-17
+            if (srt.ID == 0 && srt.Tid == 0)
+                return srt;
+
+
             // This is a new ventil
             if (srt.ID == 0)
             {
                 sSql = getInsertSQL();
                 bNew = true;
+            }
+            else if (srt.Tid == 0)
+            {
+                sSql = getDeleteSQL();
+                bDeleted = true;
             }
             else
                 sSql = getUpdateSQL();
@@ -557,10 +577,77 @@ namespace SManApi
                 // 2016-04-04 KJBO
                 crs.ensureReparatorExists(ident, srt.SrAltKey, srt.AnvID);
             }
-
+            if (bDeleted)
+                return srt;
             return getServRadRepTid(ident, srt.ID);
-
         }
+
+
+
+        /// <summary>
+        /// Sum all registered hours for one servicerad
+        /// </summary>
+        /// <param name="ident">ident</param>
+        /// <param name="srAltKey">alternate key for servicerad</param>
+        /// <param name="AnvID">UserID or empty string for all users</param>
+        /// <returns></returns>
+        public Decimal SumHoursForServRad(string ident, string srAltKey, string AnvID)
+        {            
+
+            CReparator cr = new CReparator();
+            int identOK = cr.checkIdent(ident);
+
+            if (identOK == -1)                            
+                return -1;            
+
+            string sSql = " SELECT coalesce(sum(tid),0) as sum_hours "
+                        + " FROM ServradRepTid "
+                        + " where srAltKey = :srAltKey ";
+            if (AnvID != "")
+               sSql += " and anvID = :anvID ";
+
+
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("srAltKey", srAltKey);
+            if (AnvID != "")
+                pc.Add("anvID", AnvID);
+
+
+            string errText = "";
+
+            DataTable dt = cdb.getData(sSql, ref errText, pc);
+
+
+            if (errText == "" && dt.Rows.Count == 0)            
+                return 0;            
+
+
+            if (errText != "")
+            {
+                return -2;
+            }
+
+            DataRow dr = dt.Rows[0];
+
+            return Convert.ToDecimal(dr["sum_hours"]);
+        }
+
+
+
+        /// <summary>
+        /// Sum all working hours for one servicerad 
+        /// </summary>
+        /// <param name="ident">identity</param>
+        /// <param name="srAltKey">alternate key for servicerad</param>
+        /// <returns>Number of working hours for one servicerad</returns>
+        /// 2016-06-17 KJBO
+        public Decimal SumHoursForServRad(string ident, string srAltKey)
+        {
+            return SumHoursForServRad(ident, srAltKey, "");
+        }
+
+
+
         
 
     }

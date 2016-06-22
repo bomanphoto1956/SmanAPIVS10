@@ -516,6 +516,34 @@ namespace SManApi
         }
 
 
+        /// <summary>
+        /// Returns database and API versions
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <returns></returns>
+        public VersionCL getVersion(string ident)
+        {
+            CMisc cm = new CMisc();
+            return cm.getVersion(ident);
+        }
+
+        /// <summary>
+        /// Sum all registered hours for one servicerad
+        /// </summary>
+        /// <param name="ident">ident</param>
+        /// <param name="srAltKey">alternate key for servicerad</param>
+        /// <param name="AnvID">UserID or empty string for all users</param>
+        /// <returns>Number of hours or -1 if error occurs</returns>
+        /// 2016-06-17 KJBO
+        public Decimal SumHoursForServRad(string ident, string srAltKey, string AnvID)
+        {
+            CTidRed ct = new CTidRed();
+            return ct.SumHoursForServRad(ident, srAltKey, AnvID);
+        }
+
+
+
+
 
 
 

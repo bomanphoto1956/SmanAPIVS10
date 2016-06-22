@@ -127,7 +127,7 @@ namespace SManApi
             if (sr.StalldonKontroll != orig.StalldonKontroll)
                 sSql += getDelimiter(ref bFirst) + " stalldon_kontroll = :pstalldon_kontroll ";
             if (sr.StalldonArbete != orig.StalldonArbete)
-                sSql += getDelimiter(ref bFirst) + " stalldon_arbete = :pstalldon_arbet ";
+                sSql += getDelimiter(ref bFirst) + " stalldon_arbete = :pstalldon_arbete ";
             if (sr.StalldonDelar != orig.StalldonDelar)
                 sSql += getDelimiter(ref bFirst) + " stalldon_delar = :pstalldon_delar ";
             if (sr.LagesstallKontroll != orig.LagesstallKontroll)
@@ -1166,9 +1166,9 @@ namespace SManApi
             int radnr = 0;
             if (getOrdernrRadnrFromAltKey(srAltKey, ref vartOrdernr, ref radnr) == 1)
             {
-                // Get a reparator from ident
+                // Get a reparator from anvID
                 CReparator cr = new CReparator();
-                ReparatorCL rep = cr.getReparator(ident);
+                ReparatorCL rep = cr.getReparatorFromID(anvID);
                 storeReparator(rep, vartOrdernr, radnr);
                 storeReparator2(rep, srAltKey);
             }
