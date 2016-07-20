@@ -218,6 +218,7 @@ namespace SManApi
             vr.Avdelning = dr["avdelning"].ToString();
             vr.Plan = dr["plan"].ToString();
             vr.Rum = dr["rum"].ToString();
+            vr.Anlaggningsnr = dr["anlaggningsnr"].ToString();                
             vr.ErrCode = 0;
             vr.ErrMessage = "";
 

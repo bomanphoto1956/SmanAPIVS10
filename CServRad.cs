@@ -845,7 +845,7 @@ namespace SManApi
 
 
             string sSql = " SELECT s.vart_ordernr, s.radnr, s.anlaggningsnr, s.kundens_pos, vk.ventilkategori, v.ventiltyp, v.fabrikat, v.id_nr, s.kontroll, "
-                        + " s.arbete, s.anmarkning, v.dn, v.dn2, v.pn, v.pn2, s.reparator, s.reparator2, s.reparator3, s.avdelning "
+                        + " s.arbete, s.anmarkning, v.dn, v.dn2, v.pn, v.pn2, s.reparator, s.reparator2, s.reparator3, s.avdelning, s.arbetsordernr "
                         + " FROM servicerad s join ventil v on s.ventil_id = v.ventil_id join ventilkategori vk on v.ventilkategori = vk.ventilkat_id "
                         + " where s.vart_ordernr = :pVartOrdernr ";
 
@@ -906,6 +906,7 @@ namespace SManApi
                 sr.Fabrikat = dr["fabrikat"].ToString();
                 sr.Dn = dr["dn"].ToString();
                 sr.Pn = dr["pn"].ToString();
+                sr.Arbetsordernr = dr["arbetsordernr"].ToString();
                 sr.ErrCode = 0;
                 sr.ErrMessage = "";
                 srl.Add(sr);                

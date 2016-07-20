@@ -637,7 +637,7 @@ namespace SManApi
 
         }
 
-
+        /// 2016-06-29 KJBO Added Arbetsordernr according to meeting with Ventilteknik
         [DataContract]
         public class ServiceRadListCL
         {
@@ -685,7 +685,9 @@ namespace SManApi
             public string Pn
             { get; set; }
 
-
+            [DataMember]
+            public string Arbetsordernr //50
+            { get; set; }
 
             [DataMember]
             public int ErrCode
