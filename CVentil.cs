@@ -478,6 +478,18 @@ namespace SManApi
         }
 
 
+        public string updateForraComment( string ventilID, string ovr_komment)
+        {
+            string sSql = "update ventil "
+                        + " set forra_comment = '" + ovr_komment + "' "
+                        + " where ventil_id = '" + ventilID + "' ";
+            string err = "";
+            cdb.updateData(sSql, ref err);
+            return err;
+
+        }
+
+
 
         public VentilCL saveVentil(string ident, VentilCL v)
         {

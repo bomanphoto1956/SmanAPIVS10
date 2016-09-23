@@ -33,11 +33,13 @@ namespace SManApi
                          + " , anmarkning, reservdelar, stalldon_kontroll, stalldon_arbete, stalldon_delar "
                          + " , lagesstall_kontroll, lagesstall_arbete, lagesstall_delar, antal_boxpack, boxpackning "
                          + " , boxpack_material, antal_brostpack, brostpackning, brostpack_material, ovr_komment, alternatekey, arbetsordernr "
+                         + ", hos_kund, pa_verkstad, servradKlar"
                          + " )  "
                          + "  values ( :pventil_id, :pvart_ordernr, :pradnr, :pkontroll, :parbete "
                          + " , :panmarkning, :preservdelar, :pstalldon_kontroll, :pstalldon_arbete, :pstalldon_delar "
                          + " , :plagesstall_kontroll, :plagesstall_arbete, :plagesstall_delar, :pantal_boxpack, :pboxpackning "
                          + " , :pboxpack_material, :pantal_brostpack, :pbrostpackning, :pbrostpack_material, :povr_komment, :palternatekey, :parbetsordernr "
+                         + " , :phos_kund, :ppa_verkstad, :pservradKlar "
                          + "  )";  
             return sSql;
         }
@@ -71,7 +73,10 @@ namespace SManApi
                          + ", brostpack_material = :pbrostpack_material "
                          + ", ovr_komment = :povr_komment "                         
                          + ", alternatekey = :palternatekey "
-                         + ", arbetsordernr = :parbetsordernr "
+                         + ", arbetsordernr = :parbetsordernr "          
+                         + ", hos_kund = :phos_kund "
+                         + ", pa_verkstad = :ppa_verkstad "
+                         + ", servradKlar = :pservradKlar "
                          + " where vart_ordernr =  :pvart_ordernr"
                          + " and radnr = :pradnr ";
 
@@ -108,14 +113,17 @@ namespace SManApi
         /// <param name="orig">Original ServiceradCL with values as the where when the client "checked out"</param>
         /// <returns>SQL statement</returns>
         // 2016-02-09 KJBO  Pergas AB
-        private string getServradUpdateSQL(ServiceRadCL sr, ServiceRadCL orig)
+        private string getServradUpdateSQL(ServiceRadCL sr, ServiceRadCL orig, ref bool valveChanged)
         {
             bool bFirst = false;
-
+            valveChanged = false;
             string sSql = " update servicerad ";
             sSql += " set vart_ordernr = :pvart_ordernr ";
             if (sr.VentilID != orig.VentilID)
-                sSql += getDelimiter(ref bFirst) + " ventil_id = :pventil_id ";                        
+            {
+                sSql += getDelimiter(ref bFirst) + " ventil_id = :pventil_id ";
+                valveChanged = true;
+            }
             if (sr.Kontroll != orig.Kontroll)
                 sSql += getDelimiter(ref bFirst) + " kontroll = :pkontroll ";
             if (sr.Arbete != orig.Arbete)
@@ -154,6 +162,12 @@ namespace SManApi
                 sSql += getDelimiter(ref bFirst) + " alternatekey = :palternatekey ";
             if (sr.Arbetsordernr != orig.Arbetsordernr)
                 sSql += getDelimiter(ref bFirst) + " arbetsordernr = :parbetsordernr ";
+            if (sr.hosKund != orig.hosKund)
+                sSql += getDelimiter(ref bFirst) + " hos_kund = :phos_kund ";
+            if (sr.paVerkstad != orig.paVerkstad)
+                sSql += getDelimiter(ref bFirst) + " pa_verkstad = :ppa_verkstad ";
+            if (sr.klar != orig.klar)
+                sSql += getDelimiter(ref bFirst) + " servradKlar = :pservradKlar ";
             sSql += " where vart_ordernr =  :pvart_ordernr"
                   + " and radnr = :pradnr ";
             return sSql;
@@ -216,7 +230,18 @@ namespace SManApi
             np.Add("palternatekey", sr.AlternateKey);
             sVar = sr.Arbetsordernr;
             np.Add("parbetsordernr", sVar);
-
+            if (sr.hosKund == 0)
+                np.Add("phos_kund", false);
+            else
+                np.Add("phos_kund", true);
+            if (sr.paVerkstad == 0)
+                np.Add("ppa_verkstad", false);
+            else
+                np.Add("ppa_verkstad", true);
+            if (sr.klar == 0)
+                np.Add("pservradKlar", false);
+            else
+                np.Add("pservradKlar", true);
         }
 
 
@@ -301,6 +326,7 @@ namespace SManApi
         public ServiceRadCL saveServRad(ServiceRadCL sr, string ident)
         {
             bool bNew = false;
+            bool bValveChanged = false;
             ServiceRadCL lSr = new ServiceRadCL();
             CReparator cr = new CReparator();
 
@@ -385,7 +411,7 @@ namespace SManApi
                 // then return the "default" SQL update which updates all fields
                 if (orig.ErrMessage == "" )
                     // This is the smart update that only updates changed fields
-                    sSql = getServradUpdateSQL(sr, orig);
+                    sSql = getServradUpdateSQL(sr, orig, ref bValveChanged);
                 else
                     // This is the default update that will update all fields
                     sSql = getServradUpdateSQL();                    
@@ -420,13 +446,22 @@ namespace SManApi
             storeReparator2(rep, sr.AlternateKey);
 
             // If this is a new row
-            if (bNew)
+            if (bNew || bValveChanged)
             {
                 // Store default values
-                storeDefaults(sr.AlternateKey);
+                // Removed 2016-09-12 because all values shall be handled by app
+                //storeDefaults(sr.AlternateKey);
                 // Get values from ventil (duplicate some values for history reasons)
                 getValuesFromVentil(sr.AlternateKey);
             }
+
+            if (sr.OvrKomment != "")
+            {
+                CVentil cv = new CVentil();
+                cv.updateForraComment(sr.VentilID, sr.OvrKomment);
+            }
+ 
+
 
             // Now return the row to the caller with reparator values and default stored
             return getServRad(ident, sr.VartOrdernr, sr.Radnr);            
@@ -464,7 +499,7 @@ namespace SManApi
             // SQL clause to get the desired values from ventil
             sSql = " select v.\"position\", v.avdelning, v.anlaggningsnr, v.oppningstryck "
                 + " , v.stalldonstyp, v.stalldon_id_nr, v.stalldon_fabrikat, v.stalldon_artnr "
-                + " , v.lagesstallartyp, v.lagesstall_id_nr, v.lagesstall_fabrikat "
+                + " , v.lagesstallartyp, v.lagesstall_id_nr, v.lagesstall_fabrikat, v.forra_comment "
                 + " from ventil v "
                 + " where v.ventil_id = :ventil_id ";
             // Add parameter
@@ -500,7 +535,9 @@ namespace SManApi
                 sVar = dr["avdelning"].ToString();
                 np.Add("pavdelning", sVar);
                 sVar = dr["position"].ToString();
-                np.Add("pkundens_pos", sVar); 
+                np.Add("pkundens_pos", sVar);
+                sVar = dr["forra_comment"].ToString();
+                np.Add("povr_komment", sVar);
             }
 
             // Update clause with parameters for the current servicerad (parameters created above)
@@ -516,6 +553,7 @@ namespace SManApi
              + ", anlaggningsnr = :panlaggningsnr "
              + ", avdelning = :pavdelning "
              + ", kundens_pos = :pkundens_pos "
+             + ", ovr_komment = :povr_komment "
              + " where alternatekey = :alternatekey ";
 
             err = "";
@@ -719,7 +757,7 @@ namespace SManApi
                         + " sr.reparator, sr.reparator2, sr.reparator3, sr.stalldon_kontroll, sr.stalldon_arbete, sr.stalldon_delar "
                         + " , sr.lagesstall_kontroll, sr.lagesstall_arbete, sr.lagesstall_delar, sr.antal_boxpack, sr.boxpackning "
                         + " , sr.boxpack_material, sr.antal_brostpack, sr.brostpackning, sr.brostpack_material, sr.ovr_komment, "
-                        + " sr.ventil_id, sr.alternatekey, sr.arbetsordernr ";
+                        + " sr.ventil_id, sr.alternatekey, sr.arbetsordernr, sr.hos_kund, sr.pa_verkstad, sr.servradKlar ";
             if (AnvID == "")
                 sSql += " from servicerad sr ";
             else
@@ -805,6 +843,18 @@ namespace SManApi
             sr.VentilID = dr["ventil_id"].ToString();
             sr.AlternateKey = dr["alternatekey"].ToString();
             sr.Arbetsordernr = dr["arbetsordernr"].ToString();
+            if (Convert.ToBoolean(dr["hos_kund"]) == true)
+                sr.hosKund = 1;
+            else
+                sr.hosKund = 0;
+            if (Convert.ToBoolean(dr["pa_verkstad"]) == true)
+                sr.paVerkstad = 1;
+            else
+                sr.paVerkstad = 0;
+            if (Convert.ToBoolean(dr["servradKlar"]) == true)
+                sr.klar = 1;
+            else
+                sr.klar = 0;
             sr.ErrCode = 0;
             sr.ErrMessage = "";
 
@@ -846,6 +896,7 @@ namespace SManApi
 
             string sSql = " SELECT s.vart_ordernr, s.radnr, s.anlaggningsnr, s.kundens_pos, vk.ventilkategori, v.ventiltyp, v.fabrikat, v.id_nr, s.kontroll, "
                         + " s.arbete, s.anmarkning, v.dn, v.dn2, v.pn, v.pn2, s.reparator, s.reparator2, s.reparator3, s.avdelning, s.arbetsordernr "
+                        + ", s.hos_kund, s.pa_verkstad, s.servradKlar "
                         + " FROM servicerad s join ventil v on s.ventil_id = v.ventil_id join ventilkategori vk on v.ventilkategori = vk.ventilkat_id "
                         + " where s.vart_ordernr = :pVartOrdernr ";
 
@@ -907,6 +958,18 @@ namespace SManApi
                 sr.Dn = dr["dn"].ToString();
                 sr.Pn = dr["pn"].ToString();
                 sr.Arbetsordernr = dr["arbetsordernr"].ToString();
+                if (Convert.ToBoolean(dr["hos_kund"]) == true)
+                    sr.hosKund = 1;
+                else
+                    sr.hosKund = 0;
+                if (Convert.ToBoolean(dr["pa_verkstad"]) == true)
+                    sr.paVerkstad = 1;
+                else
+                    sr.paVerkstad = 0;
+                if (Convert.ToBoolean(dr["servradKlar"]) == true)
+                    sr.klar = 1;
+                else
+                    sr.klar = 0;
                 sr.ErrCode = 0;
                 sr.ErrMessage = "";
                 srl.Add(sr);                

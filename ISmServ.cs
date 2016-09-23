@@ -638,6 +638,7 @@ namespace SManApi
         }
 
         /// 2016-06-29 KJBO Added Arbetsordernr according to meeting with Ventilteknik
+        /// 2016-09-12 KJBO Added hosKund, paVerkstad and klar.
         [DataContract]
         public class ServiceRadListCL
         {
@@ -690,6 +691,20 @@ namespace SManApi
             { get; set; }
 
             [DataMember]
+            public int hosKund
+            { get; set; }
+
+            [DataMember]
+            public int paVerkstad
+            { get; set; }
+
+            [DataMember]
+            public int klar
+            { get; set; }
+
+
+
+            [DataMember]
             public int ErrCode
             { get; set; }
 
@@ -711,6 +726,7 @@ namespace SManApi
         /// </summary>
         /// 2016-02-03 KJBO Pergas AB
         /// 2016-05-27 KJBO Added Arbetsordernr according to meeting with Ventilteknik
+        /// 2016-09-12 KJBO Added hosKund, paVerkstad and klar.
         [DataContract]
         public class ServiceRadCL
         {
@@ -814,6 +830,19 @@ namespace SManApi
             [DataMember]
             public string Arbetsordernr //50
             { get; set; }
+
+            [DataMember]
+            public int hosKund // 1 eller 0
+            { get; set; }
+
+            [DataMember]
+            public int paVerkstad // 1 eller 0
+            { get; set; }
+
+            [DataMember]
+            public int klar // 1 eller 0
+            { get; set; }
+
 
 
             [DataMember]
