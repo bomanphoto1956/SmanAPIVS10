@@ -320,6 +320,26 @@ namespace SManApi
 
         }
 
+        private int validateReservdelExists(ReservdelCL r)
+        {
+            string sSql = " select count(*) as antal "
+                        + " from reservdel "
+                        + " where vart_ordernr = :vart_ordernr "
+                        + " and radnr = :radnr "
+                        + " and reserv_nr = :reserv_nr ";
+
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", r.VartOrdernr);
+            pc.Add("radnr", r.Radnr);
+            pc.Add("reserv_nr", r.ReservNr);
+
+            string errText = "";
+
+            DataTable dt = cdb.getData(sSql, ref errText, pc);
+
+            return Convert.ToInt16(dt.Rows[0][0]); 
+        }
+
 
         private int validateReservdel(ReservdelCL r)
         {
@@ -378,11 +398,19 @@ namespace SManApi
              + " and reserv_nr = :reserv_nr ";                     
         }
 
+        private string getDeleteSQL()
+        {
+            return "delete from reservdel "
+             + " where vart_ordernr = :vart_ordernr "
+             + " and radnr = :radnr "
+             + " and reserv_nr = :reserv_nr ";                     
+
+        }
+
         
         private void setParameters(NxParameterCollection np, ReservdelCL r, string AnvID)
         {
-
-            string sVar = "";
+            string sVar = "";            
             np.Add("antal", r.Antal);
             sVar = r.ArtNamn;
             np.Add("artnamn", sVar);
@@ -393,19 +421,85 @@ namespace SManApi
             np.Add("faktureras", r.Faktureras);
             sVar = r.LevID;
             np.Add("lev_id", sVar);
-            np.Add("radnr", r.Radnr);
             sVar = AnvID;
             np.Add("reg", sVar);
             np.Add("regdat", System.DateTime.Now);
-            np.Add("reserv_nr", r.ReservNr);                        
-            np.Add("skriv_nu", true);                        
+            np.Add("skriv_nu", true);
             np.Add("uppdat_dat", System.DateTime.Now);
             np.Add("uppdaterat", AnvID);
             sVar = r.VartOrdernr;
-            np.Add("vart_ordernr", sVar); 
+            np.Add("vart_ordernr", sVar);
+            np.Add("radnr", r.Radnr);
+             np.Add("reserv_nr", r.ReservNr);
         }
-        
+
+
+        /// <summary>
+        /// Deletes a reservdel identified by primary key
+        /// </summary>
+        /// <param name="ident">identity string</param>
+        /// <param name="reservdel">One valid reservdel</param>
+        /// <returns>Empty string if OK otherwise error message</returns>
+        public string deleteReservdel(string ident, ReservdelCL reservdel)
+        {
+
+            CReparator cr = new CReparator();
+            int identOK = cr.checkIdent(ident);
+
+            ReservdelCL retRes = new ReservdelCL();
+            if (identOK == -1)
+            {
+                return "Ogiltigt login";
+            }
+
+            // Validate that order is open for editing
+            CServiceHuvud ch = new CServiceHuvud();
+            string sOpen = ch.isOpen(ident, reservdel.VartOrdernr);
+            if (sOpen != "1")
+            {
+                {
+                    retRes.ErrCode = -10;
+                    if (sOpen == "-1")
+                        return "Order är stängd för inmatning";                        
+                    else
+                        return sOpen;                    
+                }
+            }
+
+
+            int exists = validateReservdelExists(reservdel);
             
+            if (exists == 0)
+            {
+                return "Reservdel finns ej";
+            }
+
+            string sSql = "";
+
+            sSql = getDeleteSQL();
+
+            NxParameterCollection np = new NxParameterCollection();
+            setParameters(np, reservdel, "");
+
+            string errText = "";
+
+            int iRc = cdb.updateData(sSql, ref errText, np);
+
+            if (errText != "")
+            {
+
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+
+                return errText;
+            }
+
+            return "";
+
+        }
+
+    
+
         
         /// <summary>
         /// Saves a reservdel to database.

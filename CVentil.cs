@@ -486,8 +486,9 @@ namespace SManApi
             string err = "";
             cdb.updateData(sSql, ref err);
             return err;
-
         }
+
+
 
 
 
@@ -521,7 +522,7 @@ namespace SManApi
             if (iRes == -3)
             {
                 vc.ErrCode = 101;
-                vc.ErrMessage = "Det finns redan en ventil på denna position. Vill du ändå lagra på denna position?";
+                vc.ErrMessage = "Det finns redan en ventil med detta positionsnr";
                 return vc;
             }
 
@@ -562,6 +563,12 @@ namespace SManApi
                 v.ErrMessage = errText;
                 return v;
             }
+
+            // 2016-10-17 KJBO
+            CServRad csr = new CServRad();
+            csr.updateFromVentil2(v.VentilID);
+
+
 
             return getVentil(ident, v.VentilID);
         }

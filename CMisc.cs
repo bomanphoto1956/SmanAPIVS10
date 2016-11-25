@@ -9,7 +9,7 @@ namespace SManApi
     public class CMisc
     {
 
-        private const string apiVersion = "1.01";
+        private const string apiVersion = "1.02";
 
         /*
          Version 0.96:

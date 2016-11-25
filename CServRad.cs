@@ -33,13 +33,13 @@ namespace SManApi
                          + " , anmarkning, reservdelar, stalldon_kontroll, stalldon_arbete, stalldon_delar "
                          + " , lagesstall_kontroll, lagesstall_arbete, lagesstall_delar, antal_boxpack, boxpackning "
                          + " , boxpack_material, antal_brostpack, brostpackning, brostpack_material, ovr_komment, alternatekey, arbetsordernr "
-                         + ", hos_kund, pa_verkstad, servradKlar"
+                         + ", hos_kund, pa_verkstad, servradKlar, attention "
                          + " )  "
                          + "  values ( :pventil_id, :pvart_ordernr, :pradnr, :pkontroll, :parbete "
                          + " , :panmarkning, :preservdelar, :pstalldon_kontroll, :pstalldon_arbete, :pstalldon_delar "
                          + " , :plagesstall_kontroll, :plagesstall_arbete, :plagesstall_delar, :pantal_boxpack, :pboxpackning "
                          + " , :pboxpack_material, :pantal_brostpack, :pbrostpackning, :pbrostpack_material, :povr_komment, :palternatekey, :parbetsordernr "
-                         + " , :phos_kund, :ppa_verkstad, :pservradKlar "
+                         + " , :phos_kund, :ppa_verkstad, :pservradKlar, :pAttention "
                          + "  )";  
             return sSql;
         }
@@ -77,6 +77,7 @@ namespace SManApi
                          + ", hos_kund = :phos_kund "
                          + ", pa_verkstad = :ppa_verkstad "
                          + ", servradKlar = :pservradKlar "
+                         + ", attention = :pAttention "
                          + " where vart_ordernr =  :pvart_ordernr"
                          + " and radnr = :pradnr ";
 
@@ -168,6 +169,8 @@ namespace SManApi
                 sSql += getDelimiter(ref bFirst) + " pa_verkstad = :ppa_verkstad ";
             if (sr.klar != orig.klar)
                 sSql += getDelimiter(ref bFirst) + " servradKlar = :pservradKlar ";
+            if (sr.Attention != orig.Attention)
+                sSql += getDelimiter(ref bFirst) + " attention = :pAttention ";
             sSql += " where vart_ordernr =  :pvart_ordernr"
                   + " and radnr = :pradnr ";
             return sSql;
@@ -242,6 +245,11 @@ namespace SManApi
                 np.Add("pservradKlar", false);
             else
                 np.Add("pservradKlar", true);
+            // 2016-11-22 KJBO
+            if (sr.Attention == 0)
+                np.Add("pAttention", false);
+            else
+                np.Add("pAttention", true);
         }
 
 
@@ -466,6 +474,8 @@ namespace SManApi
             // Now return the row to the caller with reparator values and default stored
             return getServRad(ident, sr.VartOrdernr, sr.Radnr);            
         }
+
+
 
         /// <summary>
         /// Get values from ventil that shall be stored in servicerad
@@ -757,7 +767,7 @@ namespace SManApi
                         + " sr.reparator, sr.reparator2, sr.reparator3, sr.stalldon_kontroll, sr.stalldon_arbete, sr.stalldon_delar "
                         + " , sr.lagesstall_kontroll, sr.lagesstall_arbete, sr.lagesstall_delar, sr.antal_boxpack, sr.boxpackning "
                         + " , sr.boxpack_material, sr.antal_brostpack, sr.brostpackning, sr.brostpack_material, sr.ovr_komment, "
-                        + " sr.ventil_id, sr.alternatekey, sr.arbetsordernr, sr.hos_kund, sr.pa_verkstad, sr.servradKlar ";
+                        + " sr.ventil_id, sr.alternatekey, sr.arbetsordernr, sr.hos_kund, sr.pa_verkstad, coalesce(sr.servradKlar,false) servradklar, attention ";
             if (AnvID == "")
                 sSql += " from servicerad sr ";
             else
@@ -855,6 +865,10 @@ namespace SManApi
                 sr.klar = 1;
             else
                 sr.klar = 0;
+            if (Convert.ToBoolean(dr["attention"]) == true)
+                sr.Attention = 1;
+            else
+                sr.Attention = 0;
             sr.ErrCode = 0;
             sr.ErrMessage = "";
 
@@ -896,7 +910,7 @@ namespace SManApi
 
             string sSql = " SELECT s.vart_ordernr, s.radnr, s.anlaggningsnr, s.kundens_pos, vk.ventilkategori, v.ventiltyp, v.fabrikat, v.id_nr, s.kontroll, "
                         + " s.arbete, s.anmarkning, v.dn, v.dn2, v.pn, v.pn2, s.reparator, s.reparator2, s.reparator3, s.avdelning, s.arbetsordernr "
-                        + ", s.hos_kund, s.pa_verkstad, s.servradKlar "
+                        + ", s.hos_kund, s.pa_verkstad, coalesce(s.servradKlar,false) servradklar "
                         + " FROM servicerad s join ventil v on s.ventil_id = v.ventil_id join ventilkategori vk on v.ventilkategori = vk.ventilkat_id "
                         + " where s.vart_ordernr = :pVartOrdernr ";
 
@@ -1030,21 +1044,87 @@ namespace SManApi
 
 
         /// <summary>
-        /// Called when a ventil row is changed.
-        /// This function will evaluate if any "connected" servicerows
-        /// shall be updated
+        /// Update all rows containing one ventil. Only update if the
+        /// servicehuvud is open for app and not godkand
+        /// Function is called from save of ventil
         /// </summary>
         /// <param name="ventilID"></param>
+        public void updateFromVentil2(string ventilID)
+        {
+            // Check if anything we are interested in has been changed.
+            // Also check that the order is open
+            string sSql = " select sh.vart_ordernr "
+                        + " from servicehuvud sh "
+                        + " join servicerad sr on sh.vart_ordernr = sr.vart_ordernr "
+                        + " join ventil v on sr.ventil_id = v.ventil_id "
+                        + " where v.ventil_id = :ventil_id "
+                        + " and ((coalesce(v.\"position\",'') <> coalesce(sr.kundens_pos,'')) or "
+                        + " (coalesce(v.avdelning,'') <> coalesce(sr.avdelning,'')) or "
+                        + " (coalesce(v.anlaggningsnr,'') <> coalesce(sr.anlaggningsnr)) or "
+                        + " (coalesce(v.oppningstryck,0) <> coalesce(sr.oppningstryck,0)) or "
+                        + " (coalesce(v.stalldonstyp) <> coalesce(sr.stalldonstyp)) or "
+                        + " (coalesce(v.stalldon_id_nr,'') <> coalesce(sr.stalldon_id_nr)) or "
+                        + " (coalesce(v.stalldon_fabrikat,'') <> coalesce(sr.stalldon_fabrikat,'')) or "
+                        + " (coalesce(v.stalldon_artnr,'') <> coalesce(sr.stalldon_artnr,'')) or "
+                        + " (coalesce(v.lagesstallartyp,'') <> coalesce(sr.lagesstallartyp,'')) or "
+                        + " (coalesce(v.lagesstall_id_nr,'') <> coalesce(sr.lagesstall_id_nr,'')) or "
+                        + " (coalesce(v.lagesstall_fabrikat,'') <> coalesce(sr.lagesstall_fabrikat,'')) or "
+                        + " (coalesce(v.forra_comment,'') <> coalesce(sr.ovr_komment,''))) and "
+                        + " sh.godkand = false and sh.openForApp = true ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("ventil_id", ventilID);
+
+            string err = "";
+            DataTable dt = cdb.getData(sSql, ref err, pc);
+
+            // No servicerows for this ventil. Just return
+            if (dt.Rows.Count == 0)
+                return;
+            foreach (DataRow dr in dt.Rows)
+            {
+
+                // Retrieve the alternate key for all servicerows
+                // in one serviceorder that has this ventil
+                // Normally this shall be only one row....
+                sSql = "select alternatekey "
+                    + " from servicerad "
+                    + " where vart_ordernr = :vart_ordernr "
+                    + " and ventil_id = :ventil_id ";
+
+                pc.Add("vart_ordernr", dr["vart_ordernr"].ToString());
+
+                dt = cdb.getData(sSql, ref err, pc);
+
+                // .... as said above, normally only one row
+                foreach (DataRow dr2 in dt.Rows)
+                {
+                    getValuesFromVentil(dr2["alternatekey"].ToString());
+                }
+
+
+            }
+
+
+
+
+        }
+
         public void updateFromVentil(string ventilID)
         {
             // Only servicerad that are open for app and not godkand can be updated
             // Now retrieve the latest servicerad for this ventil
-            string sSql = "select vart_ordernr, openforapp,godkand "
+            /*            string sSql = "select vart_ordernr, openforapp,godkand "
                         + " from servicehuvud "
                         + " where regdat = (SELECT max(regdat) "
                         + " FROM servicehuvud sh "
                         + " join servicerad sr on sh.vart_ordernr = sr.vart_ordernr "                        
-                        + " where sr.ventil_id = :ventil_id ";
+                        + " where sr.ventil_id = :ventil_id) "; */
+
+            string sSql = "select sh.vart_ordernr, sh.openforapp, sh.godkand "
+                     + " from servicehuvud sh "
+                     + " join servicerad sr on sh.vart_ordernr = sr.vart_ordernr "
+                     + " where sr.ventil_id = :ventil_id "
+                     + " and sh.openForApp = true and sh.godkand = false ";
 
             NxParameterCollection pc = new NxParameterCollection();
             pc.Add("ventil_id", ventilID);

@@ -170,17 +170,18 @@ namespace SManApi
             return srrList[0];
         }
 
-
         /// <summary>
-        /// Returns all registered time (all rows)
+        /// Returns all registered time(all rows)
         /// for a specific service row (identified by srAltKey)
-        /// and a specific user (identified by AnvID)
         /// </summary>
-        /// <param name="ident">Identity</param>
-        /// <param name="srAltKey">AlternateKey for servicerad</param>
-        /// <returns>List of registered time or one row with error message</returns>
-        // 2016-02-15 Pergas AB KJBO
-
+        /// <param name="ident"></param>
+        /// <param name="srAltKey"></param>
+        /// <returns></returns>
+        //  2016-11-18 Pergas AB KJBO
+        public List<ServRadRepTidCL> getServRadRepTidForSR(string ident, string srAltKey)
+        {
+            return getServRadRepTidForServiceRad(ident, srAltKey, 0, "");
+        }
 
 
         /// <summary>
@@ -225,23 +226,29 @@ namespace SManApi
                 return srrRows;
             }
 
-            string sSql = " SELECT srrt.ID, srrt.srAltKey, srrt.anvID, srrt.tid, srrt.datum "
+            NxParameterCollection pc = new NxParameterCollection();
+            string sSql = " SELECT srrt.ID, srrt.srAltKey, srrt.anvID, srrt.tid, srrt.datum, srrt.TimeTypeID "
                         + " FROM ServradRepTid srrt ";
             if (ID != 0)
+            {
                 sSql += " where srrt.ID = :ID ";
-            else
-                sSql += " where srrt.srAltKey = :srAltKey "
-                     + " and srrt.anvID = :anvID ";
-
-
-            NxParameterCollection pc = new NxParameterCollection();
-            if (ID != 0)
                 pc.Add("ID", ID);
+            }
             else
             {
-                pc.Add("srAltKey", srAltKey);
-                pc.Add("anvID", AnvID);
+                if (srAltKey != "")
+                {
+                    sSql += " where srrt.srAltKey = :srAltKey ";
+                    pc.Add("srAltKey", srAltKey);
+                }
+                if (AnvID != "")
+                {
+                    sSql += " and srrt.anvID = :anvID ";
+                    pc.Add("anvID", AnvID);
+                }
+
             }
+            
             
 
             string errText = "";
@@ -279,6 +286,7 @@ namespace SManApi
                 srr.AnvID = dr["anvID"].ToString();
                 srr.Datum = Convert.ToDateTime(dr["datum"]);
                 srr.Tid = Convert.ToDecimal(dr["tid"]);
+                srr.timeTypeID = Convert.ToInt32(dr["TimeTypeID"]);
                 srr.ErrCode = 0;
                 srr.ErrMessage = "";
                 srrRows.Add(srr);
@@ -291,9 +299,9 @@ namespace SManApi
         private string getInsertSQL()
         {
             string sSql = " insert into ServradRepTid (  anvID, datum, regdat, srAltKey "
-                         + " , tid, attesterad)  "
+                         + " , tid, attesterad, TimeTypeID)  "
                         + "  values ( :anvID, :datum, :regdat, :srAltKey "
-                        + " , :tid, false )";
+                        + " , :tid, false, :TimeTypeID )";
 
             return sSql;
         }
@@ -308,6 +316,7 @@ namespace SManApi
                         + ", srAltKey = :srAltKey "
                         + ", tid = :tid "
                         + ", uppdat_dat = :uppdat_dat "
+                        + ", TimeTypeID = :TimeTypeID "
                         + " where ID = :ID ";
             return sSql;
 
@@ -330,7 +339,8 @@ namespace SManApi
             np.Add("regdat", System.DateTime.Now);            
             np.Add("srAltKey", sr.SrAltKey);                        
             np.Add("tid", sr.Tid);
-            np.Add("uppdat_dat", System.DateTime.Now); 
+            np.Add("uppdat_dat", System.DateTime.Now);
+            np.Add("TimeTypeID", sr.timeTypeID);
 
         }
 
@@ -376,7 +386,8 @@ namespace SManApi
                         + " from ServRadRepTid "
                         + " where srAltKey = :srAltKey "
                         + " and anvID = :anvID "
-                        + " and datum = :datum ";
+                        + " and datum = :datum "
+                        + " and TimeTypeID = :TimeTypeID ";
             if (srt.ID != 0)
                 sSql += " and ID <> :ID ";
 
@@ -384,6 +395,7 @@ namespace SManApi
             pc.Add("srAltKey", srt.SrAltKey);
             pc.Add("anvID", srt.AnvID);
             pc.Add("datum", srt.Datum);
+            pc.Add("TimeTypeID", srt.timeTypeID);
             if (srt.ID != 0)
                 pc.Add("ID", srt.ID);
 
@@ -408,6 +420,23 @@ namespace SManApi
             return 1;
         }
 
+        private int validateTimeType( int timeTypeID)
+        {
+            string sSql = " select count(*) antal "
+                        + " from TimeType "
+                        + " where TimeTypeID = :TimeTypeID ";
+
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("TimeTypeID", timeTypeID);
+
+            string er = "";
+            DataTable dt = cdb.getData(sSql, ref er, pc);
+            if (Convert.ToInt32(dt.Rows[0]["antal"]) == 1)
+                return 1;
+            return 0;
+
+        }
+
 
         private int validateServRadRepTid(ServRadRepTidCL srt, string ident, ref string err)
         {
@@ -422,6 +451,8 @@ namespace SManApi
                 return -4;
             if (validateDuplicate(srt) > 0)
                 return -5;
+            if (validateTimeType(srt.timeTypeID) == 0)
+                return -6;
             return 1;
 
         }
@@ -507,6 +538,14 @@ namespace SManApi
             {
                 retSrt.ErrCode = -1;
                 retSrt.ErrMessage = "Det finns redan tid redovisat för aktuell dag och ventil";
+                return retSrt;
+            }
+
+            // 2016-11-01 KJBO
+            if (valid == -6)
+            {
+                retSrt.ErrCode = -1;
+                retSrt.ErrMessage = "Felaktigt TimeTypeID";
                 return retSrt;
             }
 
@@ -648,7 +687,164 @@ namespace SManApi
 
 
 
-        
+        /// <summary>
+        /// Returns all time registry for a given order
+        /// </summary>
+        /// <param name="ident">Identity</param>
+        /// <param name="vartOrdernr">Order number</param>
+        /// <returns>List of RepTidListCL</returns>
+        public List<RepTidListCL> getAllTimeForOrder(string ident, string vartOrdernr)
+        {
+
+            List<RepTidListCL> rtls = new List<RepTidListCL>();
+
+            CReparator cr = new CReparator();
+            int identOK = cr.checkIdent(ident);
+
+            if (identOK == -1)
+            {
+                RepTidListCL rtl = new RepTidListCL();                
+                rtl.ErrCode = -10;
+                rtl.ErrMessage = "Ogiltigt login";
+                rtls.Add(rtl);
+                return rtls;
+            }
+
+
+            string sSql = " SELECT sr.vart_ordernr, sr.radnr, sr.AlternateKey, srt.id servRadRepTidID, tt.TimeTypeID, tt.TimeType, srt.AnvID, r.reparator, "
+                        + " ' Position : ' + sr.kundens_pos + ' (' + coalesce(v.fabrikat,'') + ' ' + vk.ventilkategori + ' aonr: ' + coalesce(sr.arbetsordernr,'') + ')' rowDescription "
+                        + " , srt.datum, srt.tid, sr.kundens_pos "
+                        + " FROM servicerad sr "
+                        + " join ventil v on sr.ventil_id = v.ventil_id "
+                        + " join ventilKategori vk on v.ventilkategori = vk.ventilkat_id "
+                        + " join servRadRepTid srt on sr.AlternateKey = srt.srAltKey "
+                        + " join TimeType tt on srt.TimeTypeID = tt.TimeTypeID "
+                        + " join reparator r on srt.AnvID = r.AnvID "
+                        + " where sr.vart_ordernr = :vart_ordernr ";
+
+
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr",vartOrdernr);
+            
+
+            string errText = "";
+
+            DataTable dt = cdb.getData(sSql, ref errText, pc);
+
+            int errCode = -100;
+
+            if (errText == "" && dt.Rows.Count == 0)
+            {
+                errText = "Inga tidsinmatning registrerade för aktuell order";
+                errCode = 0;
+            }
+
+
+            if (errText != "")
+            {
+                RepTidListCL rtl = new RepTidListCL();                                
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                rtl.ErrCode = errCode;
+                rtl.ErrMessage = errText;
+                rtls.Add(rtl);
+                return rtls;
+            }
+
+            foreach (DataRow dr in dt.Rows)
+            {
+                RepTidListCL rtl = new RepTidListCL();
+                rtl.vartOrdernr = dr["vart_ordernr"].ToString();
+                rtl.radnr = Convert.ToInt32(dr["radnr"]);
+                rtl.srAltKey = dr["AlternateKey"].ToString();
+                rtl.ServRadRepTidId = Convert.ToInt32(dr["servRadRepTidID"]);
+                rtl.timeTypeID = Convert.ToInt32(dr["TimeTypeID"]);
+                rtl.timeType = dr["TimeType"].ToString();
+                rtl.anvID = dr["AnvID"].ToString();
+                rtl.reparator = dr["reparator"].ToString();
+                rtl.rowDescription = dr["rowDescription"].ToString();
+                rtl.datum = Convert.ToDateTime(dr["datum"]);
+                rtl.tid = Convert.ToDecimal(dr["tid"]);
+                rtl.position = dr["kundens_pos"].ToString();
+                rtl.ErrCode = 0;
+                rtl.ErrMessage = "";
+                rtls.Add(rtl);
+            }
+            return rtls;
+        }
+
+
+
+
+        /// <summary>
+        /// Return a list of valid timeTypes
+        /// The list varies depending on the hosKund and paVerkstad parameters
+        /// Normaly you check the corresponding Servicerad and the hosKund and paVerkstad
+        /// and send those variables to this function thus getting the right list.
+        /// To override (and get alla timeTypes) you just set both parameters to true
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="hosKund"></param>
+        /// <param name="paVerkstad"></param>
+        /// <param name="all"></param>
+        /// <returns></returns>
+        public List<TimeTypeCL> getTimeTypes( string ident, bool hosKund, bool paVerkstad)
+        {
+            List<TimeTypeCL> tts = new List<TimeTypeCL>();
+
+            CReparator cr = new CReparator();
+            int identOK = cr.checkIdent(ident);
+
+            if (identOK == -1)
+            {
+                TimeTypeCL tt = new TimeTypeCL();
+                tt.ErrCode = -10;
+                tt.ErrMessage = "Ogiltigt login";
+                tts.Add(tt);
+                return tts;
+            }
+
+
+            string sSql = " select tt.timeTypeID, tt.TimeType "
+                        + " from TimeType tt "                        
+                        + " where 1 = 1 ";
+            if (hosKund && !paVerkstad)
+                sSql += " and tt.TimeTypeBaseID = 1 ";
+            if (!hosKund && paVerkstad)
+                sSql += " and tt.TimeTypeBaseID = 2 ";
+            if (!hosKund && !paVerkstad)
+                sSql += " and tt.TimeTypeBaseID = 3 ";
+
+            string errText = "";
+
+            DataTable dt = cdb.getData(sSql, ref errText, null);
+
+            if (errText != "")
+            {
+                TimeTypeCL tt = new TimeTypeCL();
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                tt.ErrCode = -100;
+                tt.ErrMessage = errText;
+                tts.Add(tt);
+                return tts;
+            }
+
+            foreach (DataRow dr in dt.Rows)
+            {
+                TimeTypeCL tt = new TimeTypeCL();
+                tt.TimeTypeID = Convert.ToInt32(dr["timeTypeID"]);
+                tt.TimeType = dr["TimeType"].ToString();
+                tt.ErrCode = 0;
+                tt.ErrMessage = "";
+                tts.Add(tt);            
+            }
+            return tts;
+
+        }
 
     }
+
+
+    
 }

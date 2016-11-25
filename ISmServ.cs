@@ -286,6 +286,20 @@ namespace SManApi
         [OperationContract]
         List<ServRadRepTidCL> getServRadRepTidForServiceRad(string ident, string AnvID, string srAltKey);
 
+
+        /// <summary>
+        /// Returns all registered time(all rows)
+        /// for a specific service row (identified by srAltKey)
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="srAltKey"></param>
+        /// <returns></returns>
+        //  2016-11-18 Pergas AB KJBO
+        [OperationContract]
+        List<ServRadRepTidCL> getServRadRepTidForSR(string ident, string srAltKey);
+        
+
+
         /// <summary>
         /// Validates one ServRadRepTid
         /// If the ID is 0 then this method
@@ -555,6 +569,45 @@ namespace SManApi
         [OperationContract]
         Decimal SumHoursForServRad(string ident, string srAltKey, string AnvID);
 
+
+        /// <summary>
+        /// Deletes a reservdel identified by primary key
+        /// </summary>
+        /// <param name="ident">identity string</param>
+        /// <param name="reservdel">One valid reservdel</param>
+        /// <returns>Empty string if OK otherwise error message</returns>
+        /// 2016-09-30 KJBO
+        [OperationContract]
+        string deleteReservdel(string ident, ReservdelCL reservdel); 
+       
+
+        /// <summary>
+        /// Returns all time registry for a given order
+        /// </summary>
+        /// <param name="ident">Identity</param>
+        /// <param name="vartOrdernr">Order number</param>
+        /// <returns>List of RepTidListCL</returns>
+        /// 2016-11-01 KJBO
+        [OperationContract]
+        List<RepTidListCL> getAllTimeForOrder(string ident, string vartOrdernr);
+
+
+
+        /// <summary>
+        /// Return a list of valid timeTypes
+        /// The list varies depending on the hosKund and paVerkstad parameters
+        /// Normaly you check the corresponding Servicerad and the hosKund and paVerkstad
+        /// and send those variables to this function thus getting the right list.
+        /// To override (and get alla timeTypes) you just set both parameters to true
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="hosKund"></param>
+        /// <param name="paVerkstad"></param>
+        /// <param name="all"></param>
+        /// <returns></returns>
+        /// 2016-11-01 KJBO
+        [OperationContract]
+        List<TimeTypeCL> getTimeTypes(string ident, bool hosKund, bool paVerkstad);
 
 
 
@@ -843,6 +896,9 @@ namespace SManApi
             public int klar // 1 eller 0
             { get; set; }
 
+            [DataMember]
+            public int Attention // (1 eller 0) Aktuell om en servicerad har notering i OvrKomment. Om denna sätts till 1 kommer denna servicerad att följas upp i efterhand
+            { get; set; }
 
 
             [DataMember]
@@ -1190,6 +1246,88 @@ namespace SManApi
         }
 
 
+
+
+        /// <summary>
+        /// List of registered hours for a whole order (vartOrdernr)
+        /// This class is used for returning all time registrations for the order
+        /// Note the new functionality for timeTypeID which categorizes all the time registrations
+        /// All of the time earlier time registrations is coded as "kund"
+        /// Excuse for the swenglish. Most of the new functionality in the system is
+        /// coded in english and the old parts are in Swedish.
+        /// </summary>
+ 
+        [DataContract]
+        public class RepTidListCL
+        {
+
+            [DataMember]
+            public string vartOrdernr // Primary key to the whole order
+            { get; set; }
+
+            [DataMember]
+            public int radnr // Row number in table servicerad
+            { get; set; }
+
+            [DataMember]
+            public string srAltKey // Alternate key to servicerad (primary key is vartOrdernr and radnr in combination)
+            { get; set; }
+
+
+            [DataMember]
+            public int ServRadRepTidId // Should normally not be needed in this context. Primary key for ServRadRepTid table
+            { get; set; }
+
+            [DataMember]
+            public int timeTypeID // Primary key for TimeType table normally not needed
+            { get; set; }
+
+            [DataMember]
+            public string timeType // Could be "kund", "verkstad" or "maskintid"
+            { get; set; }
+
+            [DataMember]
+            public string anvID // Key to user and in this context key to reparator (user and reparator is the same table)
+            { get; set; }
+
+            [DataMember]
+            public string reparator // Name of the reparator corresponding to anvID
+            { get; set; }
+
+            [DataMember]
+            public string rowDescription // position, ventiltyp, fabrikat, arbetsordernr in combination 
+            { get; set; }
+
+            [DataMember] 
+            public DateTime datum // Date of the time registration
+            { get; set; }
+
+            [DataMember] 
+            public Decimal tid // Registered hours
+            { get; set; }
+
+            [DataMember] 
+            public string position // Position, Also included in rowDescription
+            { get; set; }
+
+
+            [DataMember]
+            public int ErrCode
+            { get; set; }
+
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
+
+        }
+
+
+
+
+
+            
+
+
         [DataContract]
         public class ServRadRepTidCL
         {
@@ -1213,6 +1351,9 @@ namespace SManApi
             public Decimal Tid  // Arbetad tid i timmar 
             { get; set; }
 
+            [DataMember]
+            public int timeTypeID  // The new timeTypeID
+            { get; set; }
 
 
             [DataMember]
@@ -1379,5 +1520,36 @@ namespace SManApi
 
 
 
-        }    
+        }
+
+        /// <summary>
+        /// Class for time types..
+        /// Consists if ID and name for TimeTypes
+        /// </summary>
+        [DataContract]
+        public class TimeTypeCL
+        {
+            [DataMember]
+            public int TimeTypeID
+            { get; set; }
+
+            [DataMember]
+            public string TimeType
+            { get; set; }
+
+            [DataMember]
+            public int ErrCode
+            { get; set; }
+
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
+
+        }
+
+
+
+
+
+
 }

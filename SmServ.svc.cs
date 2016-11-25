@@ -243,6 +243,20 @@ namespace SManApi
             return ct.getServRadRepTidForServiceRad(ident, AnvID, srAltKey);
         }
 
+        /// <summary>
+        /// Returns all registered time(all rows)
+        /// for a specific service row (identified by srAltKey)
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="srAltKey"></param>
+        /// <returns></returns>
+        //  2016-11-18 Pergas AB KJBO
+        public List<ServRadRepTidCL> getServRadRepTidForSR(string ident, string srAltKey)
+        {
+            CTidRed ct = new CTidRed();
+            return getServRadRepTidForSR(ident, srAltKey);
+        }
+
 
         /// <summary>
         /// Validates one ServRadRepTid
@@ -541,8 +555,50 @@ namespace SManApi
             return ct.SumHoursForServRad(ident, srAltKey, AnvID);
         }
 
+        /// <summary>
+        /// Deletes a reservdel identified by primary key
+        /// </summary>
+        /// <param name="ident">identity string</param>
+        /// <param name="reservdel">One valid reservdel</param>
+        /// <returns>Empty string if OK otherwise error message</returns>
+        /// 2016-09-30 KJBO
+        public string deleteReservdel(string ident, ReservdelCL reservdel)
+        {
+            CReservdel cr = new CReservdel();
+            return cr.deleteReservdel(ident, reservdel);
+        }
 
+        /// <summary>
+        /// Returns all time registry for a given order
+        /// </summary>
+        /// <param name="ident">Identity</param>
+        /// <param name="vartOrdernr">Order number</param>
+        /// <returns>List of RepTidListCL</returns>
+        public List<RepTidListCL> getAllTimeForOrder(string ident, string vartOrdernr)
+        {
+            CTidRed ct = new CTidRed();
 
+            return ct.getAllTimeForOrder(ident, vartOrdernr);
+        }
+
+        /// <summary>
+        /// Return a list of valid timeTypes
+        /// The list varies depending on the hosKund and paVerkstad parameters
+        /// Normaly you check the corresponding Servicerad and the hosKund and paVerkstad
+        /// and send those variables to this function thus getting the right list.
+        /// To override (and get alla timeTypes) you just set both parameters to true
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="hosKund"></param>
+        /// <param name="paVerkstad"></param>
+        /// <param name="all"></param>
+        /// <returns></returns>
+        public List<TimeTypeCL> getTimeTypes(string ident, bool hosKund, bool paVerkstad)
+        {
+            CTidRed ct = new CTidRed();
+
+            return ct.getTimeTypes(ident, hosKund, paVerkstad);
+        }
 
 
 
