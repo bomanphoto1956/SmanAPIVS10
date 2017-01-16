@@ -254,7 +254,7 @@ namespace SManApi
         public List<ServRadRepTidCL> getServRadRepTidForSR(string ident, string srAltKey)
         {
             CTidRed ct = new CTidRed();
-            return getServRadRepTidForSR(ident, srAltKey);
+            return ct.getServRadRepTidForSR(ident, srAltKey);
         }
 
 
