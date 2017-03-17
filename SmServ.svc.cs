@@ -208,9 +208,25 @@ namespace SManApi
         public List<OpenDateCL> getOpenDates(string ident, string SrAltKey)
         {
             CTidRed ct = new CTidRed();
-
             return ct.getOpenDates(ident, SrAltKey);
         }
+
+
+        /// <summary>
+        /// Returns a list of valid dates for
+        /// registry of time for one ServiceOrder
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <returns></returns>
+        /// 2017-03-15 KJBO
+        public List<OpenDateCL> getOpenDatesSH(string ident, string vartOrdernr)
+        {
+            CTidRed ct = new CTidRed();
+            return ct.getOpenDatesSH(ident, vartOrdernr);            
+        }
+
+
 
 
         /// <summary>
@@ -300,6 +316,8 @@ namespace SManApi
         /// <param name="ident"></param>
         /// <param name="vartOrdernr"></param>
         /// <returns>A list of reparators or error</returns>
+        /// 2017-03-14 Added functionality
+        /// RepKatID is now current for this ordernr        
         public List<ReparatorCL> getReparatorsForServiceHuvud(string ident, string vartOrdernr)
         {
             CReparator cr = new CReparator();
@@ -599,6 +617,127 @@ namespace SManApi
 
             return ct.getTimeTypes(ident, hosKund, paVerkstad);
         }
+
+        /// <summary>
+        /// Get the current timeRegVersion
+        /// can be either 1 or 2
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <returns>Version or -1 for invalid ident or -2 for database error 
+        /// (no more error description is available for this function</returns>
+        public int getTimeRegVersion(string ident, string vartOrdernr)
+        {
+            CMisc cm = new CMisc();
+            return cm.getTimeRegVersion(ident, vartOrdernr);
+        }
+
+
+        /// <summary>
+        /// Return all salarts either for servicedetalj or serviceorder 
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="forServiceDetalj"></param>
+        /// <returns>List of salart or error code</returns>
+        public List<SalartCL> getSalart(string ident, bool forServiceDetalj)
+        {
+            CComboValues cv = new CComboValues();
+
+            return cv.getSalart(ident, forServiceDetalj);
+        }
+
+
+        /// <summary>
+        /// Get valid time types for one order
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <returns>Valid time types</returns>
+        // 2017-03-14 KJBO
+        public List<TimeTypeCL> getTimeTypesForOrder(string ident, string vartOrdernr)
+        {
+            CTidRed cr = new CTidRed();
+
+            return cr.getTimeTypesForOrder(ident, vartOrdernr);
+        }
+
+
+        /// <summary>
+        /// Get all available repKat for 
+        /// timeregistration version 2
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <returns></returns>
+        /// 2017-03-14 KJBO
+        public List<RepKatCL> getRepKat(string ident)
+        {
+            CReparator cr = new CReparator();
+            return cr.getRepKat(ident);
+        }
+
+        /// <summary>
+        /// Validates one ServHuvRepTid
+        /// If the ID is 0 the this method
+        /// assumes that this is a new row
+        /// Returns the validated and stored
+        /// row with the new ID (if its a new row)
+        /// If an error occurs then an error is returned
+        /// in the ServHuvTidRep return row
+        /// </summary>
+        /// <param name="ident">Identity</param>
+        /// <param name="sht">ServHuvRepTid</param>
+        /// <returns></returns>
+        /// 2017-03-15 KJBO  
+        public ServHuvRepTidCL saveServHuvRepTid(string ident, ServHuvRepTidCL sht)
+        {
+            CTidRed ct = new CTidRed();
+            return ct.saveServHuvRepTid(ident, sht);
+        }
+
+        /// <summary>
+        /// Get one row of ServHuvRepTid identified by PK
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="ID"></param>
+        /// <returns></returns>
+        /// 2017-03-15 KJBO
+        public ServHuvRepTidCL getServHuvRepTid(string ident, int ID)
+        {
+            CTidRed ct = new CTidRed();
+            return ct.getServHuvRepTid(ident, ID);
+        }
+
+        /// <summary>
+        /// Get all ServHuvRepTid for one order
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <returns></returns>
+        /// 2017-03-15 KJBO
+        public List<ServHuvRepTidCL> getServHuvRepTidForSH(string ident, string vartOrdernr)
+        {
+            CTidRed ct = new CTidRed();
+            return ct.getServHuvRepTidForSH(ident, vartOrdernr);
+        }
+
+        /// <summary>
+        /// Get all ServHuvRepTid for one order and 
+        /// one user ( = anv)
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <param name="anvID"></param>
+        /// <returns></returns>
+        /// 2017-03-15 KJBO
+        public List<ServHuvRepTidCL> getServHuvRepTidForShAnv(string ident, string vartOrdernr, string anvID)
+        {
+            CTidRed ct = new CTidRed();
+            return ct.getServHuvRepTidForShAnv(ident, vartOrdernr, anvID);
+        }
+
+
+
+
 
 
 

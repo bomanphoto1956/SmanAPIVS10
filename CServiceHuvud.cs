@@ -262,11 +262,13 @@ namespace SManApi
             DataRow dr = dt.Rows[0];
             Boolean bOpenForApp = Convert.ToBoolean(dr["OpenForApp"]);
             Boolean bGodkand = Convert.ToBoolean(dr["Godkand"]);
-
             if (bOpenForApp && !bGodkand)
                 return "1";
             return "-1";
         }
+
+
+
         
 
 

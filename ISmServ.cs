@@ -258,9 +258,25 @@ namespace SManApi
         /// <param name="ident"></param>
         /// <param name="SrAltKey">Alternate key</param>
         /// <returns>List of dates or an error message</returns>
-        //  2016-02-14
+        /// 2017-03-15 Added vartOrdernr parameter because this
+        /// function will be called both on servrad and servhuv (TimeRegVersion 2)
+        /// If vartOrdernr is not an empty string this value is the first choice
+        /// over the SrAltKey. The SrAltKey will be used if vartOrdernr is an empty string
         [OperationContract]
         List<OpenDateCL> getOpenDates(string ident, string SrAltKey);
+
+        /// <summary>
+        /// Returns a list of valid dates for
+        /// registry of time for one ServiceOrder
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <returns></returns>
+        /// 2017-03-15 KJBO
+        [OperationContract]
+        List<OpenDateCL> getOpenDatesSH(string ident, string vartOrdernr);
+
+
 
         /// <summary>
         /// Get a specific TidRed record identified by ID (PK)
@@ -336,7 +352,8 @@ namespace SManApi
         /// <param name="ident"></param>
         /// <param name="vartOrdernr"></param>
         /// <returns>A list of reparators or error</returns>
-        //  2016-02-18 KJBO Pergas AB
+        /// 2017-03-14 Added functionality
+        /// RepKatID is now current for this ordernr        
         [OperationContract]
         List<ReparatorCL> getReparatorsForServiceHuvud(string ident, string vartOrdernr);
 
@@ -610,6 +627,104 @@ namespace SManApi
         List<TimeTypeCL> getTimeTypes(string ident, bool hosKund, bool paVerkstad);
 
 
+        /// <summary>
+        /// Get valid time types for one order
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <returns>Valid time types</returns>
+        // 2017-03-14 KJBO
+        [OperationContract]
+        List<TimeTypeCL> getTimeTypesForOrder(string ident, string vartOrdernr);
+
+
+
+        /// <summary>
+        /// Get the current timeRegVersion
+        /// can be either 1 or 2
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <returns>Version or -1 for invalid ident or -2 for database error 
+        /// (no more error description is available for this function</returns>
+        /// 2017-03-10 KJBO
+        [OperationContract]
+        int getTimeRegVersion(string ident, string vartOrdernr);
+
+
+        /// <summary>
+        /// Return all salarts either for servicedetalj or serviceorder 
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="forServiceDetalj"></param>
+        /// <returns>List of salart or error code</returns>
+        /// 2017-03-13 KJBO
+        [OperationContract]
+        List<SalartCL> getSalart(string ident, bool forServiceDetalj);
+
+
+        /// <summary>
+        /// Get all available repKat for 
+        /// timeregistration version 2
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <returns></returns>
+        /// 2017-03-14 KJBO
+        [OperationContract]
+        List<RepKatCL> getRepKat(string ident);
+
+        /// <summary>
+        /// Validates one ServHuvRepTid
+        /// If the ID is 0 the this method
+        /// assumes that this is a new row
+        /// Returns the validated and stored
+        /// row with the new ID (if its a new row)
+        /// If an error occurs then an error is returned
+        /// in the ServHuvTidRep return row
+        /// </summary>
+        /// <param name="ident">Identity</param>
+        /// <param name="sht">ServHuvRepTid</param>
+        /// <returns></returns>
+        /// 2017-03-15 KJBO
+        [OperationContract]
+        ServHuvRepTidCL saveServHuvRepTid(string ident, ServHuvRepTidCL sht);
+
+
+        /// <summary>
+        /// Get one row of ServHuvRepTid identified by PK
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="ID"></param>
+        /// <returns></returns>
+        /// 2017-03-15 KJBO
+        [OperationContract]
+        ServHuvRepTidCL getServHuvRepTid(string ident, int ID);
+
+        /// <summary>
+        /// Get all ServHuvRepTid for one order
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <returns></returns>
+        /// 2017-03-15 KJBO
+        [OperationContract]
+        List<ServHuvRepTidCL> getServHuvRepTidForSH(string ident, string vartOrdernr);
+
+
+        /// <summary>
+        /// Get all ServHuvRepTid for one order and 
+        /// one user ( = anv)
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <param name="anvID"></param>
+        /// <returns></returns>
+        /// 2017-03-15 KJBO
+        [OperationContract]
+        List<ServHuvRepTidCL> getServHuvRepTidForShAnv(string ident, string vartOrdernr, string anvID);
+
+
+
 
 
     }
@@ -634,6 +749,7 @@ namespace SManApi
             [DataMember]
             public string RepKatID
             { get; set; }
+
 
             [DataMember]
             public int ErrCode
@@ -780,6 +896,7 @@ namespace SManApi
         /// 2016-02-03 KJBO Pergas AB
         /// 2016-05-27 KJBO Added Arbetsordernr according to meeting with Ventilteknik
         /// 2016-09-12 KJBO Added hosKund, paVerkstad and klar.
+        /// 2017-02-27 KJBO Addel max length to several string fields
         [DataContract]
         public class ServiceRadCL
         {
@@ -792,19 +909,19 @@ namespace SManApi
             { get; set; }
 
             [DataMember]
-            public string Kontroll
+            public string Kontroll // 2016-02-27 200 tkn
             { get; set; }
 
             [DataMember]
-            public string Arbete
+            public string Arbete // 2016-02-27 400 tkn
             { get; set; }
 
             [DataMember]
-            public string Anmarkning
+            public string Anmarkning // 2016-02-27 200 tkn
             { get; set; }
 
             [DataMember]
-            public string Reservdelar
+            public string Reservdelar // 2016-02-27 200 tkn
             { get; set; }
 
 
@@ -821,27 +938,27 @@ namespace SManApi
             { get; set; }
 
             [DataMember]
-            public string StalldonKontroll
+            public string StalldonKontroll // 2016-02-27 200 tkn
             { get; set; }
 
             [DataMember]
-            public string StalldonArbete
+            public string StalldonArbete // 2016-02-27 400 tkn
             { get; set; }
 
             [DataMember]
-            public string StalldonDelar
+            public string StalldonDelar // 2016-02-27 200 tkn
             { get; set; }
 
             [DataMember]
-            public string LagesstallKontroll
+            public string LagesstallKontroll // 2016-02-27 200 tkn
             { get; set; }
 
             [DataMember]
-            public string LagesstallArbete
+            public string LagesstallArbete // 2016-02-27 400 tkn
             { get; set; }
 
             [DataMember]
-            public string LagesstallDelar
+            public string LagesstallDelar // 2016-02-27 200 tkn
             { get; set; }
 
             [DataMember]
@@ -869,7 +986,7 @@ namespace SManApi
             { get; set; }
 
             [DataMember]
-            public string OvrKomment
+            public string OvrKomment // 2016-02-27 200 tkn
             { get; set; }
 
             [DataMember]
@@ -1327,7 +1444,11 @@ namespace SManApi
 
             
 
-
+        /// <summary>
+        /// Datacontract for RepTid version 2
+        /// Added SalartId and RepKatID which is required for version 2
+        /// 2017-03-13
+        /// </summary>
         [DataContract]
         public class ServRadRepTidCL
         {
@@ -1353,6 +1474,14 @@ namespace SManApi
 
             [DataMember]
             public int timeTypeID  // The new timeTypeID
+            { get; set; }
+
+            [DataMember]
+            public int SalartID
+            { get; set; }
+
+            [DataMember]
+            public string RepKatID
             { get; set; }
 
 
@@ -1543,9 +1672,142 @@ namespace SManApi
 
             [DataMember]
             public string ErrMessage
+            { get; set; } 
+        }
+        
+
+        /// <summary>
+        /// Salart has to be provided
+        /// when timeRegVersion is 2 (the newer version)
+        /// This datacontract is used both when time is registered
+        /// for each servicerow and for the whole order
+        /// SalartTypeID determines where and how to
+        /// use the salart. 
+        /// SalartTypeID 1 : Valid when entering time at servicerow level
+        ///                  Requires both reparator and RepKatID
+        ///                  (Examples of this category is normaltid, övertid vardag
+        ///                  
+        /// SalartTypeID 2 : Valid when entering time at serviceorder level
+        ///                  Requires both reparator and RepKatID
+        ///                  (Examples of this category is sovtid, veckovila, traktamente)
+        ///                  
+        /// SalartTypeID 3 : Valid when entering time at serviceorder level
+        ///                  when the registered value is not connected to individual reparator
+        ///                  (Examples of this category is milersättning, tryckmätning maskinhyra
+        ///                  
+        /// 2017-03-13 KJBO
+        /// </summary>
+        [DataContract]
+        public class SalartCL
+        {
+            [DataMember]
+            public int SalartID // Primary key
             { get; set; }
 
+            [DataMember]
+            public int SalartTypeID // See above
+            { get; set; }
+
+
+            [DataMember]
+            public string SalartName // Name of the salart
+            { get; set; }
+
+            [DataMember]
+            public string Unit // Measuring unit (timmar, st, dagar)
+            { get; set; }
+
+
+            [DataMember]
+            public int ErrCode
+            { get; set; }
+
+            [DataMember]
+            public string ErrMessage
+            { get; set; } 
         }
+
+
+        /// <summary>
+        /// Reparatörskategori
+        /// Used for selection of reparatörskategori
+        /// in combobox or similar
+        /// 2017-03-14 KJBO
+        /// </summary>
+        
+        [DataContract]
+        public class RepKatCL
+        {
+            [DataMember]
+            public string RepKatID // Primary key max 10 tkn
+            { get; set; }
+
+            [DataMember]
+            public string RepKat // Max 40 tkn
+            { get; set; }
+
+            [DataMember]
+            public int ErrCode
+            { get; set; }
+
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
+        }
+
+        
+
+        /// <summary>
+        /// Add time to Serviceorder
+        /// Used in TimeReport version 2
+        /// 2017-03-14 KJBO
+        /// </summary>
+        [DataContract]
+        public class ServHuvRepTidCL
+        {
+
+            [DataMember]
+            public int ID // Primary key
+            { get; set; }
+
+            [DataMember]
+            public string VartOrdernr // Ordernumber max 10 char
+            { get; set; }
+
+            [DataMember]
+            public int TimeTypeID // kund, verkstad eller maskintid (foreign key  to TimeType)
+            { get; set; }
+
+            [DataMember]
+            public int SalartID // Löneart/tidart foreign key to salart (=löneart)
+            { get; set; }
+
+            [DataMember]
+            public string AnvId // Reparatör ID foreign key to reparator (max 10 tkn)
+            { get; set; }
+
+            [DataMember]
+            public string RepKatID // Reparatörskategori foreign key to repKat
+            { get; set; }
+
+            [DataMember]
+            public decimal Tid // Time or any other unit (can be st or day )
+            { get; set; }
+
+            [DataMember]
+            public DateTime Datum // Day
+            { get; set; }
+
+
+            [DataMember]
+            public int ErrCode
+            { get; set; }
+
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
+        }
+
 
 
 

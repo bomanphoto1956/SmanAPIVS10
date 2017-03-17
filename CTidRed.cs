@@ -22,32 +22,110 @@ namespace SManApi
         /// <param name="ident"></param>
         /// <param name="SrAltKey">Alternate key</param>
         /// <returns>List of dates or an error message</returns>
-
         public List<OpenDateCL> getOpenDates(string ident, string SrAltKey)
         {
-            return getOpenDates(ident, SrAltKey, true);
+            return getOpenDates(ident, SrAltKey, true, 0);
+        }
+
+
+        /// <summary>
+        /// Returns a list of valid dates for
+        /// registry of time for one ServiceOrder
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <returns></returns>
+        /// 2017-03-15 KJBO
+        public List<OpenDateCL> getOpenDatesSH(string ident, string vartOrdernr)
+        {
+            return getOpenDates(ident, "", true, 2, vartOrdernr);            
+        }
+
+
+
+        /// <summary>
+        /// New function for timeRegVersion 2
+        /// called by getOpenDates(string ident, string SrAltKey, bool bValidate, int timeRegVersion = 0)
+        /// which has a different signature
+        /// </summary>
+        /// <param name="vartOrdernr"></param>
+        /// <returns></returns>
+        private List<OpenDateCL> getOpenDates(string vartOrdernr)
+        {
+
+            List<OpenDateCL> dateList = new List<OpenDateCL>();
+            // Select clause
+            string sSql = " SELECT fromDate, toDate "
+                        + " FROM timeReport2 "
+                        + " where vart_ordernr = :vart_ordernr ";
+            // Add parameter
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", vartOrdernr);
+
+            // Init error variable and perform SQL
+            string err = "";
+            DataTable dt = cdb.getData(sSql, ref err, pc);
+
+            int errCode = -100;
+
+            // If no error from database but no row exists
+            if (err == "" && dt.Rows.Count == 0)
+            {
+                err = "Det finns inga upplagda datum för tidregistrering ";
+                errCode = 0;
+            }
+
+            // If error from database
+            if (err != "")
+            {
+                OpenDateCL d = new OpenDateCL();
+                if (err.Length > 2000)
+                    err = err.Substring(1, 2000);
+                d.ErrCode = errCode;
+                d.ErrMessage = err;
+                dateList.Add(d);
+                return dateList;
+            }
+
+            // If we are here then everything is fine and we can concentrate
+            // on building a datelist
+            DateTime dat = Convert.ToDateTime(dt.Rows[0]["fromDate"]);
+            DateTime toDate = Convert.ToDateTime(dt.Rows[0]["toDate"]);
+            while (dat <= toDate)
+            {
+                OpenDateCL d = new OpenDateCL();
+                d.Datum = dat;
+                d.ErrCode = 0;
+                d.ErrMessage = "";
+                dateList.Add(d);
+                dat = dat.AddDays(1);
+            }
+            // Return the list
+            return dateList;
+
         }
 
 
 
         /// <summary>
         /// Returns a list of valid dates for
-        /// registry of time for one ServiceRow
+        /// registry of time for one ServiceRow or ServiceOrder
+        /// 2017-03-14 KJBO
+        /// Added functionality to handle timeRegistryVersion 2
         /// </summary>
         /// <param name="ident"></param>
         /// <param name="SrAltKey">Alternate key</param>
         /// <returns>List of dates or an error message</returns>
-        private List<OpenDateCL> getOpenDates(string ident, string SrAltKey, bool bValidate)
+        private List<OpenDateCL> getOpenDates(string ident, string SrAltKey, bool bValidate, int timeRegVersion = 0, string vart_ordernr = "")
         {
-            
+            // Create a list of open dates for use in return clause
             List<OpenDateCL> dateList = new List<OpenDateCL>();
 
+            // If we need to validate user...
             if (bValidate)
             {
                 CReparator cr = new CReparator();
-
                 int identOK = cr.checkIdent(ident);
-
                 if (identOK == -1)
                 {
                     OpenDateCL d = new OpenDateCL();
@@ -58,31 +136,46 @@ namespace SManApi
                 }
             }
 
-            CServRad crv = new CServRad();
-            DataTable dt = crv.validateServRad(SrAltKey);
 
-            if (dt.Rows.Count == 0)
+            if (vart_ordernr == "")
             {
-                OpenDateCL d = new OpenDateCL();
-                d.ErrCode = -10;
-                d.ErrMessage = "Ogiltig ServiceRad";
-                dateList.Add(d);
-                return dateList;
+                // We need to retrieve vart_ordernr and radnr
+                // from alternate key
+                CServRad crv = new CServRad();
+                DataTable dt = crv.validateServRad(SrAltKey);
+                // If error then return
+                if (dt.Rows.Count == 0)
+                {
+                    OpenDateCL d = new OpenDateCL();
+                    d.ErrCode = -10;
+                    d.ErrMessage = "Ogiltig ServiceRad";
+                    dateList.Add(d);
+                    return dateList;
+                }
+
+                // Store local variables
+                vart_ordernr = dt.Rows[0]["vart_ordernr"].ToString();
+                int radnr = Convert.ToInt32(dt.Rows[0]["radnr"]);
             }
 
-            string vart_ordernr = dt.Rows[0]["vart_ordernr"].ToString();
-            int radnr = Convert.ToInt32(dt.Rows[0]["radnr"]);
+            // timeRegVersion 0 means that this function shall
+            // determine the right timeRegVersion
+            if (timeRegVersion == 0)
+            {
+               CMisc cm = new CMisc();
+               timeRegVersion = cm.getTimeRegVersion(ident, vart_ordernr);
+            }
 
+            // If we need validation then check if the current order
+            // is openForApp, godkand or (in case of timeRegVersion 2)
+            // also check if the timeRegistry is approved
             if (bValidate)
             {
-
                 CServiceHuvud ch = new CServiceHuvud();
-
-                dt = ch.validateOrderOpenGodkand(vart_ordernr);
-
+                DataTable dt = ch.validateOrderOpenGodkand(vart_ordernr);
                 bool bOpenForApp = Convert.ToBoolean(dt.Rows[0]["OpenForApp"]);
                 bool bGodkand = Convert.ToBoolean(dt.Rows[0]["Godkand"]);
-
+                // Return if not open for app
                 if (!bOpenForApp)
                 {
                     OpenDateCL d = new OpenDateCL();
@@ -91,8 +184,7 @@ namespace SManApi
                     dateList.Add(d);
                     return dateList;
                 }
-
-
+                // return if godkand
                 if (bGodkand)
                 {
                     OpenDateCL d = new OpenDateCL();
@@ -101,58 +193,79 @@ namespace SManApi
                     dateList.Add(d);
                     return dateList;
                 }
-            }
-            
 
-            string sSql = "";
-            for (int i = 1; i <= 7; i++)
+                // Return if timeRegVersion = 2 and the time registry is approved
+                // and thus closed 
+                if (timeRegVersion == 2)
+                {
+                    if (isTime2Approved(vart_ordernr))
+                    {
+                        OpenDateCL d = new OpenDateCL();
+                        d.ErrCode = -10;
+                        d.ErrMessage = "Aktuell tidredovisning är stängd och kan inte ändras ";
+                        dateList.Add(d);
+                        return dateList;
+
+                    }                    
+                }               
+            }
+
+
+            // Create date list for timeRegVersion 1
+            if (timeRegVersion == 1)
             {
-                if (i > 1)
-                    sSql += " union ";
-                sSql += " select distinct datum" + i.ToString() + " ";
-                if (i == 1)
-                    sSql += " datum ";
-                sSql += " from tidrapp "
-                      + " where vart_ordernr = :vart_ordernr ";
+                string sSql = "";
+                for (int i = 1; i <= 7; i++)
+                {
+                    if (i > 1)
+                        sSql += " union ";
+                    sSql += " select distinct datum" + i.ToString() + " ";
+                    if (i == 1)
+                        sSql += " datum ";
+                    sSql += " from tidrapp "
+                          + " where vart_ordernr = :vart_ordernr ";
+                }
+                sSql += " order by 1 ";
+
+                NxParameterCollection pc = new NxParameterCollection();
+                pc.Add("vart_ordernr", vart_ordernr);
+
+                string err = "";
+                DataTable dt = cdb.getData(sSql, ref err, pc);
+
+                int errCode = -100;
+
+                if (err == "" && dt.Rows.Count == 0)
+                {
+                    err = "Det finns inga upplagda datum för tidregistrering ";
+                    errCode = 0;
+                }
+
+
+                if (err != "")
+                {
+                    OpenDateCL d = new OpenDateCL();
+                    if (err.Length > 2000)
+                        err = err.Substring(1, 2000);
+                    d.ErrCode = errCode;
+                    d.ErrMessage = err;
+                    dateList.Add(d);
+                    return dateList;
+                }
+
+                foreach (DataRow dr in dt.Rows)
+                {
+                    OpenDateCL d = new OpenDateCL();
+                    d.Datum = Convert.ToDateTime(dr["datum"]);
+                    d.ErrCode = 0;
+                    d.ErrMessage = "";
+                    dateList.Add(d);
+                }
+
+                return dateList;
             }
-            sSql += " order by 1 ";
-
-            NxParameterCollection pc = new NxParameterCollection();
-            pc.Add("vart_ordernr", vart_ordernr);
-
-            string err = "";
-            dt = cdb.getData(sSql, ref err, pc);
-
-            int errCode = -100;
-
-            if (err == "" && dt.Rows.Count == 0)
-            {
-                err = "Det finns inga upplagda datum för tidregistrering ";
-                errCode = 0;
-            }
-
-
-            if (err != "")
-            {
-                OpenDateCL d = new OpenDateCL();
-                if (err.Length > 2000)
-                    err = err.Substring(1, 2000);
-                d.ErrCode = errCode;
-                d.ErrMessage = err;
-                dateList.Add(d);
-                return dateList;            
-            }
-
-            foreach (DataRow dr in dt.Rows)
-            {
-                OpenDateCL d = new OpenDateCL();
-                d.Datum = Convert.ToDateTime(dr["datum"]);
-                d.ErrCode = 0;
-                d.ErrMessage = "";
-                dateList.Add(d);
-            }
-
-            return dateList;
+            // Call function for timeRegVersion 2
+            return getOpenDates(vart_ordernr);
         }
 
         
@@ -227,7 +340,7 @@ namespace SManApi
             }
 
             NxParameterCollection pc = new NxParameterCollection();
-            string sSql = " SELECT srrt.ID, srrt.srAltKey, srrt.anvID, srrt.tid, srrt.datum, srrt.TimeTypeID "
+            string sSql = " SELECT srrt.ID, srrt.srAltKey, srrt.anvID, srrt.tid, srrt.datum, srrt.TimeTypeID, srrt.SalartID, srrt.rep_kat_id "
                         + " FROM ServradRepTid srrt ";
             if (ID != 0)
             {
@@ -287,6 +400,11 @@ namespace SManApi
                 srr.Datum = Convert.ToDateTime(dr["datum"]);
                 srr.Tid = Convert.ToDecimal(dr["tid"]);
                 srr.timeTypeID = Convert.ToInt32(dr["TimeTypeID"]);
+                if (dr["SalartID"] == DBNull.Value)
+                    srr.SalartID = 0;
+                else
+                    srr.SalartID = Convert.ToInt32(dr["SalartID"]);
+                srr.RepKatID = dr["rep_kat_id"].ToString();
                 srr.ErrCode = 0;
                 srr.ErrMessage = "";
                 srrRows.Add(srr);
@@ -299,9 +417,9 @@ namespace SManApi
         private string getInsertSQL()
         {
             string sSql = " insert into ServradRepTid (  anvID, datum, regdat, srAltKey "
-                         + " , tid, attesterad, TimeTypeID)  "
+                         + " , tid, attesterad, TimeTypeID, SalartID, rep_kat_id)  "
                         + "  values ( :anvID, :datum, :regdat, :srAltKey "
-                        + " , :tid, false, :TimeTypeID )";
+                        + " , :tid, false, :TimeTypeID, :SalartID, :rep_kat_id )";
 
             return sSql;
         }
@@ -317,6 +435,8 @@ namespace SManApi
                         + ", tid = :tid "
                         + ", uppdat_dat = :uppdat_dat "
                         + ", TimeTypeID = :TimeTypeID "
+                        + ", SalartID = :SalartID "
+                        + ", rep_kat_id = :rep_kat_id "
                         + " where ID = :ID ";
             return sSql;
 
@@ -341,6 +461,11 @@ namespace SManApi
             np.Add("tid", sr.Tid);
             np.Add("uppdat_dat", System.DateTime.Now);
             np.Add("TimeTypeID", sr.timeTypeID);
+            if (sr.SalartID == 0)
+                np.Add("SalartID", System.DBNull.Value);
+            else
+                np.Add("SalartID", sr.SalartID);
+            np.Add("rep_kat_id", sr.RepKatID);
 
         }
 
@@ -360,9 +485,9 @@ namespace SManApi
             return cr.getName(anvID).Length;
         }
 
-        private int validateDatum( ServRadRepTidCL srt, string ident)
+        private int validateDatum( ServRadRepTidCL srt, string ident, int timeRegVersion)
         {
-            List<OpenDateCL> dateList = getOpenDates(ident, srt.SrAltKey, false);
+            List<OpenDateCL> dateList = getOpenDates(ident, srt.SrAltKey, false, timeRegVersion);
 
             OpenDateCL dateToCheck = new OpenDateCL();
 
@@ -380,7 +505,7 @@ namespace SManApi
         }
 
 
-        private int validateDuplicate(ServRadRepTidCL srt)
+        private int validateDuplicate(ServRadRepTidCL srt, int timeRegVersion)
         {
             string sSql = " SELECT count(*) as antal "
                         + " from ServRadRepTid "
@@ -388,6 +513,11 @@ namespace SManApi
                         + " and anvID = :anvID "
                         + " and datum = :datum "
                         + " and TimeTypeID = :TimeTypeID ";
+            if (timeRegVersion == 2)
+            {
+                sSql += " and SalartID = :SalartID "
+                        + " and rep_kat_id = :rep_kat_id ";
+            }
             if (srt.ID != 0)
                 sSql += " and ID <> :ID ";
 
@@ -398,6 +528,11 @@ namespace SManApi
             pc.Add("TimeTypeID", srt.timeTypeID);
             if (srt.ID != 0)
                 pc.Add("ID", srt.ID);
+            if (timeRegVersion == 2)
+            {
+                pc.Add("SalartID", srt.SalartID);
+                pc.Add("rep_kat_id", srt.RepKatID);
+            }
 
             string er = "";
 
@@ -437,24 +572,66 @@ namespace SManApi
 
         }
 
+        private int validateAttested(ServRadRepTidCL srt)
+        {
+            if (srt.ID == 0)
+                return 0;
+            string sSql = "SELECT attesterad "
+                        + "FROM ServRadRepTid "
+                        + "where ID = :ID ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("ID", srt.ID);
 
-        private int validateServRadRepTid(ServRadRepTidCL srt, string ident, ref string err)
+            string er = "";
+            DataTable dt = cdb.getData(sSql, ref er, pc);
+
+            if (dt.Rows.Count == 0)
+                return 0;
+
+            Boolean bAttest = Convert.ToBoolean(dt.Rows[0]["attesterad"]);
+
+            if (bAttest)
+                return 1;
+            return 0;
+        }
+
+
+        private int validateServRadRepTid(ServRadRepTidCL srt, string ident, ref string err, int timeRegVersion)
         {
             err = "";
             if (validateAlternateKey(srt.SrAltKey) == 0)            
                 return -1;            
             if (validateAnvID(srt.AnvID) == 0 )
                 return -2;
-            if (validateDatum(srt, ident) == 0)
+            if (validateDatum(srt, ident, timeRegVersion) == 0)
                 return -3;
             if (validateTid(srt.Tid, ref err) == 0)
                 return -4;
-            if (validateDuplicate(srt) > 0)
+            if (validateDuplicate(srt, timeRegVersion) > 0)
                 return -5;
             if (validateTimeType(srt.timeTypeID) == 0)
                 return -6;
+            if (validateAttested(srt) == 1)
+                return -7;
             return 1;
+        }
 
+        private int validateSalart(int SalartID, bool forServiceDetalj, ref int salartCatID)
+        {
+            CSalart csa = new CSalart();
+            int valid = csa.validateSalart(SalartID, forServiceDetalj, ref salartCatID);
+            if (valid == 1)
+                return 1;
+            return -1;            
+        }
+
+        private int validateRepKat(string repKatID)
+        {
+            CReparator cr = new CReparator();
+            int valid = cr.validateRepKat(repKatID);
+            if (valid == 1)
+                return 1;
+            return -1;
         }
 
         private int getLastInserted( string AnvID)
@@ -483,7 +660,9 @@ namespace SManApi
         /// <param name="ident">Identity</param>
         /// <param name="srt">ServRadTidRepCL</param>
         /// <returns>The saved row or an error</returns>
-        //  2016-02-15 KJBO Pergas AB
+        ///  2016-02-15 KJBO Pergas AB
+        ///  Added handling for generation 2 of timeregistry
+        ///  2017-03-13 KJBO Pergas AB
         public ServRadRepTidCL saveServRadRepTid(string ident, ServRadRepTidCL srt)
         {
             bool bNew = false;
@@ -500,10 +679,38 @@ namespace SManApi
                 return retSrt;
             }
 
+            CServRad crs = new CServRad();
+            DataTable dtsr = crs.validateServRad(srt.SrAltKey);
+
+            string sVartOrdernr = dtsr.Rows[0]["vart_ordernr"].ToString();
+
+            CServiceHuvud ch = new CServiceHuvud();
+            string sOpen = ch.isOpen(ident, sVartOrdernr);
+            if (sOpen != "1")
+            {                
+                retSrt.ErrCode = -10;
+                if (sOpen == "-1")
+                    retSrt.ErrMessage = "Order är stängd för inmatning";
+                else
+                    retSrt.ErrMessage = sOpen;
+                return retSrt;                
+            }
+
+
+            if (isTime2Approved(sVartOrdernr))
+            {
+                retSrt.ErrCode = -10;
+                retSrt.ErrMessage = "Aktuell tidredovisning är stängd och kan inte ändras ";
+                return retSrt;                
+            }
+
+            // Added 2017-03-13 for generation 2 handling
+            CMisc cm = new CMisc();
+            int timeRegVersion = cm.getTimeRegVersion(ident, sVartOrdernr);
 
 
             string err = "";
-            int valid = validateServRadRepTid(srt, ident, ref err);
+            int valid = validateServRadRepTid(srt, ident, ref err, timeRegVersion);
 
             if (valid == -1)
             {
@@ -537,7 +744,10 @@ namespace SManApi
             if (valid == -5)
             {
                 retSrt.ErrCode = -1;
-                retSrt.ErrMessage = "Det finns redan tid redovisat för aktuell dag och ventil";
+                if (timeRegVersion == 1)
+                    retSrt.ErrMessage = "Det finns redan tid redovisat för aktuell dag och ventil ";
+                else
+                    retSrt.ErrMessage = "Det finns redan tid redovisat för aktuell användare, dag, ventil och löneart ";
                 return retSrt;
             }
 
@@ -549,27 +759,46 @@ namespace SManApi
                 return retSrt;
             }
 
-
-            CServRad crs = new CServRad();
-
-            DataTable dtsr = crs.validateServRad(srt.SrAltKey);
-
-            string sVartOrdernr = dtsr.Rows[0]["vart_ordernr"].ToString();
-
-            CServiceHuvud ch = new CServiceHuvud();
-            string sOpen = ch.isOpen(ident, sVartOrdernr);
-            if (sOpen != "1")
+            if (valid == -7)
             {
-                {
-                    retSrt.ErrCode = -10;
-                    if (sOpen == "-1")
-                        retSrt.ErrMessage = "Order är stängd för inmatning";
-                    else
-                        retSrt.ErrMessage = sOpen;
-                    return retSrt;
-                }
+                retSrt.ErrCode = -1;
+                retSrt.ErrMessage = "Tidregistreringen är attesterad";
+                return retSrt;
+
             }
 
+
+
+            if (timeRegVersion == 2)
+            {                
+                if (srt.SalartID == 0)
+                {
+                    retSrt.ErrCode = -1;
+                    retSrt.ErrMessage = "Löneart saknas";
+                    return retSrt;
+                }
+                if (srt.RepKatID == "")
+                {
+                    retSrt.ErrCode = -1;
+                    retSrt.ErrMessage = "Reparatörskategori saknas";
+                    return retSrt;
+                }
+
+                int dontNeed = 0;
+                if (validateSalart(srt.SalartID, true, ref dontNeed) == -1)
+                {
+                    retSrt.ErrCode = -1;
+                    retSrt.ErrMessage = "Felaktig löneart";
+                    return retSrt;
+                }
+                if (validateRepKat(srt.RepKatID) == -1)
+                {
+                    retSrt.ErrCode = -1;
+                    retSrt.ErrMessage = "Felaktig reparatörskategor";
+                    return retSrt;
+                }
+
+            }
 
             string sSql = "";
 
@@ -591,7 +820,6 @@ namespace SManApi
             }
             else
                 sSql = getUpdateSQL();
-
            
             NxParameterCollection np = new NxParameterCollection();
             setParameters(np, srt);
@@ -773,6 +1001,55 @@ namespace SManApi
             return rtls;
         }
 
+        /// <summary>
+        /// Get valid time types for one order
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <returns>Valid time types</returns>
+        // 2017-03-14 KJBO
+        public List<TimeTypeCL> getTimeTypesForOrder(string ident, string vartOrdernr)
+        {
+            string sSql = "SELECT count(*) hos_kund "
+                        + "FROM servicerad "
+                        + "where vart_ordernr = :vart_ordernr "
+                        + "and hos_kund ";
+
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", vartOrdernr);
+
+            string errText = "";
+
+            DataTable dt = cdb.getData(sSql, ref errText, pc);
+
+            bool bHosKund = false;
+
+            if (dt.Rows.Count > 0)
+            {
+                bHosKund = Convert.ToInt32(dt.Rows[0]["hos_kund"]) > 0;
+            }
+
+
+            sSql = "SELECT count(*) pa_verkstad "
+                + "FROM servicerad "
+                + "where vart_ordernr = :vart_ordernr "
+                + "and pa_verkstad ";
+
+            pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", vartOrdernr);
+            errText = "";
+
+            dt = cdb.getData(sSql, ref errText, pc);
+
+            bool bPaVerkstad = false;
+
+            if (dt.Rows.Count > 0)
+            {
+                bPaVerkstad = Convert.ToInt32(dt.Rows[0]["pa_verkstad"]) > 0;
+            }
+            return getTimeTypes(ident, bHosKund, bPaVerkstad);
+        }
+
 
 
 
@@ -842,6 +1119,574 @@ namespace SManApi
             return tts;
 
         }
+
+
+        public bool isTime2Approved (string vartOrdernr)
+        {
+
+
+            string sSql = " SELECT approved "
+                        + " FROM timeReport2 "
+                        + " where vart_ordernr = :vartOrdernr ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", vartOrdernr);
+
+            string errText = "";
+            DataTable dt = cdb.getData(sSql, ref errText, pc);
+            
+            if (errText == "" && dt.Rows.Count == 0)
+            {
+                return false;
+            }
+
+            if (dt.Rows.Count == 0)
+                return false;
+
+            return Convert.ToBoolean(dt.Rows[0]["approved"]);
+
+
+        }
+
+
+        private int validateDatum(ServHuvRepTidCL sht)
+        {
+            List<OpenDateCL> dateList = getOpenDates(sht.VartOrdernr);
+
+            OpenDateCL dateToCheck = new OpenDateCL();
+
+            dateToCheck.Datum = sht.Datum;
+            dateToCheck.ErrCode = 0;
+            dateToCheck.ErrMessage = "";
+
+            foreach (OpenDateCL od in dateList)
+            {
+                if (od.Datum == sht.Datum)
+                    return 1;
+            }
+
+            return 0;
+        }
+
+        private int validateDuplicate(ServHuvRepTidCL sht, int salartTypeCategory)
+        {
+
+            string sSql = "SELECT count(*) as antal "
+                        + "from ServHuvRepTid "
+                        + "where vart_ordernr = :vart_ordernr "
+                        + " and datum = :datum "
+                        + " and TimeTypeID = :TimeTypeID "
+                        + " and SalartID = :SalartID ";
+            if (salartTypeCategory == 1)
+                  sSql += " and anvID = :anvID "
+                        + " and rep_kat_id = :rep_kat_id ";
+            if (sht.ID != 0)
+                sSql += " and ID <> :ID ";
+
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", sht.VartOrdernr);            
+            pc.Add("datum", sht.Datum);
+            pc.Add("TimeTypeID", sht.TimeTypeID);
+            pc.Add("SalartID", sht.SalartID);
+            if (salartTypeCategory == 1)
+            {
+                pc.Add("anvID", sht.AnvId);
+                pc.Add("rep_kat_id", sht.RepKatID);
+            }
+            if (sht.ID != 0)
+                pc.Add("ID", sht.ID);           
+            string er = "";
+
+            DataTable dt = cdb.getData(sSql, ref er, pc);
+            return Convert.ToInt32(dt.Rows[0]["antal"]);
+        }
+
+
+        private int validateAttested(ServHuvRepTidCL srt)
+        {
+            if (srt.ID == 0)
+                return 0;
+            string sSql = "SELECT attesterad "
+                        + "FROM ServHuvRepTid "
+                        + "where ID = :ID ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("ID", srt.ID);
+
+            string er = "";
+            DataTable dt = cdb.getData(sSql, ref er, pc);
+
+            if (dt.Rows.Count == 0)
+                return 0;
+
+            Boolean bAttest = Convert.ToBoolean(dt.Rows[0]["attesterad"]);
+
+            if (bAttest)
+                return 1;
+            return 0;
+        }
+
+        
+
+
+
+        private int validateServHuvRepTid(ServHuvRepTidCL sht, string ident, ref string err, int SalartCatID)
+        {
+            err = "";
+            if (SalartCatID == 1)
+            {
+                if (validateAnvID(sht.AnvId) == 0)
+                    return -2;
+            }
+            if (validateDatum(sht) == 0)
+                return -3;
+            if (validateTid(sht.Tid, ref err) == 0)
+                return -4;
+            if (validateDuplicate(sht, SalartCatID) > 0)
+                return -5;
+            if (validateTimeType(sht.TimeTypeID) == 0)
+                return -6;
+            if (validateAttested(sht) == 1)
+                return -7;
+            return 1;
+        }
+
+
+        private string getShInsertSQL()
+        {
+            string sSql = " insert into ServHuvRepTid ( vart_ordernr, timeTypeID, salartID, anvID, rep_kat_id, tid, datum, regdat, attesterad) "
+                        + " values ( :vart_ordernr, :timeTypeID, :salartID, :anvID, :rep_kat_id, :tid, :datum, :regdat, false) ";
+            return sSql;
+        }
+
+        private string getShDeleteSQL()
+        {
+            string sSql = " delete from ServHuvRepTid "
+                        + " where ID = :ID ";
+            return sSql;
+        }
+
+
+        private string getShUpdateSQL()
+        {
+            string sSql = " update ServHuvRepTid "
+                        + " set anvID = :anvID "
+                        + ", datum = :datum "
+                        + ", vart_ordernr = :vart_ordernr "
+                        + ", tid = :tid "
+                        + ", uppdat_dat = :uppdat_dat "
+                        + ", TimeTypeID = :TimeTypeID "
+                        + ", SalartID = :SalartID "
+                        + ", rep_kat_id = :rep_kat_id "
+                        + " where ID = :ID ";
+            return sSql;
+
+        }
+
+        private int getShLastInserted()
+        {
+            string sSql = " SELECT coalesce(max(ID),0) as MaxID "
+                        + " FROM ServHuvRepTid ";                        
+
+            string er = "";
+            DataTable dt = cdb.getData(sSql, ref er);
+            return Convert.ToInt32(dt.Rows[0]["MaxID"]);
+        }
+
+
+
+        private void setParameters(NxParameterCollection np, ServHuvRepTidCL sr, int salartCatID)
+        {
+            if (sr.ID != 0)
+            {
+                np.Add("ID", sr.ID);
+                np.Add("uppdat_dat", System.DateTime.Now);
+            }
+            else
+                np.Add("regdat", System.DateTime.Now);                            
+            np.Add("datum", sr.Datum);
+            np.Add("vart_ordernr", sr.VartOrdernr);
+            np.Add("tid", sr.Tid);            
+            np.Add("TimeTypeID", sr.TimeTypeID);
+            np.Add("SalartID", sr.SalartID);
+            if (salartCatID == 1)
+            {
+                np.Add("anvID", sr.AnvId);    
+                np.Add("rep_kat_id", sr.RepKatID);
+            }
+            else
+            {
+                np.Add("anvID", System.DBNull.Value);
+                np.Add("rep_kat_id", System.DBNull.Value);
+            }                           
+        }
+
+
+
+
+
+        
+        /// <summary>
+        /// Validates one ServHuvRepTid
+        /// If the ID is 0 the this method
+        /// assumes that this is a new row
+        /// Returns the validated and stored
+        /// row with the new ID (if its a new row)
+        /// If an error occurs then an error is returned
+        /// in the ServHuvTidRep return row
+        /// </summary>
+        /// <param name="ident">Identity</param>
+        /// <param name="sht">ServHuvRepTid</param>
+        /// <returns></returns>
+        public ServHuvRepTidCL saveServHuvRepTid(string ident, ServHuvRepTidCL sht)
+        {
+            // Init variables
+            bool bNew = false;            
+            bool bDeleted = false;
+
+            CReparator cr = new CReparator();
+            int identOK = cr.checkIdent(ident);
+
+            ServHuvRepTidCL retSrt = new ServHuvRepTidCL();
+            if (identOK == -1)
+            {
+                retSrt.ErrCode = -10;
+                retSrt.ErrMessage = "Ogiltigt login";
+                return retSrt;
+            }
+
+
+            if (sht.VartOrdernr == "")
+            {
+                retSrt.ErrCode = -1;
+                retSrt.ErrMessage = "Ordernummer saknas";
+                return retSrt;
+            }
+            
+
+            CServiceHuvud ch = new CServiceHuvud();
+            string sOpen = ch.isOpen(ident, sht.VartOrdernr);
+            if (sOpen != "1")
+            {
+                retSrt.ErrCode = -10;
+                if (sOpen == "-1")
+                    retSrt.ErrMessage = "Order är stängd för inmatning";
+                else
+                    retSrt.ErrMessage = sOpen;
+                return retSrt;
+            }
+
+
+            if (isTime2Approved(sht.VartOrdernr))
+            {
+                retSrt.ErrCode = -10;
+                retSrt.ErrMessage = "Aktuell tidredovisning är stängd och kan inte ändras ";
+                return retSrt;
+            }
+
+            if (sht.SalartID == 0)
+            {
+                retSrt.ErrCode = -1;
+                retSrt.ErrMessage = "Löneart saknas";
+                return retSrt;
+            }
+
+
+            int salartCatID = 0;
+            if (validateSalart(sht.SalartID, false, ref salartCatID) == -1)
+            {
+                retSrt.ErrCode = -1;
+                retSrt.ErrMessage = "Felaktig löneart";
+                return retSrt;
+            }
+
+
+
+            string err = "";
+            int valid = validateServHuvRepTid(sht, ident, ref err, salartCatID);
+
+
+            if (valid == -2)
+            {
+                retSrt.ErrCode = -1;
+                retSrt.ErrMessage = "Felaktigt användarID";
+                return retSrt;
+            }
+
+            if (valid == -3)
+            {
+                retSrt.ErrCode = -1;
+                retSrt.ErrMessage = "Felaktigt datum";
+                return retSrt;
+            }
+
+            if (valid == -4)
+            {
+                retSrt.ErrCode = -1;
+                retSrt.ErrMessage = err;
+                return retSrt;
+            }
+
+            // 2016-06-17 added clause
+            if (valid == -5)
+            {
+                retSrt.ErrCode = -1;
+                if (salartCatID == 1)
+                    retSrt.ErrMessage = "Det finns redan tid redovisat för aktuell reparatör, dag och löneart ";
+                else
+                    retSrt.ErrMessage = "Det finns redan tid redovisat för aktuell dag och löneart ";
+                return retSrt;
+            }
+
+            // 2016-11-01 KJBO
+            if (valid == -6)
+            {
+                retSrt.ErrCode = -1;
+                retSrt.ErrMessage = "Felaktigt TimeTypeID";
+                return retSrt;
+            }
+
+            if (valid == -7)
+            {
+                retSrt.ErrCode = -1;
+                retSrt.ErrMessage = "Tidregistreringen är attesterad";
+                return retSrt;
+
+            }
+
+
+
+            if (salartCatID == 1)
+            {
+                if (sht.RepKatID == "")
+                {
+                    retSrt.ErrCode = -1;
+                    retSrt.ErrMessage = "Reparatörskategori saknas";
+                    return retSrt;
+                }
+
+                if (validateRepKat(sht.RepKatID) == -1)
+                {
+                    retSrt.ErrCode = -1;
+                    retSrt.ErrMessage = "Felaktig reparatörskategori";
+                    return retSrt;
+                }
+            }
+
+            
+
+            string sSql = "";
+
+            // Nothing to save... 2016-06-17
+            if (sht.ID == 0 && sht.Tid == 0)
+                return sht;
+
+
+            // This is a new ventil
+            if (sht.ID == 0)
+            {
+                sSql = getShInsertSQL();
+                bNew = true;
+            }
+            else if (sht.Tid == 0)
+            {
+                sSql = getShDeleteSQL();
+                bDeleted = true;
+            }
+            else
+                sSql = getShUpdateSQL();
+
+            NxParameterCollection np = new NxParameterCollection();
+            setParameters(np, sht, salartCatID);
+
+            string errText = "";
+
+            int iRc = cdb.updateData(sSql, ref errText, np);
+
+            if (errText != "")
+            {
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                retSrt.ErrCode = -100;
+                retSrt.ErrMessage = errText;
+                return retSrt;
+            }
+
+            if (bNew)
+            {
+                sht.ID = getShLastInserted();
+                CServRad crs = new CServRad();
+                // 2016-04-04 KJBO
+                crs.ensureReparatorExists(ident, "", "", sht.VartOrdernr);
+            }
+            if (bDeleted)
+                return sht;
+            return getServHuvRepTid(ident, sht.ID);
+        }
+
+
+
+        /// <summary>
+        /// Get one row of ServHuvRepTid identified by PK
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="ID"></param>
+        /// <returns></returns>
+        /// 2017-03-15 KJBO
+        public ServHuvRepTidCL getServHuvRepTid(string ident, int ID)
+        {
+            List<ServHuvRepTidCL> srrList = getServHuvRepTidForOrder(ident, "", ID, "");
+            return srrList[0];
+        }
+
+
+
+
+        /// <summary>
+        /// Get all ServHuvRepTid for one order
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <returns></returns>
+        /// 2017-03-15 KJBO
+        public List<ServHuvRepTidCL> getServHuvRepTidForSH(string ident, string vartOrdernr)
+        {
+            return getServHuvRepTidForOrder(ident, vartOrdernr, 0, "");
+        }
+
+
+        /// <summary>
+        /// Get all ServHuvRepTid for one order and 
+        /// one user ( = anv)
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <param name="anvID"></param>
+        /// <returns></returns>
+        /// 2017-03-15 KJBO
+        public List<ServHuvRepTidCL> getServHuvRepTidForShAnv(string ident, string vartOrdernr, string anvID)
+        {
+            return getServHuvRepTidForOrder(ident, vartOrdernr, 0, anvID);
+        }
+
+
+
+
+        /// <summary>
+        /// Lists ServRadRepTid rows depending on parameters
+        /// Note that this is a private function used by several
+        /// other public functions
+        /// 
+        /// If an ID is given (and is not 0) this function returns only zero or one row
+        /// because this is the primary key
+        /// 
+        /// If ID is 0 and vartOrdernr is not an empty string then this function returns 
+        /// a list of all ServRadRepTid rows for the current order.
+        /// 
+        /// If ID is 0 and both vartOrdernr and AnvId is provided this function returns
+        /// a list of all ServRadRepTid rows for the current order and user (anvID)
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <param name="ID"></param>
+        /// <param name="AnvID"></param>
+        /// <returns></returns>
+        private List<ServHuvRepTidCL> getServHuvRepTidForOrder(string ident, string vartOrdernr, int ID, string AnvID)
+        {
+            // Object to use when return from function
+            List<ServHuvRepTidCL> shrRows = new List<ServHuvRepTidCL>();
+
+            // Check ident
+            CReparator cr = new CReparator();
+            int identOK = cr.checkIdent(ident);
+
+            if (identOK == -1)
+            {
+                ServHuvRepTidCL srr = new ServHuvRepTidCL();
+                srr.ErrCode = -10;
+                srr.ErrMessage = "Ogiltigt login";
+                shrRows.Add(srr);
+                return shrRows;
+            }
+
+            // Create an empty parameter collection
+            NxParameterCollection pc = new NxParameterCollection();
+            string sSql = " select ID, vart_ordernr, anvID, tid, datum, TimeTypeID, SalartID, rep_kat_id "
+                        + " from servHuvRepTid ";
+            // Now construct the SQL clause and add parameters...
+            if (ID != 0)
+            {
+                sSql += " where ID = :ID ";
+                pc.Add("ID", ID);
+            }
+            else
+            {
+                if (vartOrdernr != "")
+                {
+                    sSql += " where vart_ordernr = :vart_ordernr ";
+                    pc.Add("vart_ordernr", vartOrdernr);
+                }
+                if (AnvID != "")
+                {
+                    sSql += " and anvID = :anvID ";
+                    pc.Add("anvID", AnvID);
+                }
+
+            }
+
+            string errText = "";
+
+            // Get data
+            DataTable dt = cdb.getData(sSql, ref errText, pc);
+
+            int errCode = -100;
+
+            // Check if any result
+            if (errText == "" && dt.Rows.Count == 0)
+            {
+                if (ID != 0)
+                    errText = "Felaktigt ID";
+                else
+                    errText = "Inga tidsinmatning registrerade för aktuell serviceorder/användare";
+                errCode = 0;
+            }
+
+
+            // Check for database errors
+            if (errText != "")
+            {
+                ServHuvRepTidCL srr = new ServHuvRepTidCL();
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                srr.ErrCode = errCode;
+                srr.ErrMessage = errText;
+                shrRows.Add(srr);
+                return shrRows;
+            }
+
+            // Build result list
+            foreach (DataRow dr in dt.Rows)
+            {
+                ServHuvRepTidCL shr = new ServHuvRepTidCL();
+                shr.ID = Convert.ToInt32(dr["ID"]);
+                shr.VartOrdernr = dr["vart_ordernr"].ToString();
+                if (dr["anvID"] != DBNull.Value)
+                    shr.AnvId = dr["anvID"].ToString();
+                shr.Datum = Convert.ToDateTime(dr["datum"]);
+                shr.Tid = Convert.ToDecimal(dr["tid"]);
+                shr.TimeTypeID = Convert.ToInt32(dr["TimeTypeID"]);
+                shr.SalartID = Convert.ToInt32(dr["SalartID"]);
+                if (dr["rep_kat_id"] != DBNull.Value)
+                    shr.RepKatID = dr["rep_kat_id"].ToString();
+                shr.ErrCode = 0;
+                shr.ErrMessage = "";
+                shrRows.Add(shr);
+            }
+            // Return result
+            return shrRows;
+        }
+
+
+
+
 
     }
 

@@ -185,6 +185,77 @@ namespace SManApi
             return lp;
         }
 
+        /// <summary>
+        /// Return all salarts either for servicedetalj or serviceorder 
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="forServiceDetalj"></param>
+        /// <returns>List of salart or error code</returns>
+        public List<SalartCL> getSalart(string ident, bool forServiceDetalj)
+        {
+            List<SalartCL> ls = new List<SalartCL>();
+            CReparator cr = new CReparator();
+            int identOK = cr.checkIdent(ident);
+
+            if (identOK == -1)
+            {
+                SalartCL s = new SalartCL();
+                s.ErrCode = -10;
+                s.ErrMessage = "Ogiltigt login";
+                ls.Add(s);
+                return ls;
+            }
+            
+
+            string sSql = " SELECT SalartID, SalartTypeID, SalartName, enhet "
+                        + " FROM Salart ";
+            if (forServiceDetalj)
+                sSql += "where SalartTypeID = 1";
+            else
+                sSql += "where SalartTypeID > 1";
+                        
+
+            string errText = "";
+
+            DataTable dt = cdb.getData(sSql, ref errText);
+
+            int errCode = -100;
+
+            if (errText == "" && dt.Rows.Count == 0)
+            {
+                errText = "Lönearter finns tillgängliga";
+                errCode = 0;
+            }
+
+            if (errText != "")
+            {
+
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                SalartCL s = new SalartCL();
+                s.ErrCode = errCode;
+                s.ErrMessage = errText;
+                ls.Add(s);
+                return ls;
+            }
+
+
+            foreach (DataRow dr in dt.Rows)
+            {
+                SalartCL s = new SalartCL();
+                s.SalartID = Convert.ToInt32(dr["SalartID"]);
+                s.SalartTypeID = Convert.ToInt32(dr["SalartTypeID"]);
+                s.SalartName = dr["SalartName"].ToString();
+                s.Unit = dr["enhet"].ToString();
+                s.ErrCode = 0;
+                s.ErrMessage = "";
+                ls.Add(s);
+            }
+            return ls;
+
+        }
+
+
 
     }
 }

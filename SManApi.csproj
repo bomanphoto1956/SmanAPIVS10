@@ -85,6 +85,7 @@
     <Compile Include="CReadSettings.cs" />
     <Compile Include="CReparator.cs" />
     <Compile Include="CReservdel.cs" />
+    <Compile Include="CSalart.cs" />
     <Compile Include="CServiceHuvud.cs" />
     <Compile Include="CServRad.cs" />
     <Compile Include="CStdText.cs" />

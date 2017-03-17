@@ -373,6 +373,8 @@ namespace SManApi
         /// <param name="ident"></param>
         /// <param name="vartOrdernr"></param>
         /// <returns>A list of reparators or error</returns>
+        /// 2017-03-14 Added functionality
+        /// RepKatID is now current for this ordernr
         public List<ReparatorCL> getReparatorsForServiceHuvud( string ident, string vartOrdernr)
         {
 
@@ -392,14 +394,14 @@ namespace SManApi
                 return repList;
             }
 
-            string sSql = " select Coalesce(allRep,false) allRep,  Coalesce(OpenForApp,false) OpenforApp "
+            string sSql = " select Coalesce(allRep,false) allRep,  Coalesce(OpenForApp,false) OpenforApp, orderAdmin "
                         + " from servicehuvud "
                         + " where vart_ordernr = :vart_ordernr ";
 
             NxParameterCollection np = new NxParameterCollection();
             np.Add("vart_ordernr", vartOrdernr);
             
-            string errSt = "";
+            string errSt = "";            
             DataTable dt = cdb.getData(sSql, ref errSt, np);
 
             int errCode = -100;
@@ -428,6 +430,9 @@ namespace SManApi
                 repList.Add(rep);
                 return repList;
             }
+
+            string orderAdmin = dt.Rows[0]["orderAdmin"] == DBNull.Value ? "" : dt.Rows[0]["orderAdmin"].ToString();
+            
 
 
             if (Convert.ToBoolean(dt.Rows[0]["allRep"]) == true)
@@ -482,31 +487,116 @@ namespace SManApi
                 ReparatorCL r = new ReparatorCL();            
                 r.AnvID = dr["anvID"].ToString();
                 r.Reparator = dr["Reparator"].ToString();
-                r.RepKatID = dr["Rep_kat_id"].ToString();
+                if (dr["anvID"].ToString() == orderAdmin)
+                    r.RepKatID = "AL_ST";
+                else
+                    r.RepKatID = "REPARATOR";                
                 r.ErrCode = 0;
                 r.ErrMessage = "";
                 repList.Add(r);
             }
 
             return repList;
+        }
 
+        public int validateRepKat(string repKatID)
+        {
+            string sSql = " SELECT count(*) countRepKat "
+                        + " FROM rep_kat "
+                        + " where rep_kat_id = :rep_kat_id ";
+
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("rep_kat_id", repKatID);
+            string errText = "";
+
+            DataTable dt = cdb.getData(sSql, ref errText, pc);
+
+            int errCode = -100;
+
+            if (errText == "" && dt.Rows.Count == 0)
+            {
+                return -1;
+            }
+
+            if (dt.Rows.Count == 1)
+            {
+                int count = Convert.ToInt32(dt.Rows[0]["countRepKat"]);
+                if (count == 1)
+                    return 1;
+                else
+                    return -1;
+            }
+
+            return -1;
+        }
+
+
+        /// <summary>
+        /// Get all available repKat for 
+        /// timeregistration version 2
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <returns></returns>
+        /// 2017-03-14 KJBO
+        public List<RepKatCL> getRepKat(string ident)
+        {
+
+            int identOK = checkIdent(ident);
+            List<RepKatCL> repList = new List<RepKatCL>();
+
+            
+            if (identOK == -1)
+            {
+                RepKatCL rep = new RepKatCL();
+                rep.RepKatID = "";
+                rep.RepKat = "";
+                rep.ErrCode = -10;
+                rep.ErrMessage = "Ogiltigt login";
+                repList.Add(rep);
+                return repList;
+            }
+
+            string sSql = " select rep_kat_id, rep_kat "
+                        + " from rep_kat "
+                        + " order by rep_kat ";
+
+            string errSt = "";
+            DataTable dt = cdb.getData(sSql, ref errSt);
+
+            int errCode = -100;
+
+            if (errSt == "" && dt.Rows.Count == 0)
+            {                
+                errSt = "Reparatörskategorier saknas";
+                errCode = 0;
+            }
+
+
+            if (errSt != "")
+            {
+                RepKatCL rep = new RepKatCL();
+                if (errSt.Length > 2000)
+                    errSt = errSt.Substring(1, 2000);
+                rep.ErrCode = errCode;
+                rep.ErrMessage = errSt;
+                repList.Add(rep);
+                return repList;
+            }
+
+            foreach (DataRow dr in dt.Rows)
+            {
+                RepKatCL rep = new RepKatCL();
+                rep.RepKatID = dr["rep_kat_id"].ToString();
+                rep.RepKat = dr["rep_kat"].ToString();
+                repList.Add(rep);
+            }
+
+            return repList;
 
         }
 
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
+ 
+      
 
     }
 }

@@ -1304,11 +1304,12 @@ namespace SManApi
         /// <param name="ident"></param>
         /// <param name="srAltKey"></param>
         /// <param name="anvID"></param>
-        public void ensureReparatorExists(string ident, string srAltKey, string anvID)
-        {
-            string vartOrdernr = "";
+        public void ensureReparatorExists(string ident, string srAltKey, string anvID, string vartOrdernr = "")
+        {            
             int radnr = 0;
-            if (getOrdernrRadnrFromAltKey(srAltKey, ref vartOrdernr, ref radnr) == 1)
+            if (vartOrdernr == "")
+                getOrdernrRadnrFromAltKey(srAltKey, ref vartOrdernr, ref radnr);
+            if (vartOrdernr != "")
             {
                 // Get a reparator from anvID
                 CReparator cr = new CReparator();
