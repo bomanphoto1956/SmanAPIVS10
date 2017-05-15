@@ -531,6 +531,107 @@ namespace SManApi
         }
 
 
+
+        /// <summary>
+        /// Determines if the AnvID is administrator for the current order
+        /// If so the function will return the administrator RepCat.
+        /// Otherwise it will return the default RepKat.
+        /// repKat
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="AnvID"></param>
+        /// <param name="VartOrdernr"></param>
+        /// <returns></returns>
+        public RepKatCL getDefaultRepKat(string ident, string AnvID, string VartOrdernr)
+        {
+            int identOK = checkIdent(ident);
+
+            if (identOK == -1)
+            {
+                RepKatCL rep = new RepKatCL();
+                rep.RepKatID = "";
+                rep.RepKat = "";
+                rep.ErrCode = -10;
+                rep.ErrMessage = "Ogiltigt login";                
+                return rep;
+            }
+
+            string sSql = "select coalesce(orderAdmin,'') orderAdmin "
+                        + "from serviceHuvud "
+                        + "where vart_ordernr = :vart_ordernr ";
+
+            NxParameterCollection np = new NxParameterCollection();
+            np.Add("vart_ordernr", VartOrdernr);
+
+            string errSt = "";
+            DataTable dt = cdb.getData(sSql, ref errSt, np);
+
+            string orderAdmin = "";
+
+            int errCode = -100;
+
+            if (errSt != "")
+            {
+                RepKatCL rep = new RepKatCL();
+                if (errSt.Length > 2000)
+                    errSt = errSt.Substring(1, 2000);
+                rep.ErrCode = errCode;
+                rep.ErrMessage = errSt;
+                return rep;
+            }
+
+            if (dt.Rows.Count > 0)
+            {
+                orderAdmin = dt.Rows[0]["orderAdmin"].ToString();
+            }
+
+            sSql = "SELECT rep_kat_id, rep_kat "
+                + "FROM rep_kat "
+                + " where stdkat = :stdkat ";
+
+            np = new NxParameterCollection();
+
+            if (AnvID == orderAdmin)
+                np.Add("stdkat", false);
+            else
+                np.Add("stdkat", true);
+
+
+            dt = cdb.getData(sSql, ref errSt, np);
+
+            errCode = -100;
+
+            if (errSt == "" && dt.Rows.Count == 0)
+            {
+                errSt = "Reparatörskategori kan ej utvärderas";
+                errCode = 0;
+            }
+
+
+            if (errSt != "")
+            {
+                RepKatCL rep = new RepKatCL();
+                if (errSt.Length > 2000)
+                    errSt = errSt.Substring(1, 2000);
+                rep.ErrCode = errCode;
+                rep.ErrMessage = errSt;            
+                return rep;
+            }
+
+            if (dt.Rows.Count > 0)
+            {
+                RepKatCL rep = new RepKatCL();
+                rep.RepKatID = dt.Rows[0]["rep_kat_id"].ToString();
+                rep.RepKat = dt.Rows[0]["rep_kat"].ToString();
+                rep.ErrCode = 0;
+                rep.ErrMessage = "";
+                return rep;                
+            }
+
+            return null;           
+        }
+
+
         /// <summary>
         /// Get all available repKat for 
         /// timeregistration version 2

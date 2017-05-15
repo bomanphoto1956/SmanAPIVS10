@@ -735,7 +735,54 @@ namespace SManApi
             return ct.getServHuvRepTidForShAnv(ident, vartOrdernr, anvID);
         }
 
+        /// <summary>
+        /// Determines if the AnvID is administrator for the current order
+        /// If so the function will return the administrator RepCat.
+        /// Otherwise it will return the default RepKat.
+        /// repKat
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="AnvID"></param>
+        /// <param name="VartOrdernr"></param>
+        /// <returns></returns>
+        public RepKatCL getDefaultRepKat(string ident, string AnvID, string VartOrdernr)
+        {
+            CReparator cr = new CReparator();
 
+            return cr.getDefaultRepKat(ident, AnvID, VartOrdernr);
+        }
+
+        /// <summary>
+        /// Initiate creation of timeRep2Report
+        /// parameter p must have at least a VartOrdernr and an email (for the returning mail)
+        /// The return value is a filled instance of TimeRep2ProcessCL with init values.
+        /// To check the status of the report generation, call getTimeRep2ReportStatus(string VartOrdernr)
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="p"></param>
+        /// <param name="bOverrideExisting"></param>
+        /// <returns>A filled TimeRep2ProcessCL</returns>
+        /// 2017-03-21  KJBO
+        public TimeRep2ProcessCL generateTimeReg2Report(string ident, TimeRep2ProcessCL p, bool bOverrideExisting)
+        {
+            CTidRed ct = new CTidRed();
+            return ct.generateTimeReg2Report(ident, p, bOverrideExisting);
+        }
+
+        /// <summary>
+        /// After calling generateTimeReg2Report() there is a possibility
+        /// to check the status of the report generation process.
+        /// Call this function and you get a status report back
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="VartOrdernr"></param>
+        /// <returns>Instance of TimeRep2ProcessCL</returns>
+        /// 2017-03-21 KJBO
+        public TimeRep2ProcessCL getTimeRep2ReportStatus(string ident, string VartOrdernr)
+        {
+            CTidRed ct = new CTidRed();
+            return ct.getTimeRep2ReportStatus(ident, VartOrdernr);
+        }
 
 
 

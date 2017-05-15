@@ -4,12 +4,26 @@ using System.Linq;
 using System.Web;
 using System.Data;
 using NexusDB.ADOProvider;
+using System.Runtime.InteropServices;
 
 namespace SManApi
-{
+{    
+
     public class CTidRed
     {
         CDB cdb = null;
+
+ 
+        [DllImport("PTimeRep2.dll",
+        CallingConvention = CallingConvention.StdCall,
+        CharSet = CharSet.Ansi)]
+
+        public static extern int
+            createTimeRep2();
+
+
+
+
         public CTidRed()
         {
             cdb = new CDB(); 
@@ -1684,8 +1698,362 @@ namespace SManApi
             return shrRows;
         }
 
+        private string getTimeReg2ReportInsertSQL()
+        {
+            string sSql = "insert into TimeRep2Process (vart_ordernr, email, reportType, ordered, reportStatus, errCode, errMess, linkURL, linkAdded, emailCreated) "
+                        + " values (:vart_ordernr, :email, :reportType, :ordered, 0, 0, '') ";
+            return sSql;
+        }
+
+        private string getTimeReg2ReportUpdateSQL()
+        {
+            string sSql = " update TimeRep2Process "
+                        + " set email = :email "
+                        + ", ordered = :ordered "
+                        + ", reportStatus = 0 "
+                        + ", errCode = 0 "
+                        + ", errMess = ''"
+                        + ", linkURL = :linkURL "
+                        + ", linkAdded = :linkAdded "
+                        + ", emailCreated = :emailCreated"
+                        + " where vart_ordernr = :vart_ordernr ";
+            return sSql;
+        }
 
 
+
+
+
+
+
+
+
+
+        /// <summary>
+        /// Initiate creation of timeRep2Report
+        /// parameter p must have at least a VartOrdernr and an email (for the returning mail)
+        /// The return value is a filled instance of TimeRep2ProcessCL with init values.
+        /// To check the status of the report generation, call getTimeRep2ReportStatus(string VartOrdernr)
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="p"></param>
+        /// <param name="bOverrideExisting"></param>
+        /// <returns>A filled TimeRep2ProcessCL</returns>
+        /// 2017-03-21  KJBO
+        public TimeRep2ProcessCL generateTimeReg2Report(string ident, TimeRep2ProcessCL p, bool bOverrideExisting)        
+        {
+
+            CReparator cr = new CReparator();           
+
+            int identOK = cr.checkIdent(ident);
+
+            if (identOK == -1)
+            {
+                p.ErrCode = -10;
+                p.ErrMessage = "Ogiltigt login";
+                return p;
+            }
+                
+            // Check how many rows matiching the current ordernr
+            string sSql = "SELECT count(*) count_rows "
+                        + " FROM TimeRep2Process "
+                        + " where vart_ordernr = :vart_ordernr ";
+
+            // Create an empty parameter collection
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", p.VartOrdernr);
+
+            string errText = "";
+
+            // Get data
+            DataTable dt = cdb.getData(sSql, ref errText, pc);
+            
+
+            // Check if any result
+            if (errText == "" && dt.Rows.Count == 0)
+            {
+                p.ErrCode = 0;
+                p.ErrMessage = "Kan inte räkna rader i TimeRep2Process tabellen";
+                return p;
+            }
+            int errCode = -100;
+
+
+
+            // Check for database errors
+            if (errText != "")
+            {
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                p.ErrCode = errCode;
+                p.ErrMessage = errText;
+                return p;
+            }
+
+            // Init variable
+            int antal = 0;
+
+            if (dt.Rows.Count > 0)
+            {
+                DataRow dr = dt.Rows[0];
+                antal = Convert.ToInt32(dr["count_rows"]);
+            }
+
+            // If row exists and allow overwrite is disallowed then repor error
+            if (antal == 1 && !bOverrideExisting)
+            {
+                p.ErrCode = 100;
+                p.ErrMessage = "Det finns redan en rapportbeställning för denna order";
+                return p;
+            }
+
+            int rc = attestAllTime2(p.VartOrdernr);
+            errText = "";
+            switch (rc)
+            {
+                case -1: errText = "Fel vid attestering av ServHuvRepTid";
+                    break;
+                case -2: errText = "Fel vid kontroll av ServRadRepTid";
+                    break;
+                case -3: errText = "Fel vid uppdatering av ServHuvRepTid";
+                    break;
+            }
+
+            if (errText != "")
+            {
+                p.ErrCode = -101;
+                p.ErrMessage = errText;
+                return p;
+            }
+                
+            // 2017-05-15 KJBO
+    
+            if (approveTimeRep2(p.VartOrdernr, ref errText) != 0)
+            {
+                p.ErrCode = -101;
+                p.ErrMessage = errText;
+                return p;
+            }
+
+            if (antal == 0)
+                sSql = getTimeReg2ReportInsertSQL();
+            else
+                sSql = getTimeReg2ReportUpdateSQL();
+
+            DateTime dtNow = System.DateTime.Now;
+            pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", p.VartOrdernr);
+            pc.Add("email", p.Email);
+            pc.Add("reportType", 2);
+            pc.Add("ordered", dtNow);
+            pc.Add("linkURL", DBNull.Value);
+            pc.Add("linkAdded", DBNull.Value);
+            pc.Add("emailCreated", DBNull.Value);
+
+
+
+            errText = "";
+
+            cdb.updateData(sSql, ref errText, pc);
+
+            if (errText != "")
+            {
+
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                p.ErrCode = -100;
+                p.ErrMessage = errText;
+                return p;                
+            }
+
+            int li_rc = createTimeRep2();   
+
+            return getTimeRep2ReportStatus(p.VartOrdernr);
+
+        }
+
+
+        /// <summary>
+        /// Get status of timeRep2Report
+        /// </summary>
+        /// <param name="VartOrdernr"></param>
+        /// <returns></returns>
+        private TimeRep2ProcessCL getTimeRep2ReportStatus(string VartOrdernr)
+        {
+            TimeRep2ProcessCL p = new TimeRep2ProcessCL();
+            string sSql = "select vart_ordernr, email, reportType, ordered, reportStatus, errCode, errMess, linkURL, linkAdded, emailCreated "
+                        + " from TimeRep2Process "
+                        + " where vart_ordernr = :vart_ordernr ";
+
+            // Create an empty parameter collection
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", VartOrdernr);
+
+            string errText = "";
+
+            // Get data
+            DataTable dt = cdb.getData(sSql, ref errText, pc);
+
+
+            // Check if any result
+            if (errText == "" && dt.Rows.Count == 0)
+            {
+                p.ErrCode = 0;
+                p.ErrMessage = "Det finns ingen beställning på tidrapport för denna order";
+                return p;
+            }
+
+            int errCode = -100;
+
+            // Check for database errors
+            if (errText != "")
+            {
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                p.ErrCode = errCode;
+                p.ErrMessage = errText;
+                return p;
+            }
+
+            if (dt.Rows.Count > 0)
+            {
+                DataRow dr = dt.Rows[0];
+                p.VartOrdernr = dr["vart_ordernr"].ToString();
+                p.Email = dr["email"].ToString();
+                p.ReportType = Convert.ToInt32(dr["reportType"]);
+                p.Ordered = Convert.ToDateTime(dr["ordered"]);
+                p.ReportStatus = Convert.ToInt32(dr["reportStatus"]);
+                p.ErrCode = Convert.ToInt32(dr["errCode"]);
+                p.ErrMessage = dr["errMess"].ToString();
+                p.LinkURL = dr["linkURL"].ToString();
+                if (dr["linkAdded"] != DBNull.Value)
+                    p.LinkAdded = Convert.ToDateTime(dr["linkAdded"]);
+                if (dr["emailCreated"] != DBNull.Value)
+                    p.EmailCreated = Convert.ToDateTime(dr["emailCreated"]);
+                return p;
+            }
+
+            return null;
+
+        }
+
+
+        /// <summary>
+        /// After calling generateTimeReg2Report() there is a possibility
+        /// to check the status of the report generation process.
+        /// Call this function and you get a status report back
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="VartOrdernr"></param>
+        /// <returns>Instance of TimeRep2ProcessCL</returns>
+        /// 2017-03-21 KJBO
+        public TimeRep2ProcessCL getTimeRep2ReportStatus(string ident, string VartOrdernr)
+        {
+            TimeRep2ProcessCL p = new TimeRep2ProcessCL();
+            CReparator cr = new CReparator();
+
+            int identOK = cr.checkIdent(ident);
+
+            if (identOK == -1)
+            {
+                p.ErrCode = -10;
+                p.ErrMessage = "Ogiltigt login";
+                return p;
+            }   
+                 
+            return getTimeRep2ReportStatus(VartOrdernr);
+
+        }
+
+
+
+        /// <summary>
+        /// Attest all unattested time registry
+        /// </summary>
+        /// <param name="VartOrdernr"></param>
+        /// <returns></returns>
+        private int attestAllTime2( string VartOrdernr)
+        {
+            string sSql = "update servHuvRepTid "
+                        + "set attesterad = true "
+                        + ", attestDat = :attestDat "
+                        + "where vart_ordernr = :vart_ordernr "
+                        + "and attesterad = false ";
+
+
+            DateTime ldtNow = DateTime.Now;
+            NxParameterCollection np = new NxParameterCollection();
+            np.Add("vart_ordernr", VartOrdernr);
+            np.Add("attestDat", ldtNow);
+ 
+
+            string errText = "";
+
+            int iRc = cdb.updateData(sSql, ref errText, np);
+
+            if (errText != "")            
+                return -1;
+
+            // Get a list of all alternate keys (rows) belonging to
+            // this order
+            sSql = "select alternateKey "
+                + " from servicerad "
+                + " where vart_ordernr = :vart_ordernr ";
+            
+            errText = "";
+
+            DataTable dt = cdb.getData(sSql, ref errText, np);
+            
+
+            if (errText != "")            
+                return -2;
+
+            string sSqlUpdate = " update servRadRepTid "
+                            + " set attesterad = true "
+                            + ", attestDat = :attestDat "
+                            + " where srAltKey = :srAltKey "
+                            + " and attesterad = false ";
+            np.Add("srAltKey", DbType.String);
+
+            // Loop through and attest all
+            foreach (DataRow dr in dt.Rows)
+            {
+                string alternateKey = dr["alternateKey"].ToString();
+                np["srAltKey"].Value = alternateKey;
+                iRc = cdb.updateData(sSqlUpdate, ref errText, np);
+
+                if (errText != "")
+                    return -3;
+            }
+
+
+
+
+            return 1;
+        }
+
+        private int approveTimeRep2(string vartOrdernr, ref string errText)
+        {
+            string sSql = "update timeReport2 "
+                        + " set approved = true "
+                        + " where vart_ordernr = :vartOrdernr ";
+
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vartOrdernr", vartOrdernr);
+
+            errText = "";
+            cdb.updateData(sSql, ref errText, pc);
+
+            int liRc = 0;
+            if (errText != "")
+            {
+                liRc = -1;                
+            }
+
+
+            return liRc;
+
+        }
 
 
     }

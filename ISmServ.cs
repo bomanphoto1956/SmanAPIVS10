@@ -258,10 +258,6 @@ namespace SManApi
         /// <param name="ident"></param>
         /// <param name="SrAltKey">Alternate key</param>
         /// <returns>List of dates or an error message</returns>
-        /// 2017-03-15 Added vartOrdernr parameter because this
-        /// function will be called both on servrad and servhuv (TimeRegVersion 2)
-        /// If vartOrdernr is not an empty string this value is the first choice
-        /// over the SrAltKey. The SrAltKey will be used if vartOrdernr is an empty string
         [OperationContract]
         List<OpenDateCL> getOpenDates(string ident, string SrAltKey);
 
@@ -722,6 +718,50 @@ namespace SManApi
         /// 2017-03-15 KJBO
         [OperationContract]
         List<ServHuvRepTidCL> getServHuvRepTidForShAnv(string ident, string vartOrdernr, string anvID);
+
+        /// <summary>
+        /// Determines if the AnvID is administrator for the current order
+        /// If so the function will return the administrator RepCat.
+        /// Otherwise it will return the default RepKat.
+        /// repKat
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="AnvID"></param>
+        /// <param name="VartOrdernr"></param>
+        /// <returns></returns>
+        /// 2017-03-21 KJBO
+        [OperationContract]
+        RepKatCL getDefaultRepKat(string ident, string AnvID, string VartOrdernr);
+
+
+        /// <summary>
+        /// Initiate creation of timeRep2Report
+        /// parameter p must have at least a VartOrdernr and an email (for the returning mail)
+        /// The return value is a filled instance of TimeRep2ProcessCL with init values.
+        /// To check the status of the report generation, call getTimeRep2ReportStatus(string VartOrdernr)
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="p"></param>
+        /// <param name="bOverrideExisting"></param>
+        /// <returns>A filled TimeRep2ProcessCL</returns>
+        /// 2017-03-21  KJBO
+        [OperationContract]
+        TimeRep2ProcessCL generateTimeReg2Report(string ident, TimeRep2ProcessCL p, bool bOverrideExisting);
+
+        /// <summary>
+        /// After calling generateTimeReg2Report() there is a possibility
+        /// to check the status of the report generation process.
+        /// Call this function and you get a status report back
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="VartOrdernr"></param>
+        /// <returns>Instance of TimeRep2ProcessCL</returns>
+        /// 2017-03-21 KJBO
+        [OperationContract]
+        TimeRep2ProcessCL getTimeRep2ReportStatus(string ident, string VartOrdernr);
+
+
+
 
 
 
@@ -1809,8 +1849,53 @@ namespace SManApi
         }
 
 
+        [DataContract]
+        public class TimeRep2ProcessCL
+        {
+
+            [DataMember]
+            public string VartOrdernr // Ordernumber max 10 char Primary key
+            { get; set; }
+
+            [DataMember]
+            public string Email // Email address to receive notification about
+            { get; set; }       // report created 
 
 
+            [DataMember]
+            public int ReportType // Not used yet. Today always 2
+            { get; set; }       // In the future the customer can decide which level of details in the report (1-3)
+
+            [DataMember]
+            public DateTime Ordered // Datetime when a report order has been created
+            { get; set; }
+
+            [DataMember]
+            public int ReportStatus // Interesting information
+            { get; set; }       // 0 = initial, 1 = in process, 2 = report created on disc, 3 = report sent via dropbox
+
+            [DataMember]
+            public string LinkURL // Link to the URL in DropBox (available when reportStatus = 3)
+            { get; set; }
+
+            [DataMember]
+            public DateTime LinkAdded // Date and time when report was copied to DropBox and link was created
+            { get; set; }
+
+            [DataMember]
+            public DateTime EmailCreated // Date and time when email was created and sent to Email address above
+            { get; set; }
+
+
+            [DataMember]
+            public int ErrCode
+            { get; set; }
+
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
+
+        }
 
 
 
