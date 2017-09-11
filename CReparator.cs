@@ -532,6 +532,61 @@ namespace SManApi
 
 
 
+
+        /// <summary>
+        /// New function that always returns the rep_kat for one reparator
+        /// </summary>
+        /// <param name="AnvID"></param>
+        /// <returns></returns>
+        /// 2017-09-06 KJBO
+        private RepKatCL getDefaultRepKat2(string AnvID)
+        {
+
+            string sSql = "SELECT rk.rep_kat_id, rk.rep_kat "
+                        + " FROM reparator r "
+                        + " join rep_kat rk on r.rep_kat_id = rk.rep_kat_id "
+                        + " where r.AnvID = :AnvID "
+                        + " union "
+                        + " select rep_kat_id, rep_kat "
+                        + " from rep_kat "
+                        + " where stdkat = true ";
+
+
+            NxParameterCollection np = new NxParameterCollection();
+            np.Add("AnvID", AnvID);
+
+            string errSt = "";
+            DataTable dt = cdb.getData(sSql, ref errSt, np);
+            
+
+            int errCode = -100;
+
+            if (errSt != "")
+            {
+                RepKatCL rep = new RepKatCL();
+                if (errSt.Length > 2000)
+                    errSt = errSt.Substring(1, 2000);
+                rep.ErrCode = errCode;
+                rep.ErrMessage = errSt;
+                return rep;
+            }
+
+            if (dt.Rows.Count > 0)
+            {
+                RepKatCL rep = new RepKatCL();
+                rep.RepKatID = dt.Rows[0]["rep_kat_id"].ToString();
+                rep.RepKat = dt.Rows[0]["rep_kat"].ToString();
+                rep.ErrCode = 0;
+                rep.ErrMessage = "";
+                return rep;
+            }
+
+            return null;           
+
+        }
+
+
+
         /// <summary>
         /// Determines if the AnvID is administrator for the current order
         /// If so the function will return the administrator RepCat.
@@ -542,6 +597,7 @@ namespace SManApi
         /// <param name="AnvID"></param>
         /// <param name="VartOrdernr"></param>
         /// <returns></returns>
+        /// 2017-09-06 Always return the default rep-kat for one reparator (AnvID)
         public RepKatCL getDefaultRepKat(string ident, string AnvID, string VartOrdernr)
         {
             int identOK = checkIdent(ident);
@@ -556,6 +612,8 @@ namespace SManApi
                 return rep;
             }
 
+            return getDefaultRepKat2(AnvID);
+            /*
             string sSql = "select coalesce(orderAdmin,'') orderAdmin "
                         + "from serviceHuvud "
                         + "where vart_ordernr = :vart_ordernr ";
@@ -629,6 +687,7 @@ namespace SManApi
             }
 
             return null;           
+            */
         }
 
 

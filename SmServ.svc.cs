@@ -763,10 +763,11 @@ namespace SManApi
         /// <param name="bOverrideExisting"></param>
         /// <returns>A filled TimeRep2ProcessCL</returns>
         /// 2017-03-21  KJBO
-        public TimeRep2ProcessCL generateTimeReg2Report(string ident, TimeRep2ProcessCL p, bool bOverrideExisting)
+        /// 2017-05-19 KJBO Added approve parameter
+        public TimeRep2ProcessCL generateTimeReg2Report(string ident, TimeRep2ProcessCL p, bool bOverrideExisting, bool approve)
         {
             CTidRed ct = new CTidRed();
-            return ct.generateTimeReg2Report(ident, p, bOverrideExisting);
+            return ct.generateTimeReg2Report(ident, p, bOverrideExisting, approve);
         }
 
         /// <summary>

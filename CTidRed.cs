@@ -13,7 +13,7 @@ namespace SManApi
     {
         CDB cdb = null;
 
- 
+ /*
         [DllImport("PTimeRep2.dll",
         CallingConvention = CallingConvention.StdCall,
         CharSet = CharSet.Ansi)]
@@ -21,7 +21,7 @@ namespace SManApi
         public static extern int
             createTimeRep2();
 
-
+        */
 
 
         public CTidRed()
@@ -554,20 +554,25 @@ namespace SManApi
             return Convert.ToInt32(dt.Rows[0]["antal"]);
         }
 
-        private int validateTid( Decimal tid, ref string err)
+        private int validateTid( Decimal tid, int salartId, ref string err)
         {
+
             if (tid < 0)
             {
                 err = "Registrerad tid får inte vara negativ";
                 return 0;
             }
-            if (tid > 24)
+            CSalart csa = new CSalart();
+            string unit = csa.getSalartUnit(salartId);
+            if (tid > 24 && unit.ToUpper() == "TIM")
             {
                 err = "Registrerad tid får inte överstiga 24 timmar";
                 return 0;
             }
             return 1;
         }
+
+
 
         private int validateTimeType( int timeTypeID)
         {
@@ -619,7 +624,7 @@ namespace SManApi
                 return -2;
             if (validateDatum(srt, ident, timeRegVersion) == 0)
                 return -3;
-            if (validateTid(srt.Tid, ref err) == 0)
+            if (validateTid(srt.Tid, srt.SalartID, ref err) == 0)
                 return -4;
             if (validateDuplicate(srt, timeRegVersion) > 0)
                 return -5;
@@ -1143,7 +1148,7 @@ namespace SManApi
                         + " FROM timeReport2 "
                         + " where vart_ordernr = :vartOrdernr ";
             NxParameterCollection pc = new NxParameterCollection();
-            pc.Add("vart_ordernr", vartOrdernr);
+            pc.Add("vartOrdernr", vartOrdernr);
 
             string errText = "";
             DataTable dt = cdb.getData(sSql, ref errText, pc);
@@ -1252,7 +1257,7 @@ namespace SManApi
             }
             if (validateDatum(sht) == 0)
                 return -3;
-            if (validateTid(sht.Tid, ref err) == 0)
+            if (validateTid(sht.Tid, sht.SalartID, ref err) == 0)
                 return -4;
             if (validateDuplicate(sht, SalartCatID) > 0)
                 return -5;
@@ -1700,8 +1705,8 @@ namespace SManApi
 
         private string getTimeReg2ReportInsertSQL()
         {
-            string sSql = "insert into TimeRep2Process (vart_ordernr, email, reportType, ordered, reportStatus, errCode, errMess, linkURL, linkAdded, emailCreated) "
-                        + " values (:vart_ordernr, :email, :reportType, :ordered, 0, 0, '') ";
+            string sSql = "insert into TimeRep2Process (vart_ordernr, email, reportType, ordered, reportStatus, errCode, errMess, linkURL, linkAdded, emailCreated, dropBoxFilename, dropBoxArchiveName, dropBoxArchiveCreated, approve) "
+                        + " values (:vart_ordernr, :email, :reportType, :ordered, 0, 0,'' ,:linkURL ,:linkAdded ,:emailCreated, :dropBoxFilename, :dropBoxArchiveName, :dropBoxArchiveCreated, :approve ) ";
             return sSql;
         }
 
@@ -1715,7 +1720,12 @@ namespace SManApi
                         + ", errMess = ''"
                         + ", linkURL = :linkURL "
                         + ", linkAdded = :linkAdded "
-                        + ", emailCreated = :emailCreated"
+                        + ", emailCreated = :emailCreated "
+                        + ", reportType = :reportType "
+                        + ", dropBoxFilename = :dropBoxFilename "
+                        + ", dropBoxArchiveName = :dropBoxArchiveName "
+                        + ", dropBoxArchiveCreated = :dropBoxArchiveCreated "
+                        + ", approve = :approve "
                         + " where vart_ordernr = :vart_ordernr ";
             return sSql;
         }
@@ -1740,7 +1750,7 @@ namespace SManApi
         /// <param name="bOverrideExisting"></param>
         /// <returns>A filled TimeRep2ProcessCL</returns>
         /// 2017-03-21  KJBO
-        public TimeRep2ProcessCL generateTimeReg2Report(string ident, TimeRep2ProcessCL p, bool bOverrideExisting)        
+        public TimeRep2ProcessCL generateTimeReg2Report(string ident, TimeRep2ProcessCL p, bool bOverrideExisting, bool approve)        
         {
 
             CReparator cr = new CReparator();           
@@ -1807,33 +1817,37 @@ namespace SManApi
                 return p;
             }
 
-            int rc = attestAllTime2(p.VartOrdernr);
-            errText = "";
-            switch (rc)
+            // 2017-07-03
+            if (approve)
             {
-                case -1: errText = "Fel vid attestering av ServHuvRepTid";
-                    break;
-                case -2: errText = "Fel vid kontroll av ServRadRepTid";
-                    break;
-                case -3: errText = "Fel vid uppdatering av ServHuvRepTid";
-                    break;
-            }
+                int rc = attestAllTime2(p.VartOrdernr, false);
+                errText = "";
+                switch (rc)
+                {
+                    case -1: errText = "Fel vid attestering av ServHuvRepTid";
+                        break;
+                    case -2: errText = "Fel vid kontroll av ServRadRepTid";
+                        break;
+                    case -3: errText = "Fel vid uppdatering av ServHuvRepTid";
+                        break;
+                }
 
-            if (errText != "")
-            {
-                p.ErrCode = -101;
-                p.ErrMessage = errText;
-                return p;
+                if (errText != "")
+                {
+                    p.ErrCode = -101;
+                    p.ErrMessage = errText;
+                    return p;
+                }
+
+                if (approveTimeRep2(p.VartOrdernr, ref errText) != 0)
+                {
+                    p.ErrCode = -101;
+                    p.ErrMessage = errText;
+                    return p;
+                }
             }
-                
-            // 2017-05-15 KJBO
-    
-            if (approveTimeRep2(p.VartOrdernr, ref errText) != 0)
-            {
-                p.ErrCode = -101;
-                p.ErrMessage = errText;
-                return p;
-            }
+            else
+                attestAllTime2(p.VartOrdernr, true);
 
             if (antal == 0)
                 sSql = getTimeReg2ReportInsertSQL();
@@ -1844,11 +1858,15 @@ namespace SManApi
             pc = new NxParameterCollection();
             pc.Add("vart_ordernr", p.VartOrdernr);
             pc.Add("email", p.Email);
-            pc.Add("reportType", 2);
+            pc.Add("reportType", 4);
             pc.Add("ordered", dtNow);
             pc.Add("linkURL", DBNull.Value);
             pc.Add("linkAdded", DBNull.Value);
             pc.Add("emailCreated", DBNull.Value);
+            pc.Add("dropBoxFilename", DBNull.Value);
+            pc.Add("dropBoxArchiveName", DBNull.Value);
+            pc.Add("dropBoxArchiveCreated", DBNull.Value);
+            pc.Add("approve", approve);
 
 
 
@@ -1866,7 +1884,7 @@ namespace SManApi
                 return p;                
             }
 
-            int li_rc = createTimeRep2();   
+            //int li_rc = createTimeRep2();   
 
             return getTimeRep2ReportStatus(p.VartOrdernr);
 
@@ -1972,14 +1990,25 @@ namespace SManApi
         /// </summary>
         /// <param name="VartOrdernr"></param>
         /// <returns></returns>
-        private int attestAllTime2( string VartOrdernr)
+        private int attestAllTime2( string VartOrdernr, bool unattest)
         {
-            string sSql = "update servHuvRepTid "
-                        + "set attesterad = true "
-                        + ", attestDat = :attestDat "
+            string sSql = "";
+            if (unattest)
+            {
+                sSql = "update servHuvRepTid "
+                        + "set attesterad = false "
+                        + ", attestDat = null "
                         + "where vart_ordernr = :vart_ordernr "
-                        + "and attesterad = false ";
-
+                        + "and attesterad = true ";
+            }
+            else
+            {
+                sSql = "update servHuvRepTid "
+                            + "set attesterad = true "
+                            + ", attestDat = :attestDat "
+                            + "where vart_ordernr = :vart_ordernr "
+                            + "and attesterad = false ";
+            }
 
             DateTime ldtNow = DateTime.Now;
             NxParameterCollection np = new NxParameterCollection();
@@ -2007,12 +2036,24 @@ namespace SManApi
 
             if (errText != "")            
                 return -2;
+            string sSqlUpdate = "";
 
-            string sSqlUpdate = " update servRadRepTid "
-                            + " set attesterad = true "
-                            + ", attestDat = :attestDat "
-                            + " where srAltKey = :srAltKey "
-                            + " and attesterad = false ";
+            if (unattest)
+            {
+                sSqlUpdate = " update servRadRepTid "
+                                + " set attesterad = false "
+                                + ", attestDat = null "
+                                + " where srAltKey = :srAltKey "
+                                + " and attesterad = true ";
+            }
+            else
+            {
+                sSqlUpdate = " update servRadRepTid "
+                                + " set attesterad = true "
+                                + ", attestDat = :attestDat "
+                                + " where srAltKey = :srAltKey "
+                                + " and attesterad = false ";
+            }
             np.Add("srAltKey", DbType.String);
 
             // Loop through and attest all

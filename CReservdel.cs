@@ -408,6 +408,25 @@ namespace SManApi
         }
 
         
+        
+        /// <summary>
+        /// Standardize the unit to mixedcase
+        /// </summary>
+        /// <param name="aUnit"></param>
+        /// <returns></returns>
+        /// 2017-09-06 KJBO
+        private string standardizeUnit( string aUnit)
+        {
+            if (aUnit == "st")
+                return "St";
+            if (aUnit == "m")
+                return "M";
+            if (aUnit == "kg")
+                return "Kg";
+            return aUnit;
+        }
+
+        
         private void setParameters(NxParameterCollection np, ReservdelCL r, string AnvID)
         {
             string sVar = "";            
@@ -416,7 +435,7 @@ namespace SManApi
             np.Add("artnamn", sVar);
             sVar = r.Artnr;
             np.Add("artnr", sVar);
-            sVar = r.Enhet;
+            sVar = standardizeUnit(r.Enhet);
             np.Add("enhet", sVar);
             np.Add("faktureras", r.Faktureras);
             sVar = r.LevID;

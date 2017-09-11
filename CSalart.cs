@@ -46,5 +46,27 @@ namespace SManApi
 
             return rc;
         }
+
+        public string getSalartUnit(int salartID)
+        {
+            string sSql = "SELECT enhet unit "
+                        + " FROM salart "
+                        + " where salartId = :salartId ";
+
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("salartId", salartID);
+
+            string errText = "";
+
+            DataTable dt = cdb.getData(sSql, ref errText, pc);
+
+            string unit = "";            
+            if (dt.Rows.Count == 1)
+            {
+                unit = dt.Rows[0]["unit"].ToString();                
+            }
+
+            return unit;
+        }
     }
 }

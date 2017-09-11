@@ -348,6 +348,11 @@ namespace SManApi
                 if (duplicateExists(v) > 0)
                     return -3;
             }
+            if (v.insideDiameter != 0 && v.outsideDiameter != 0)
+            {
+                if (v.insideDiameter > v.outsideDiameter)
+                    return -4;
+            }
             return 1;                       
         }
 
@@ -359,13 +364,13 @@ namespace SManApi
                     + " , dn2, oppningstryck, stalldonstyp, stalldon_id_nr, stalldon_fabrikat "
                     + " , stalldon_artnr, lagesstallartyp, lagesstall_id_nr, lagesstall_fabrikat, avdelning "
                     + " , anlaggningsnr, reg, regdat "
-                    + " , changed, plan, rum )  "
+                    + " , changed, plan, rum, insideDiameter, outsideDiameter )  "
                     + "  values ( :pventil_id, :pventilkategori, :pkund_id, :pposition, :pfabrikat "
                     + " , :pventiltyp, :pid_nr, :ppn, :ppn2, :pdn "
                     + " , :pdn2, :poppningstryck, :pstalldonstyp, :pstalldon_id_nr, :pstalldon_fabrikat "
                     + " , :pstalldon_artnr, :plagesstallartyp, :plagesstall_id_nr, :plagesstall_fabrikat, :pavdelning "
                     + " , :panlaggningsnr, :preg, :pregdat "
-                    + " , :pchanged, :pplan, :prum )";  
+                    + " , :pchanged, :pplan, :prum, :insideDiameter, :outsideDiameter  )";  
 
 
 
@@ -402,6 +407,8 @@ namespace SManApi
                          + ", changed = :pchanged "
                          + ", plan = :pplan "
                          + ", rum = :prum "
+                         + ", insideDiameter = :insideDiameter "
+                         + ", outsideDiameter = :outsideDiameter "
                          + " where ventil_id = :pventil_id ";
             return sSql;
 
@@ -475,6 +482,16 @@ namespace SManApi
             np.Add("pchanged", System.DateTime.Now);
             np.Add("pplan", v.Plan);
             np.Add("prum", v.Rum);
+            // 2017-06-21 KJBO
+            if (v.insideDiameter == 0)
+                np.Add("insideDiameter", System.DBNull.Value);
+            else
+                np.Add("insideDiameter", v.insideDiameter);
+            if (v.outsideDiameter == 0)
+                np.Add("outsideDiameter", System.DBNull.Value);
+            else
+                np.Add("outsideDiameter", v.outsideDiameter);
+            
         }
 
 
@@ -523,6 +540,13 @@ namespace SManApi
             {
                 vc.ErrCode = 101;
                 vc.ErrMessage = "Det finns redan en ventil med detta positionsnr";
+                return vc;
+            }
+
+            if (iRes == -4)
+            {
+                vc.ErrCode = -1;
+                vc.ErrMessage = "Ytterdiameter måste vara större än innerdiameter";
                 return vc;
             }
 

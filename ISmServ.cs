@@ -745,8 +745,9 @@ namespace SManApi
         /// <param name="bOverrideExisting"></param>
         /// <returns>A filled TimeRep2ProcessCL</returns>
         /// 2017-03-21  KJBO
+        /// 2017-05-19 KJBO Added approve parameter
         [OperationContract]
-        TimeRep2ProcessCL generateTimeReg2Report(string ident, TimeRep2ProcessCL p, bool bOverrideExisting);
+        TimeRep2ProcessCL generateTimeReg2Report(string ident, TimeRep2ProcessCL p, bool bOverrideExisting, bool approve);
 
         /// <summary>
         /// After calling generateTimeReg2Report() there is a possibility
@@ -1210,6 +1211,13 @@ namespace SManApi
                                   // to have duplicate position. But if there is a typing error the appUser has to
                                   // change position and try to save again with forceSave to false 2016-03-21 KJBO 
 
+            [DataMember]
+            public decimal insideDiameter // Inside and outside diameter is values used in online pressure measurement
+            { get; set; }                 // This value is not mandatory. It is expressed in mm (or parts of)  
+
+            [DataMember]
+            public decimal outsideDiameter
+            { get; set; }
 
             [DataMember]
             public int ErrCode
