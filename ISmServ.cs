@@ -746,6 +746,9 @@ namespace SManApi
         /// <returns>A filled TimeRep2ProcessCL</returns>
         /// 2017-03-21  KJBO
         /// 2017-05-19 KJBO Added approve parameter
+        /// 2017-09-10 KJBO Added detailed parameter
+        /// 2017-09-20 KJBO Removed detailed parameter. Using p.ReportType to indicate detail level
+        /// where 4 = standard report and 5 = detailed report
         [OperationContract]
         TimeRep2ProcessCL generateTimeReg2Report(string ident, TimeRep2ProcessCL p, bool bOverrideExisting, bool approve);
 
@@ -1873,6 +1876,9 @@ namespace SManApi
             [DataMember]
             public int ReportType // Not used yet. Today always 2
             { get; set; }       // In the future the customer can decide which level of details in the report (1-3)
+                                // 2017-09-20 KJBO
+                                // ReportType 4 = standard report, 5 = detailed report
+                                // From now on don't use 2 anymore
 
             [DataMember]
             public DateTime Ordered // Datetime when a report order has been created

@@ -51,7 +51,7 @@ namespace SManApi
                         + " v.oppningstryck, v.stalldonstyp, v.stalldon_id_nr, v.stalldon_fabrikat, v.stalldon_artnr, v.lagesstallartyp, "
                         + " v.lagesstall_id_nr, v.lagesstall_fabrikat, v.avdelning, v.anlaggningsnr,  "
                         + "  v.forra_comment, vk.ventilkategori as ventilkategori_namn "
-                        + ", v.plan, v.rum "
+                        + ", v.plan, v.rum, v.insideDiameter, v.outsideDiameter  "
                         + " FROM ventil v "
                         + " join ventilkategori vk on v.ventilkategori = vk.ventilkat_id "
                         + " where v.kund_id = :pKundID "
@@ -122,6 +122,15 @@ namespace SManApi
                 vr.Anlaggningsnr = dr["anlaggningsnr"].ToString();
                 vr.Plan = dr["plan"].ToString();
                 vr.Rum = dr["rum"].ToString();
+                // 2017-09-25 KJBO
+                if (dr["insideDiameter"] == DBNull.Value)
+                    vr.insideDiameter = 0;
+                else
+                    vr.insideDiameter = Convert.ToDecimal(dr["insideDiameter"]);
+                if (dr["outsideDiameter"] == DBNull.Value)
+                    vr.outsideDiameter = 0;
+                else
+                    vr.outsideDiameter = Convert.ToDecimal(dr["outsideDiameter"]);           
                 vr.ErrCode = 0;
                 vr.ErrMessage = "";
 
@@ -158,7 +167,7 @@ namespace SManApi
                         + " v.oppningstryck, v.stalldonstyp, v.stalldon_id_nr, v.stalldon_fabrikat, v.stalldon_artnr, v.lagesstallartyp, "
                         + " v.lagesstall_id_nr, v.lagesstall_fabrikat, v.avdelning,  v.anlaggningsnr,  "
                         + " v.forra_comment, vk.ventilkategori as ventilkategori_namn "
-                        + " , plan, rum "
+                        + " , plan, rum, v.insideDiameter, v.outsideDiameter  "
                         + " FROM ventil v "
                         + " join ventilkategori vk on v.ventilkategori = vk.ventilkat_id "
                         + " where ventil_id = :pVentilID ";
@@ -218,7 +227,16 @@ namespace SManApi
             vr.Avdelning = dr["avdelning"].ToString();
             vr.Plan = dr["plan"].ToString();
             vr.Rum = dr["rum"].ToString();
-            vr.Anlaggningsnr = dr["anlaggningsnr"].ToString();                
+            vr.Anlaggningsnr = dr["anlaggningsnr"].ToString();
+            // 2017-09-25 KJBO
+            if (dr["insideDiameter"] == DBNull.Value)
+                vr.insideDiameter = 0;
+            else
+                vr.insideDiameter = Convert.ToDecimal(dr["insideDiameter"]);
+            if (dr["outsideDiameter"] == DBNull.Value)
+                vr.outsideDiameter = 0;
+            else
+                vr.outsideDiameter = Convert.ToDecimal(dr["outsideDiameter"]);           
             vr.ErrCode = 0;
             vr.ErrMessage = "";
 

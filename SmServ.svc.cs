@@ -764,8 +764,11 @@ namespace SManApi
         /// <returns>A filled TimeRep2ProcessCL</returns>
         /// 2017-03-21  KJBO
         /// 2017-05-19 KJBO Added approve parameter
+        /// 2017-09-10 KJBO Added detailed parameter
+        /// 2017-09-20 KJBO Removed detailed parameter. Using p.ReportType to indicate detail level
+        /// where 4 = standard report and 5 = detailed report
         public TimeRep2ProcessCL generateTimeReg2Report(string ident, TimeRep2ProcessCL p, bool bOverrideExisting, bool approve)
-        {
+        {            
             CTidRed ct = new CTidRed();
             return ct.generateTimeReg2Report(ident, p, bOverrideExisting, approve);
         }

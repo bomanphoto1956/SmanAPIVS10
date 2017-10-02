@@ -1750,9 +1750,10 @@ namespace SManApi
         /// <param name="bOverrideExisting"></param>
         /// <returns>A filled TimeRep2ProcessCL</returns>
         /// 2017-03-21  KJBO
+        /// 2017-09-10 KJBO Added detailed parameter
         public TimeRep2ProcessCL generateTimeReg2Report(string ident, TimeRep2ProcessCL p, bool bOverrideExisting, bool approve)        
         {
-
+            
             CReparator cr = new CReparator();           
 
             int identOK = cr.checkIdent(ident);
@@ -1854,11 +1855,13 @@ namespace SManApi
             else
                 sSql = getTimeReg2ReportUpdateSQL();
 
+
+
             DateTime dtNow = System.DateTime.Now;
             pc = new NxParameterCollection();
             pc.Add("vart_ordernr", p.VartOrdernr);
             pc.Add("email", p.Email);
-            pc.Add("reportType", 4);
+            pc.Add("reportType", p.ReportType);
             pc.Add("ordered", dtNow);
             pc.Add("linkURL", DBNull.Value);
             pc.Add("linkAdded", DBNull.Value);
