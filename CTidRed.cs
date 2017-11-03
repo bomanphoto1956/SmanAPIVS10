@@ -5,6 +5,7 @@ using System.Web;
 using System.Data;
 using NexusDB.ADOProvider;
 using System.Runtime.InteropServices;
+using System.Globalization;
 
 namespace SManApi
 {    
@@ -212,7 +213,7 @@ namespace SManApi
                 // and thus closed 
                 if (timeRegVersion == 2)
                 {
-                    if (isTime2Approved(vart_ordernr))
+                    if (!hasOpenWeeks(vart_ordernr))
                     {
                         OpenDateCL d = new OpenDateCL();
                         d.ErrCode = -10;
@@ -270,10 +271,12 @@ namespace SManApi
                 foreach (DataRow dr in dt.Rows)
                 {
                     OpenDateCL d = new OpenDateCL();
-                    d.Datum = Convert.ToDateTime(dr["datum"]);
+                    DateTime currDate = Convert.ToDateTime(dr["datum"]);
+                    d.Datum = currDate;
                     d.ErrCode = 0;
                     d.ErrMessage = "";
                     dateList.Add(d);
+
                 }
 
                 return dateList;
@@ -431,9 +434,9 @@ namespace SManApi
         private string getInsertSQL()
         {
             string sSql = " insert into ServradRepTid (  anvID, datum, regdat, srAltKey "
-                         + " , tid, attesterad, TimeTypeID, SalartID, rep_kat_id)  "
+                         + " , tid, attesterad, TimeTypeID, SalartID, rep_kat_id, timeRep2WeekId)  "
                         + "  values ( :anvID, :datum, :regdat, :srAltKey "
-                        + " , :tid, false, :TimeTypeID, :SalartID, :rep_kat_id )";
+                        + " , :tid, false, :TimeTypeID, :SalartID, :rep_kat_id, :timeRep2WeekId )";
 
             return sSql;
         }
@@ -451,6 +454,7 @@ namespace SManApi
                         + ", TimeTypeID = :TimeTypeID "
                         + ", SalartID = :SalartID "
                         + ", rep_kat_id = :rep_kat_id "
+                        + ", timeRep2WeekId = :timeRep2WeekId "
                         + " where ID = :ID ";
             return sSql;
 
@@ -464,7 +468,7 @@ namespace SManApi
         }
 
 
-        private void setParameters( NxParameterCollection np, ServRadRepTidCL sr)
+        private void setParameters( NxParameterCollection np, ServRadRepTidCL sr, int timeRep2WeekId)
         {
             if (sr.ID != 0)            
                 np.Add("ID", sr.ID);            
@@ -480,7 +484,7 @@ namespace SManApi
             else
                 np.Add("SalartID", sr.SalartID);
             np.Add("rep_kat_id", sr.RepKatID);
-
+            np.Add("timeRep2WeekId", timeRep2WeekId);
         }
 
         private int validateAlternateKey(string alternateKey)
@@ -716,10 +720,10 @@ namespace SManApi
             }
 
 
-            if (isTime2Approved(sVartOrdernr))
+            if (isTime2Approved(sVartOrdernr, srt.Datum))
             {
                 retSrt.ErrCode = -10;
-                retSrt.ErrMessage = "Aktuell tidredovisning är stängd och kan inte ändras ";
+                retSrt.ErrMessage = "Tidredovisning för denna vecka är stängd och kan inte ändras ";
                 return retSrt;                
             }
 
@@ -819,6 +823,35 @@ namespace SManApi
 
             }
 
+            string vartOrdernr = "";
+            int slask = 0;
+            crs.getOrdernrRadnrFromAltKey(srt.SrAltKey, ref vartOrdernr, ref slask);
+
+            int tr2WeekId = getTimeRep2WeekId(vartOrdernr, srt.Datum);
+
+            if (tr2WeekId == -1)
+            {
+                retSrt.ErrCode = -1;
+                retSrt.ErrMessage = "Vecka för tidrapport saknas";
+                return retSrt;
+            }
+
+            if (tr2WeekId == -2)
+            {
+                retSrt.ErrCode = -1;
+                retSrt.ErrMessage = "Vecka för aktuellt datum är godkänd. Tiden kan ej ändras ";
+                return retSrt;
+            }
+
+            if (tr2WeekId == -3)
+            {
+                retSrt.ErrCode = -1;
+                retSrt.ErrMessage = "Okänt fel när veckonummer ska beräknas";
+                return retSrt;
+            }
+
+
+
             string sSql = "";
 
             // Nothing to save... 2016-06-17
@@ -841,7 +874,7 @@ namespace SManApi
                 sSql = getUpdateSQL();
            
             NxParameterCollection np = new NxParameterCollection();
-            setParameters(np, srt);
+            setParameters(np, srt, tr2WeekId);
             
             string errText = "";
 
@@ -1140,15 +1173,32 @@ namespace SManApi
         }
 
 
-        public bool isTime2Approved (string vartOrdernr)
+
+        /// <summary>
+        /// Check if the week that aDate belongs to
+        /// is approved
+        /// </summary>
+        /// <param name="vartOrdernr"></param>
+        /// <param name="aDate"></param>
+        /// <returns>true for approved, false for not approved</returns>
+        public bool isTime2Approved (string vartOrdernr, DateTime aDate)
         {
-
-
-            string sSql = " SELECT approved "
-                        + " FROM timeReport2 "
-                        + " where vart_ordernr = :vartOrdernr ";
+            // Init variables
+            int year = 0;
+            int week = 0;
+            // Get year and week from date
+            GetIso8601WeekOfYear(aDate, ref year, ref week);
+            // SQL clause
+            string sSql = "SELECT approved "
+                        + " FROM timeRep2Week "
+                        + " where vart_ordernr = :vart_ordernr "
+                        + " and \"year\" = :year "
+                        + " and week = :week ";
+            // Create parameters
             NxParameterCollection pc = new NxParameterCollection();
-            pc.Add("vartOrdernr", vartOrdernr);
+            pc.Add("vart_ordernr", vartOrdernr);
+            pc.Add("year", year);
+            pc.Add("week", week);
 
             string errText = "";
             DataTable dt = cdb.getData(sSql, ref errText, pc);
@@ -1162,8 +1212,21 @@ namespace SManApi
                 return false;
 
             return Convert.ToBoolean(dt.Rows[0]["approved"]);
+        }
 
-
+        public bool hasOpenWeeks(string vartOrdernr)
+        {
+            string sSql = "SELECT count(*) as countOpen "
+                        + " FROM timeRep2Week "
+                        + " where vart_ordernr = :vart_ordernr "
+                        + " and approved = false ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", vartOrdernr);
+            string errText = "";
+            DataTable dt = cdb.getData(sSql, ref errText, pc);
+            if (dt.Rows.Count == 0)
+                return false;
+            return (Convert.ToInt32(dt.Rows[0]["countOpen"]) > 0);
         }
 
 
@@ -1271,8 +1334,8 @@ namespace SManApi
 
         private string getShInsertSQL()
         {
-            string sSql = " insert into ServHuvRepTid ( vart_ordernr, timeTypeID, salartID, anvID, rep_kat_id, tid, datum, regdat, attesterad) "
-                        + " values ( :vart_ordernr, :timeTypeID, :salartID, :anvID, :rep_kat_id, :tid, :datum, :regdat, false) ";
+            string sSql = " insert into ServHuvRepTid ( vart_ordernr, timeTypeID, salartID, anvID, rep_kat_id, tid, datum, regdat, attesterad, timeRep2WeekId) "
+                        + " values ( :vart_ordernr, :timeTypeID, :salartID, :anvID, :rep_kat_id, :tid, :datum, :regdat, false, :timeRep2WeekId) ";
             return sSql;
         }
 
@@ -1295,6 +1358,7 @@ namespace SManApi
                         + ", TimeTypeID = :TimeTypeID "
                         + ", SalartID = :SalartID "
                         + ", rep_kat_id = :rep_kat_id "
+                        + ", timeRep2WeekId = :timeRep2WeekId "
                         + " where ID = :ID ";
             return sSql;
 
@@ -1312,7 +1376,7 @@ namespace SManApi
 
 
 
-        private void setParameters(NxParameterCollection np, ServHuvRepTidCL sr, int salartCatID)
+        private void setParameters(NxParameterCollection np, ServHuvRepTidCL sr, int salartCatID, int tr2WeekId)
         {
             if (sr.ID != 0)
             {
@@ -1335,8 +1399,60 @@ namespace SManApi
             {
                 np.Add("anvID", System.DBNull.Value);
                 np.Add("rep_kat_id", System.DBNull.Value);
-            }                           
+            }
+            np.Add("timeRep2WeekId", tr2WeekId);
         }
+
+
+
+        private int getTimeRep2WeekId(string vart_ordernr, DateTime aDate)
+        {
+            string sSql = " SELECT id, approved "
+                        + " FROM timeRep2Week "
+                        + " where vart_ordernr = :vart_ordernr "
+                        + " and \"year\" = :year "
+                        + " and week = :week ";
+
+            int year = 0;
+            int week = 0;
+            GetIso8601WeekOfYear(aDate, ref year, ref week);
+            NxParameterCollection np = new NxParameterCollection();
+            np.Add("vart_ordernr", vart_ordernr);
+            np.Add("year", year);
+            np.Add("week", week);
+
+            string errText = "";
+            DataTable dt = cdb.getData(sSql, ref errText, np);
+
+            if (errText != "")
+                return -3;
+            if (dt.Rows.Count == 0)
+                return -1;
+            DataRow dr = dt.Rows[0];
+            if (Convert.ToBoolean(dr["approved"]))
+                return -2;
+            return Convert.ToInt32(dr["id"]);
+        }
+
+
+        private void GetIso8601WeekOfYear(DateTime time, ref int Year, ref int Week)
+        {
+            Year = CultureInfo.InvariantCulture.Calendar.GetYear(time);
+            int Month = CultureInfo.InvariantCulture.Calendar.GetMonth(time);
+            DayOfWeek day = CultureInfo.InvariantCulture.Calendar.GetDayOfWeek(time);
+            if (day >= DayOfWeek.Monday && day <= DayOfWeek.Wednesday)
+            {
+                time = time.AddDays(3);
+            }
+            // Return the week of our adjusted day
+            Week = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(time, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+            // Now if month is January and week is 52 or 53 then we have to reduce the year in order to get right
+            if (Month == 1 && Week > 51)
+                Year--;
+            // if month is December but the decided week is 1 then this week belongs to the next year
+            if (Month == 12 && Week == 1)
+                Year++;
+        } 
 
 
 
@@ -1351,6 +1467,8 @@ namespace SManApi
         /// row with the new ID (if its a new row)
         /// If an error occurs then an error is returned
         /// in the ServHuvTidRep return row
+        /// 2017-10-17 KJBO
+        /// Added handling of timeRep2Week
         /// </summary>
         /// <param name="ident">Identity</param>
         /// <param name="sht">ServHuvRepTid</param>
@@ -1394,10 +1512,10 @@ namespace SManApi
             }
 
 
-            if (isTime2Approved(sht.VartOrdernr))
+            if (isTime2Approved(sht.VartOrdernr, sht.Datum))
             {
                 retSrt.ErrCode = -10;
-                retSrt.ErrMessage = "Aktuell tidredovisning är stängd och kan inte ändras ";
+                retSrt.ErrMessage = "Tidredovisning för denna vecka är stängd och kan inte ändras ";
                 return retSrt;
             }
 
@@ -1471,6 +1589,8 @@ namespace SManApi
 
             }
 
+            
+
 
 
             if (salartCatID == 1)
@@ -1490,6 +1610,29 @@ namespace SManApi
                 }
             }
 
+            int tr2WeekId = getTimeRep2WeekId(sht.VartOrdernr, sht.Datum);
+
+            if (tr2WeekId == -1)
+            {
+                retSrt.ErrCode = -1;
+                retSrt.ErrMessage = "Vecka för tidrapport saknas";
+                return retSrt;
+            }
+
+            if (tr2WeekId == -2)
+            {
+                retSrt.ErrCode = -1;
+                retSrt.ErrMessage = "Vecka för aktuellt datum är godkänd. Tiden kan ej ändras ";
+                return retSrt;
+            }
+
+            if (tr2WeekId == -3)
+            {
+                retSrt.ErrCode = -1;
+                retSrt.ErrMessage = "Okänt fel när veckonummer ska beräknas";
+                return retSrt;
+            }
+
             
 
             string sSql = "";
@@ -1499,7 +1642,7 @@ namespace SManApi
                 return sht;
 
 
-            // This is a new ventil
+            // This is a new timerecord
             if (sht.ID == 0)
             {
                 sSql = getShInsertSQL();
@@ -1514,7 +1657,7 @@ namespace SManApi
                 sSql = getShUpdateSQL();
 
             NxParameterCollection np = new NxParameterCollection();
-            setParameters(np, sht, salartCatID);
+            setParameters(np, sht, salartCatID, tr2WeekId);
 
             string errText = "";
 
@@ -1534,7 +1677,9 @@ namespace SManApi
                 sht.ID = getShLastInserted();
                 CServRad crs = new CServRad();
                 // 2016-04-04 KJBO
-                crs.ensureReparatorExists(ident, "", "", sht.VartOrdernr);
+                // Added 
+
+                crs.ensureReparatorExists(ident, "", sht.AnvId, sht.VartOrdernr);
             }
             if (bDeleted)
                 return sht;
@@ -1705,8 +1850,8 @@ namespace SManApi
 
         private string getTimeReg2ReportInsertSQL()
         {
-            string sSql = "insert into TimeRep2Process (vart_ordernr, email, reportType, ordered, reportStatus, errCode, errMess, linkURL, linkAdded, emailCreated, dropBoxFilename, dropBoxArchiveName, dropBoxArchiveCreated, approve) "
-                        + " values (:vart_ordernr, :email, :reportType, :ordered, 0, 0,'' ,:linkURL ,:linkAdded ,:emailCreated, :dropBoxFilename, :dropBoxArchiveName, :dropBoxArchiveCreated, :approve ) ";
+            string sSql = "insert into TimeRep2Process (vart_ordernr, email, reportType, ordered, reportStatus, errCode, errMess, linkURL, linkAdded, emailCreated, dropBoxFilename, dropBoxArchiveName, dropBoxArchiveCreated, approve, VersionNumber) "
+                        + " values (:vart_ordernr, :email, :reportType, :ordered, 0, 0,'' ,:linkURL ,:linkAdded ,:emailCreated, :dropBoxFilename, :dropBoxArchiveName, :dropBoxArchiveCreated, :approve, :VersionNumber ) ";
             return sSql;
         }
 
@@ -1751,7 +1896,8 @@ namespace SManApi
         /// <returns>A filled TimeRep2ProcessCL</returns>
         /// 2017-03-21  KJBO
         /// 2017-09-10 KJBO Added detailed parameter
-        public TimeRep2ProcessCL generateTimeReg2Report(string ident, TimeRep2ProcessCL p, bool bOverrideExisting, bool approve)        
+        /// 2017-10-23 KJBO Added timeRep2WeekIds to determine which weeks to include
+        public TimeRep2ProcessCL generateTimeReg2ReportOld(string ident, TimeRep2ProcessCL p, bool bOverrideExisting, bool approve, List<int> timeRep2WeekIds, List<KundEmailCL> kundEmails )        
         {
             
             CReparator cr = new CReparator();           
@@ -1764,6 +1910,7 @@ namespace SManApi
                 p.ErrMessage = "Ogiltigt login";
                 return p;
             }
+            
                 
             // Check how many rows matiching the current ordernr
             string sSql = "SELECT count(*) count_rows "
@@ -1818,10 +1965,31 @@ namespace SManApi
                 return p;
             }
 
+            // 2017-10-23 KJBO
+            if (timeRep2WeekIds.Count == 0)
+            {
+                p.ErrCode = 100;
+                p.ErrMessage = "Välj minst en vecka att rapportera";
+                return p;
+            }
+
+            int rc = validateWeeks(p.VartOrdernr, timeRep2WeekIds);
+            {
+                if (rc < 0)
+                {
+                    p.ErrCode = 100;
+                    if (rc == -1)
+                        p.ErrMessage = "Databasfel vid validering av veckor ";
+                    if (rc >= -2 )
+                        p.ErrMessage = "Veckor för tidrapport felaktiga eller hör till annan order";
+                    return p;
+                }
+            }
+
             // 2017-07-03
             if (approve)
             {
-                int rc = attestAllTime2(p.VartOrdernr, false);
+                rc = attestAllTime2(p.VartOrdernr, false, timeRep2WeekIds);
                 errText = "";
                 switch (rc)
                 {
@@ -1840,15 +2008,31 @@ namespace SManApi
                     return p;
                 }
 
-                if (approveTimeRep2(p.VartOrdernr, ref errText) != 0)
+
+                // Removed 2017-10-24 KJBO
+                /*if (approveTimeRep2(p.VartOrdernr, ref errText) != 0)
                 {
                     p.ErrCode = -101;
                     p.ErrMessage = errText;
                     return p;
-                }
+                }*/
             }
             else
-                attestAllTime2(p.VartOrdernr, true);
+                attestAllTime2(p.VartOrdernr, true, timeRep2WeekIds);
+
+
+            // 2017-10-24 KJBO
+            errText = addWeeksForPrint(p.VartOrdernr, timeRep2WeekIds, approve);
+            if (errText != "")
+            {
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                p.ErrCode = -100;
+                p.ErrMessage = errText;
+                return p;
+
+            }
+
 
             if (antal == 0)
                 sSql = getTimeReg2ReportInsertSQL();
@@ -1887,10 +2071,315 @@ namespace SManApi
                 return p;                
             }
 
+            rc = updateKundEmails(p.VartOrdernr, kundEmails, ref errText);
+            if (rc == -1 || errText != "")
+            {
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                p.ErrCode = -100;
+                p.ErrMessage = errText;
+                return p;                
+            }
+
+
             //int li_rc = createTimeRep2();   
 
-            return getTimeRep2ReportStatus(p.VartOrdernr);
+            return getTimeRep2ReportStatus(p.VartOrdernr, 0);
 
+        }
+
+
+        private int getNextTimeReg2ReportVersion(string vartOrdernr)
+        {
+            string sSql = "SELECT coalesce(max(VersionNumber),0) maxVersion "
+                        + " FROM TimeRep2Process "
+                        + " where vart_ordernr = :vart_ordernr ";
+            string errTxt = "";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", vartOrdernr);
+
+            DataTable dt = cdb.getData(sSql, ref errTxt, pc);
+            int currVersion = Convert.ToInt32(dt.Rows[0]["maxVersion"]);
+            currVersion++;
+            return currVersion;
+
+        }
+
+
+        /// <summary>
+        /// Initiate creation of timeRep2Report
+        /// parameter p must have at least a VartOrdernr and an email (for the returning mail)
+        /// The return value is a filled instance of TimeRep2ProcessCL with init values.
+        /// To check the status of the report generation, call getTimeRep2ReportStatus(string VartOrdernr)
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="p"></param>
+        /// <param name="bOverrideExisting"></param>
+        /// <returns>A filled TimeRep2ProcessCL</returns>
+        /// 2017-03-21  KJBO
+        /// 2017-09-10 KJBO Added detailed parameter
+        /// 2017-10-23 KJBO Added timeRep2WeekIds to determine which weeks to include
+        /// 2017-10-27 KJBO Added version handling
+        public TimeRep2ProcessCL generateTimeReg2Report(string ident, TimeRep2ProcessCL p, bool bOverrideExisting, bool approve, List<int> timeRep2WeekIds, List<KundEmailCL> kundEmails)
+        {
+
+            CReparator cr = new CReparator();
+
+            int identOK = cr.checkIdent(ident);
+
+            if (identOK == -1)
+            {
+                p.ErrCode = -10;
+                p.ErrMessage = "Ogiltigt login";
+                return p;
+            }
+
+
+
+            // 2017-10-23 KJBO
+            if (timeRep2WeekIds.Count == 0)
+            {
+                p.ErrCode = 100;
+                p.ErrMessage = "Välj minst en vecka att rapportera";
+                return p;
+            }
+
+            int rc = validateWeeks(p.VartOrdernr, timeRep2WeekIds);
+            {
+                if (rc < 0)
+                {
+                    p.ErrCode = 100;
+                    if (rc == -1)
+                        p.ErrMessage = "Databasfel vid validering av veckor ";
+                    if (rc >= -2)
+                        p.ErrMessage = "Veckor för tidrapport felaktiga eller hör till annan order";
+                    return p;
+                }
+            }
+            string errText = "";
+
+            // 2017-07-03
+            if (approve)
+            {
+                rc = attestAllTime2(p.VartOrdernr, false, timeRep2WeekIds);
+                errText = "";
+                switch (rc)
+                {
+                    case -1: errText = "Fel vid attestering av ServHuvRepTid";
+                        break;
+                    case -2: errText = "Fel vid kontroll av ServRadRepTid";
+                        break;
+                    case -3: errText = "Fel vid uppdatering av ServHuvRepTid";
+                        break;
+                }
+
+                if (errText != "")
+                {
+                    p.ErrCode = -101;
+                    p.ErrMessage = errText;
+                    return p;
+                }
+
+
+                // Removed 2017-10-24 KJBO
+                /*if (approveTimeRep2(p.VartOrdernr, ref errText) != 0)
+                {
+                    p.ErrCode = -101;
+                    p.ErrMessage = errText;
+                    return p;
+                }*/
+            }
+            else
+                attestAllTime2(p.VartOrdernr, true, timeRep2WeekIds);
+
+
+            // 2017-10-24 KJBO
+            errText = addWeeksForPrint(p.VartOrdernr, timeRep2WeekIds, approve);
+            if (errText != "")
+            {
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                p.ErrCode = -100;
+                p.ErrMessage = errText;
+                return p;
+
+            }
+
+            int versionNumber = getNextTimeReg2ReportVersion(p.VartOrdernr);
+
+            
+            string sSql = getTimeReg2ReportInsertSQL();
+                        
+            DateTime dtNow = System.DateTime.Now;
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", p.VartOrdernr);
+            pc.Add("email", p.Email);
+            pc.Add("reportType", p.ReportType);
+            pc.Add("ordered", dtNow);
+            pc.Add("linkURL", DBNull.Value);
+            pc.Add("linkAdded", DBNull.Value);
+            pc.Add("emailCreated", DBNull.Value);
+            pc.Add("dropBoxFilename", DBNull.Value);
+            pc.Add("dropBoxArchiveName", DBNull.Value);
+            pc.Add("dropBoxArchiveCreated", DBNull.Value);
+            pc.Add("approve", approve);
+            pc.Add("VersionNumber", versionNumber);
+
+
+
+            errText = "";
+
+            cdb.updateData(sSql, ref errText, pc);
+
+            if (errText != "")
+            {
+
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                p.ErrCode = -100;
+                p.ErrMessage = errText;
+                return p;
+            }
+
+            rc = updateKundEmails(p.VartOrdernr, kundEmails, ref errText);
+            if (rc == -1 || errText != "")
+            {
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                p.ErrCode = -100;
+                p.ErrMessage = errText;
+                return p;
+            }
+
+
+            // Now create both emailList and weekList to the current version of timeRep2Process
+            rc = addTimeRep2ProcessWeeks(p.VartOrdernr, versionNumber, timeRep2WeekIds, ref errText);
+
+            if (rc == 1)
+                rc = addTimeRep2ProcessEmail(p.VartOrdernr, versionNumber, kundEmails, ref errText);
+
+            // Error handling for call to addTimRep2ProcessVersion
+            if (rc < 0)
+            {
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                p.ErrCode = -100;
+                p.ErrMessage = errText;
+                return p;
+
+            }
+
+
+
+            //int li_rc = createTimeRep2();   
+
+            return getTimeRep2ReportStatus(p.VartOrdernr, 0);
+
+        }
+
+
+
+        /// <summary>
+        /// Create a weeklist for an order and a version
+        /// </summary>
+        /// <param name="vartOrdernr"></param>
+        /// <param name="versionNumber"></param>
+        /// <param name="timeRep2WeekIds"></param>
+        /// <param name="errText"></param>
+        /// <returns>1 = OK, -1 = Check the reference variable errText for details </returns>
+        private int addTimeRep2ProcessWeeks(string vartOrdernr, int versionNumber, List<int>timeRep2WeekIds, ref string errText)
+        {
+            // SQL clause
+            string sSql = " insert into TimeRep2ProcessVersion ( vart_ordernr, versionNumber, timeRep2WeekID) "
+                        + " values (:vart_ordernr, :versionNumber, :timeRep2WeekID)";
+
+            // Add parameters
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", vartOrdernr);
+            pc.Add("versionNumber", versionNumber);
+            pc.Add("timeRep2WeekID", DbType.Int32);
+            errText = "";
+            // Loop through all timeRepWeekIds
+            foreach (int timeRep2WeekId in timeRep2WeekIds)
+            {                
+                // Update parameter
+                pc["timeRep2WeekID"].Value = timeRep2WeekId;
+                // Run SQL
+                cdb.updateData(sSql, ref errText, pc);
+                // Catch error..
+                if (errText != "")
+                {
+                    errText = "addTimeRep2ProcessVersion(). Fel vid skapande av rader i tabellen TimeRep2ProcessVersion. Felmeddelande : " + errText;
+                    return -1;
+                }
+            }
+            return 1;
+        }
+
+
+
+        /// <summary>
+        /// Creates a list of email addresses for a timeRepProcess verson
+        /// </summary>
+        /// <param name="vartOrdernr"></param>
+        /// <param name="versionNumber"></param>
+        /// <param name="kundEmails"></param>
+        /// <param name="errText"></param>
+        /// <returns>1 - OK, -1 see errText</returns>
+        private int addTimeRep2ProcessEmail(string vartOrdernr, int versionNumber, List<KundEmailCL> kundEmails, ref string errText)
+        {
+            // Sql clause
+            string sSql = "insert into TimeRep2ProcessEmail (vart_ordernr, versionNumber, kundEmailID) "
+                        + " values (:vart_ordernr, :versionNumber, :kundEmailID) ";
+            // Add parameters
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", vartOrdernr);
+            pc.Add("versionNumber", versionNumber);
+            pc.Add("kundEmailID", DbType.Int32);
+            // Loop through all kundEmail objects
+            foreach (KundEmailCL kundEmail in kundEmails)
+            {
+                // If the current Email is selected then add to the table
+                if (kundEmail.SelectedForTR)
+                {
+                    pc["kundEmailID"].Value = kundEmail.ID;
+                    // Run SQL
+                    cdb.updateData(sSql, ref errText, pc);
+                    // Catch error
+                    if (errText != "")
+                    {
+                        errText = "addTimeRep2ProcessEmail(). Fel vid skapande av rader i tabellen TimeRep2ProcessEmail. Felmeddelande : " + errText;
+                        return -1;
+                    }
+                }
+            }
+            return 1;
+        }
+
+
+
+        /// <summary>
+        /// Get the newest (last) version of a timeRep2Process row
+        /// </summary>
+        /// <param name="vartOrdernr"></param>
+        /// <param name="errText"></param>
+        /// <returns></returns>
+        private int getMaxTr2VersionNumber(string vartOrdernr, ref string errText)
+        {
+            string sSql = " SELECT coalesce(max(versionNumber),0) maxVersion "
+                        + " FROM TimeRep2Process "
+                        + " where vart_ordernr = :vart_ordernr ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", vartOrdernr);            
+            errText = "";
+            DataTable dt = cdb.getData(sSql, ref errText, pc);
+
+            if (errText != "")
+            {
+                errText = "getMxTr2VersionNumber(). Error while reading max versionnumber. Error text : " + errText;
+                return -1;
+            }
+            return Convert.ToInt32(dt.Rows[0]["maxVersion"]);            
         }
 
 
@@ -1899,19 +2388,36 @@ namespace SManApi
         /// </summary>
         /// <param name="VartOrdernr"></param>
         /// <returns></returns>
-        private TimeRep2ProcessCL getTimeRep2ReportStatus(string VartOrdernr)
+        /// 2017-11-01 KJBO Added handling of versions
+        private TimeRep2ProcessCL getTimeRep2ReportStatus(string VartOrdernr, int versionNumber)
         {
+
             TimeRep2ProcessCL p = new TimeRep2ProcessCL();
+            string errText = "";
+
+            // 2017-11-01 KJBO
+            if (versionNumber == 0)
+            {
+                versionNumber = getMaxTr2VersionNumber(VartOrdernr,ref errText);
+                if ( versionNumber == -1)
+                {
+                    if (errText.Length > 2000)
+                        errText = errText.Substring(1, 2000);
+                    p.ErrCode = -100;
+                    p.ErrMessage = errText;
+                    return p;
+                }
+            }
             string sSql = "select vart_ordernr, email, reportType, ordered, reportStatus, errCode, errMess, linkURL, linkAdded, emailCreated "
                         + " from TimeRep2Process "
-                        + " where vart_ordernr = :vart_ordernr ";
+                        + " where vart_ordernr = :vart_ordernr "
+                        + " and versionNumber = :versionNumber ";
 
             // Create an empty parameter collection
             NxParameterCollection pc = new NxParameterCollection();
             pc.Add("vart_ordernr", VartOrdernr);
-
-            string errText = "";
-
+            pc.Add("versionNumber", versionNumber);
+           
             // Get data
             DataTable dt = cdb.getData(sSql, ref errText, pc);
 
@@ -1982,7 +2488,7 @@ namespace SManApi
                 return p;
             }   
                  
-            return getTimeRep2ReportStatus(VartOrdernr);
+            return getTimeRep2ReportStatus(VartOrdernr, 0);
 
         }
 
@@ -1993,34 +2499,37 @@ namespace SManApi
         /// </summary>
         /// <param name="VartOrdernr"></param>
         /// <returns></returns>
-        private int attestAllTime2( string VartOrdernr, bool unattest)
+        /// 2017-10-27 Only the current weeks are affected
+        private int attestAllTime2(string VartOrdernr, bool unattest, List<int> timeRep2WeekIds)
         {
-            string sSql = "";
+            
+            string sSql = "update servHuvRepTid ";
             if (unattest)
-            {
-                sSql = "update servHuvRepTid "
-                        + "set attesterad = false "
-                        + ", attestDat = null "
-                        + "where vart_ordernr = :vart_ordernr "
-                        + "and attesterad = true ";
-            }
+                sSql += "set attesterad = false ";
             else
+                sSql += "set attesterad = true ";
+            sSql += ", attestDat = :attestDat "
+            + "where vart_ordernr = :vart_ordernr "                 
+            + "and timeRep2WeekID in ( ";
+            bool bFirst = true;
+            foreach (int week in timeRep2WeekIds)
             {
-                sSql = "update servHuvRepTid "
-                            + "set attesterad = true "
-                            + ", attestDat = :attestDat "
-                            + "where vart_ordernr = :vart_ordernr "
-                            + "and attesterad = false ";
+                if (bFirst)
+                    bFirst = false;
+                else
+                    sSql += ", ";
+                sSql += week.ToString();
             }
+            sSql += ") ";            
 
             DateTime ldtNow = DateTime.Now;
             NxParameterCollection np = new NxParameterCollection();
             np.Add("vart_ordernr", VartOrdernr);
-            np.Add("attestDat", ldtNow);
- 
-
+            if (unattest)
+                np.Add("attestDat", System.DBNull.Value);
+            else
+                np.Add("attestDat", ldtNow);
             string errText = "";
-
             int iRc = cdb.updateData(sSql, ref errText, np);
 
             if (errText != "")            
@@ -2039,24 +2548,25 @@ namespace SManApi
 
             if (errText != "")            
                 return -2;
-            string sSqlUpdate = "";
-
+            string sSqlUpdate = " update servRadRepTid ";
             if (unattest)
-            {
-                sSqlUpdate = " update servRadRepTid "
-                                + " set attesterad = false "
-                                + ", attestDat = null "
-                                + " where srAltKey = :srAltKey "
-                                + " and attesterad = true ";
-            }
+                sSqlUpdate += " set attesterad = false ";
             else
+                sSqlUpdate += " set attesterad = true ";
+            sSqlUpdate += ", attestDat = :attestDat "
+                + " where srAltKey = :srAltKey "
+            + "and timeRep2WeekID in ( ";
+            bFirst = true;
+            foreach (int week in timeRep2WeekIds)
             {
-                sSqlUpdate = " update servRadRepTid "
-                                + " set attesterad = true "
-                                + ", attestDat = :attestDat "
-                                + " where srAltKey = :srAltKey "
-                                + " and attesterad = false ";
+                if (bFirst)
+                    bFirst = false;
+                else
+                    sSqlUpdate += ", ";
+                sSqlUpdate += week.ToString();
             }
+            sSqlUpdate += ") ";            
+                                
             np.Add("srAltKey", DbType.String);
 
             // Loop through and attest all
@@ -2069,14 +2579,14 @@ namespace SManApi
                 if (errText != "")
                     return -3;
             }
-
-
-
-
             return 1;
         }
 
-        private int approveTimeRep2(string vartOrdernr, ref string errText)
+
+        // Not used anymore 2017-10-28
+
+        /*
+        private int approveTimeRep2x(string vartOrdernr, ref string errText)
         {
             string sSql = "update timeReport2 "
                         + " set approved = true "
@@ -2098,6 +2608,434 @@ namespace SManApi
             return liRc;
 
         }
+         */
+
+
+
+
+ 
+
+        /// <summary>
+        /// This method shall be called in order to display
+        /// a list of weeks to be included int the report
+        /// Note that there can be weeks that are approved
+        /// and those weeks shall not be selectable (only displayed)
+        /// 
+        /// </summary>
+        /// <param name="ident">Needs no explanation</param>
+        /// <param name="VartOrdernr">The current order</param>
+        /// <returns>List of TimeRep2WeekCL</returns>
+        // 2017-10-23 KJBO
+        public List<TimeRep2WeekCL> getTimeRep2Weeks(string ident, string VartOrdernr)
+        {
+            List<TimeRep2WeekCL> ttw = new List<TimeRep2WeekCL>();
+
+            CReparator cr = new CReparator();
+            int identOK = cr.checkIdent(ident);
+
+            if (identOK == -1)
+            {
+                TimeRep2WeekCL tw = new TimeRep2WeekCL();
+                tw.ErrCode = -10;
+                tw.ErrMessage = "Ogiltigt login";
+                ttw.Add(tw);
+                return ttw;
+            }
+
+
+            string sSql = "SELECT id, vart_ordernr, \"year\", week, approved "
+                        + " FROM timeRep2Week "
+                        + " where vart_ordernr = :vart_ordernr "
+                        + " order by id ";
+
+            string errText = "";
+            NxParameterCollection np = new NxParameterCollection();
+            np.Add("vart_ordernr", VartOrdernr);
+
+            DataTable dt = cdb.getData(sSql, ref errText, np);
+
+            if (errText != "")
+            {
+                TimeRep2WeekCL tw = new TimeRep2WeekCL();
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                tw.ErrCode = -100;
+                tw.ErrMessage = errText;
+                ttw.Add(tw);
+                return ttw;
+            }
+
+            foreach (DataRow dr in dt.Rows)
+            {
+                TimeRep2WeekCL tw = new TimeRep2WeekCL();
+                tw.ID = Convert.ToInt32(dr["id"]);
+                tw.VartOrdernr = dr["vart_ordernr"].ToString();
+                tw.YearWeek = Convert.ToInt32(dr["year"]).ToString().PadLeft(4, '0') + "-" + Convert.ToInt16(dr["week"]).ToString().PadLeft(2, '0');
+                tw.Approved = Convert.ToBoolean(dr["approved"]);
+                tw.ErrCode = 0;
+                tw.ErrMessage = "";
+                ttw.Add(tw);
+            }
+            return ttw;
+        }
+
+
+        private int validateWeeks(string vartOrdernr, List<int> timeRep2WeekIds)
+        {
+            string sSql = "SELECT  vart_ordernr, approved "
+                        + " FROM timeRep2Week "
+                        + " where id in ( ";
+            bool bFirst = true;
+            foreach (int id in timeRep2WeekIds)
+            {
+                if (bFirst)
+                    bFirst = false;
+                else
+                    sSql += ", ";
+                sSql += id.ToString();
+            }
+            sSql += " )";
+
+            string errText = "";
+            DataTable dt = cdb.getData(sSql, ref errText, null);
+
+            if (errText != "")            
+                return -1;
+
+            if (timeRep2WeekIds.Count != dt.Rows.Count)
+                return -2;
+
+            foreach (DataRow dr in dt.Rows)
+                if (dr["vart_ordernr"].ToString() != vartOrdernr)
+                    return -3;
+            return 1;
+        }
+
+
+        /// <summary>
+        /// Updates the selected flag for printing of reports
+        /// Only weeks with the selected flag will be printed.
+        /// First the function resets the flag for the current order
+        /// Then it updates the flag for each week in the timeRep2WeekIds array
+        /// </summary>
+        /// <param name="vartOrdernr"></param>
+        /// <param name="timeRep2WeekIds">Array of integers representing primary key in timeRep2Week table</param>
+        /// <returns></returns>
+        private string addWeeksForPrint(string vartOrdernr, List<int> timeRep2WeekIds, bool approve)
+        {
+            // SQL clause to reset the flag
+            string sSql = "update timeRep2Week "
+                        + " set selected = false "
+                        + " where vart_ordernr = '" + vartOrdernr + "' ";
+
+            string errText = "";
+            cdb.updateData(sSql, ref errText);
+            // Return the error message if something goes wrong
+            if (errText != "")            
+                return "Fel vid återställning av selected i timeRep2Week. Felmeddelande : " + errText;            
+            
+            // Sql clause for "turning on" the selected field
+            sSql = " update timeRep2Week "
+                + " set selected = true ";
+            if (approve)
+                sSql += ", approved = true ";
+            sSql += " where id = :id ";
+
+            errText = "";
+            NxParameterCollection pc = new NxParameterCollection();
+            // Add a parameter without a value
+            pc.Add("id", 1);
+            // Loop through the list if id:s and do the update
+            foreach (int id in timeRep2WeekIds)
+            {
+                // Set the value
+                pc[0].Value = id;
+                // .. update
+                cdb.updateData(sSql, ref errText, pc);
+                // Return error message on fail
+                if (errText != "")
+                    return "Fel vid uppdatering av selected i timeRep2Week. Felmeddelande : " + errText;
+            }
+            return "";
+
+        }
+
+        /// <summary>
+        /// Return a list of email contacts for a customer 
+        /// Returns also if the contact is selected earlier
+        /// as a default value to the caller
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="VartOrdernr"></param>
+        /// <returns>List of KundEmailCL or error message</returns>
+        public List<KundEmailCL> getTimeRecordContactList(string ident, string VartOrdernr)
+        {
+            List<KundEmailCL> lke = new List<KundEmailCL>();
+
+            CReparator cr = new CReparator();
+            int identOK = cr.checkIdent(ident);
+
+            if (identOK == -1)
+            {
+                KundEmailCL ke = new KundEmailCL();
+                ke.ErrCode = -10;
+                ke.ErrMessage = "Ogiltigt login";
+                lke.Add(ke);
+                return lke;
+            }
+
+            string sSql = "SELECT ke.kundEmailID, ke.Kontaktperson, ke.email, ke.selectedForTimeReport "
+                        + " FROM KundEmail ke "
+                        + " join ServiceHuvud sh on ke.kund_id = sh.kund "
+                        + " where vart_ordernr = :vart_ordernr ";
+
+            string errText = "";
+            NxParameterCollection np = new NxParameterCollection();
+            np.Add("vart_ordernr", VartOrdernr);
+
+            DataTable dt = cdb.getData(sSql, ref errText, np);
+
+            if (errText != "")
+            {
+                KundEmailCL ke = new KundEmailCL();
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                ke.ErrCode = -100;
+                ke.ErrMessage = errText;
+                lke.Add(ke);
+                return lke;
+            }
+
+            foreach (DataRow dr in dt.Rows)
+            {
+                KundEmailCL ke = new KundEmailCL();
+                ke.ID = Convert.ToInt32(dr["kundEmailID"]);
+                ke.Kontaktperson = dr["Kontaktperson"].ToString();
+                ke.Email = dr["email"].ToString();
+                if (dr["selectedForTimeReport"] == DBNull.Value)
+                    ke.SelectedForTR = false;
+                else
+                    ke.SelectedForTR = Convert.ToBoolean(dr["selectedForTimeReport"]);
+                ke.ErrCode = 0;
+                ke.ErrMessage = "";
+                lke.Add(ke);
+            }
+            return lke;
+        }
+
+
+
+
+        /// <summary>
+        /// Creates a parameter collection object and add standard data
+        /// </summary>
+        /// <param name="kundEmail"></param>
+        /// <returns>Parmeter collection</returns>
+        /// 2017-10-25 KJBO
+        private NxParameterCollection getKundEmailParams(KundEmailCL kundEmail)
+        {
+            NxParameterCollection np = new NxParameterCollection();
+            np.Add("Kontaktperson", kundEmail.Kontaktperson);
+            np.Add("Email",kundEmail.Email );
+            np.Add("selectedForTimeReport", kundEmail.SelectedForTR);
+            np.Add("uppdaterat", "API");
+            np.Add("uppdat_dat", System.DateTime.Now);
+            np.Add("KundEmailId", kundEmail.ID);
+            np.Add("reg", "API");
+            np.Add("regdat", System.DateTime.Now);
+            return np;
+        }
+
+
+
+        /// <summary>
+        /// Updates kundEmail values. This function is mostly for
+        /// updating the selectedForTimeReport flag but of course
+        /// the other fields can be updated as well.
+        /// </summary>
+        /// <param name="kundEmail"></param>
+        /// <returns>Empty string or error text</returns>
+        private string updateKundEmail(KundEmailCL kundEmail)
+        {
+            string sSql = " update kundEmail "
+                        + " set Kontaktperson = :Kontaktperson "
+                        + " , Email = :Email "
+                        + " , selectedForTimeReport = :selectedForTimeReport "
+                        + " , uppdaterat = :uppdaterat "
+                        + " , uppdat_dat = :uppdat_dat "
+                        + " where KundEmailId = :KundEmailId ";
+
+            string errText = "";
+            NxParameterCollection np = getKundEmailParams(kundEmail);
+            // Use the SQL clause and parameter collection to update the table
+            cdb.updateData(sSql, ref errText, np);
+            // Check for errors
+            if (errText != "")
+                return errText;
+            // If all went well then we return empty string
+            return "";
+        }
+
+
+        /// <summary>
+        /// Given an order number we try to get a custome number
+        /// </summary>
+        /// <param name="VartOrdernr"></param>
+        /// <param name="errText">Error text (or empty string)</param>
+        /// <returns>Customer number or empty string if an error returns. If error occures se the errText reference parameter</returns>
+        private string getKundID(string VartOrdernr, ref string errText)
+        {
+            string sSql = " select kund "
+                       + " from ServiceHuvud "
+                       + " where vart_ordernr = :vart_ordernr";
+            // Create an empty collection...
+            NxParameterCollection np = new NxParameterCollection();
+            // ... add vart_ordernr
+            np.Add("vart_ordernr", VartOrdernr);
+
+            DataTable dt = cdb.getData(sSql, ref errText, np);
+            // Check if error happened during SQL 
+            if (errText != "")
+            {
+                errText = "Fel i getKundID när kundnummer skulle hämtas från servicehuvud. Felmeddelande : " + errText;
+                return "";
+            }
+            // If no customer can be found...
+            if (dt.Rows.Count == 0)
+            {
+                errText = "getKundID(). Kan inte hämta kundnummer från vårt ordernr : " + VartOrdernr;
+                return "";
+            }
+            // Return the customer number
+            return dt.Rows[0]["kund"].ToString();
+  
+        }
+
+        private void getInsertedKundEmailID(KundEmailCL kundEmail, string kundId)
+        {
+            string sSql = " select KundEmailId "
+                        + " from kundEmail "
+                        + " where kund_id = :kund_id "
+                        + " and Email = :email ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("kund_id", kundId);
+            pc.Add("email", kundEmail.Email);
+            string slask = "";
+
+            DataTable dt = cdb.getData(sSql, ref slask, pc);
+            if (dt.Rows.Count > 0)
+                kundEmail.ID = Convert.ToInt32(dt.Rows[0]["KundEmailId"]);
+        }
+
+        /// <summary>
+        /// Inserts a new kundEmail row
+        /// </summary>
+        /// <param name="VartOrdernr"></param>
+        /// <param name="kundEmail"></param>
+        /// <returns>Empty string for success or an error message</returns>
+        private string insertNewKundEmail(string VartOrdernr, KundEmailCL kundEmail)
+        {
+            string sSql = " insert into kundEmail (Kund_id, Kontaktperson, Email, Selected, reg, regdat, selectedForTimeReport) "
+                        + " values (:kund_id, :Kontaktperson, :Email, false, :reg, :regdat, :selectedForTimeReport) ";
+            string errText = "";
+            // Now we need to use the ordernummer to get a kundnummer
+            string kundID = getKundID(VartOrdernr, ref errText);
+            // If error then return
+            if (errText != "")
+                return errText;
+
+            // Now get a standard parameter collection..
+            NxParameterCollection pc = getKundEmailParams(kundEmail);
+            // ...  add kundId as this is not part of the standards
+            pc.Add("kund_id", kundID);
+            // Try to update database
+            cdb.updateData(sSql, ref errText, pc);
+            // If error occurs then return error text
+            if (errText != "")
+                errText = "insertNewKundEmail(). Fel vid skapande av ny kundEmail. Felmeddelande : " + errText;
+            // Return empty string if everything went well.
+
+            // 2017-10-31 KJBO
+            if (errText == "")
+                getInsertedKundEmailID(kundEmail, kundID);
+            return "";
+        }
+
+
+
+        /// <summary>
+        /// Checks if an email exists in a customer context
+        /// </summary>
+        /// <param name="VartOrdernr"></param>
+        /// <param name="kundEmail"></param>
+        /// <param name="errText">Error text as reference</param>
+        /// <returns>-1 for error (see errorText parameter). 0 if this email doesn't exist or ID of an existing email contact</returns>
+        /// 2017-10-25 KJBO
+        private int checkIfEmailAlreadyExists(string VartOrdernr, KundEmailCL kundEmail, ref string errText)
+        {
+            string sSql = "select ke.KundEmailID "
+                        + " from KundEmail ke "
+                        + " join ServiceHuvud sh on sh.kund = ke.kund_id "
+                        + " where sh.vart_ordernr = :vart_ordernr "
+                        + " and Email = :Email ";
+            // Create standard parameters
+            NxParameterCollection np = getKundEmailParams(kundEmail);
+            // Add vartOrdernr parameter
+            np.Add("vart_ordernr", VartOrdernr);
+            // Get the result
+            DataTable dt = cdb.getData(sSql, ref errText, np);
+            // if error occurs during running of SQL clause
+            if (errText != "")
+                return -1;
+            // If no kundEmail exists then return 0....
+            if (dt.Rows.Count == 0)
+                return 0;
+            // .. otherwise return the PK of the kundEmail
+            return Convert.ToInt32(dt.Rows[0]["KundEmailID"]);
+        }
+
+
+
+        /// <summary>
+        /// This is the main function for inserting and updating the kundEmail table
+        /// 
+        /// </summary>
+        /// <param name="VartOrdernr"></param>
+        /// <param name="kundEmails">List of kundEmails</param>
+        /// <param name="errText">Error description as reference parameter</param>
+        /// <returns>1 on success -1 on error</returns>
+        /// 2017-10-25 KJBO
+        private int updateKundEmails(string VartOrdernr, List<KundEmailCL> kundEmails, ref string errText)
+        {
+            // Loop through all emails...
+            foreach(KundEmailCL kundEmail in kundEmails)
+            {
+                //.... Indicates new email
+                if (kundEmail.ID == 0)
+                {
+                    // First do a check if this email already exists in the current custome context
+                    // just to be sure no duplicates enty
+                    int id = checkIfEmailAlreadyExists(VartOrdernr, kundEmail, ref errText);
+                    // If the returned ID = 0 then we now that this contact doesn't exists.....
+                    if (id == 0)
+                        // ... so we insert a new contace
+                        errText = insertNewKundEmail(VartOrdernr, kundEmail);
+                    // Check for errors
+                    if (errText != "")
+                        return -1;
+                    // If we found an existing email address (see above) then use that ID to update
+                    if (id > 0)
+                        kundEmail.ID = id;
+                }
+                // Update an existing kundEmail
+                if (kundEmail.ID > 0)
+                    errText = updateKundEmail(kundEmail);
+                if (errText != "")
+                    return -1;
+            }
+            return 1;
+        }
+
 
 
     }

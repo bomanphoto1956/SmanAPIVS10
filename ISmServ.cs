@@ -749,8 +749,12 @@ namespace SManApi
         /// 2017-09-10 KJBO Added detailed parameter
         /// 2017-09-20 KJBO Removed detailed parameter. Using p.ReportType to indicate detail level
         /// where 4 = standard report and 5 = detailed report
+        /// 2017-10-24 KJBO Added timeRep2WeekIds which is a list of integer
+        /// representing primary key of timeRep2Week. This is the weeks that shall be reported this time
+        /// 2017-10-25 KJBO Added kundEmails list to indicate which emails that shall receive the attested
+        /// timereport.
         [OperationContract]
-        TimeRep2ProcessCL generateTimeReg2Report(string ident, TimeRep2ProcessCL p, bool bOverrideExisting, bool approve);
+        TimeRep2ProcessCL generateTimeReg2Report(string ident, TimeRep2ProcessCL p, bool bOverrideExisting, bool approve, List<int> timeRep2WeekIds, List<KundEmailCL> kundEmails);
 
         /// <summary>
         /// After calling generateTimeReg2Report() there is a possibility
@@ -764,6 +768,34 @@ namespace SManApi
         [OperationContract]
         TimeRep2ProcessCL getTimeRep2ReportStatus(string ident, string VartOrdernr);
 
+
+        /// <summary>
+        /// This method shall be called in order to display
+        /// a list of weeks to be included int the report
+        /// Note that there can be weeks that are approved
+        /// and those weeks shall not be selectable (only displayed)
+        /// 
+        /// </summary>
+        /// <param name="ident">Needs no explanation</param>
+        /// <param name="VartOrdernr">The current order</param>
+        /// <returns>List of TimeRep2WeekCL</returns>
+        //  2017-10-23 KJBO
+        [OperationContract]
+        List<TimeRep2WeekCL> getTimeRep2Weeks(string ident, string VartOrdernr);
+
+
+
+        /// <summary>
+        /// This function shall be called when a contact list for sending timereports is requierd
+        /// It gives a list of earlier contacts and also if the current contact
+        /// (email address) was selected for having a timeReport in history
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="VartOrdernr"></param>
+        /// <returns>List of KundEmailCL or error</returns>
+        /// 2017-10-25 KJBO
+        [OperationContract]
+        List<KundEmailCL> getTimeRecordContactList(string ident, string VartOrdernr);
 
 
 
@@ -1060,6 +1092,12 @@ namespace SManApi
             [DataMember]
             public int Attention // (1 eller 0) Aktuell om en servicerad har notering i OvrKomment. Om denna sätts till 1 kommer denna servicerad att följas upp i efterhand
             { get; set; }
+
+            [DataMember]
+            public int valveOpen // Om ventil är öppen eller stängd före demontering. Kan ha värde 0 eller 1. Obligatoriskt val. Användaren måste välja före spara. Om användaren
+                                // ej valt ska värdet vara -1 vilket indikerar null och kommer att generera ett felmeddelande.
+            { get; set; }
+
 
 
             [DataMember]
@@ -1899,6 +1937,72 @@ namespace SManApi
             [DataMember]
             public DateTime EmailCreated // Date and time when email was created and sent to Email address above
             { get; set; }
+
+
+            [DataMember]
+            public int ErrCode
+            { get; set; }
+
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
+
+        }
+
+
+        [DataContract]
+        public class TimeRep2WeekCL
+        {
+
+            [DataMember]
+            public int ID // Unique identity
+            { get; set; }
+
+            public string VartOrdernr // Current ordernumber (probably not needed in the communication
+            { get; set; }           // between App and API)
+
+
+            [DataMember]
+            public string YearWeek // yyyy-ww
+            { get; set; }       
+
+
+            [DataMember]
+            public bool Approved // If approved is true than the current week is closed and should not
+            { get; set; }       // be selected in the App but displayed as readonly
+
+
+            [DataMember]
+            public int ErrCode
+            { get; set; }
+
+            [DataMember]
+            public string ErrMessage
+            { get; set; }
+
+        }
+
+        [DataContract]
+        public class KundEmailCL
+        {
+
+            [DataMember]
+            public int ID // Unique identity
+            { get; set; }
+
+            [DataMember]
+            public string Kontaktperson // Name of the contact person
+            { get; set; }           
+
+
+            [DataMember]
+            public string Email // Email address
+            { get; set; }
+
+
+            [DataMember]
+            public bool SelectedForTR // Toggle this setting for selected or not
+            { get; set; }       
 
 
             [DataMember]

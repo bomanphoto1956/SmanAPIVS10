@@ -767,10 +767,12 @@ namespace SManApi
         /// 2017-09-10 KJBO Added detailed parameter
         /// 2017-09-20 KJBO Removed detailed parameter. Using p.ReportType to indicate detail level
         /// where 4 = standard report and 5 = detailed report
-        public TimeRep2ProcessCL generateTimeReg2Report(string ident, TimeRep2ProcessCL p, bool bOverrideExisting, bool approve)
+        /// 2017-10-24 KJBO Added timeRep2WeekIds which is a list of integer
+        /// representing primary key of timeRep2Week. This is the weeks that shall be reported this time        
+        public TimeRep2ProcessCL generateTimeReg2Report(string ident, TimeRep2ProcessCL p, bool bOverrideExisting, bool approve, List<int> timeRep2WeekIds, List<KundEmailCL> kundEmails)
         {            
             CTidRed ct = new CTidRed();
-            return ct.generateTimeReg2Report(ident, p, bOverrideExisting, approve);
+            return ct.generateTimeReg2Report(ident, p, bOverrideExisting, approve, timeRep2WeekIds, kundEmails);
         }
 
         /// <summary>
@@ -787,6 +789,41 @@ namespace SManApi
             CTidRed ct = new CTidRed();
             return ct.getTimeRep2ReportStatus(ident, VartOrdernr);
         }
+
+
+        /// <summary>
+        /// This method shall be called in order to display
+        /// a list of weeks to be included int the report
+        /// Note that there can be weeks that are approved
+        /// and those weeks shall not be selectable (only displayed)
+        /// 
+        /// </summary>
+        /// <param name="ident">Needs no explanation</param>
+        /// <param name="VartOrdernr">The current order</param>
+        /// <returns>List of TimeRep2WeekCL</returns>
+        // 2017-10-23 KJBO
+        public List<TimeRep2WeekCL> getTimeRep2Weeks(string ident, string VartOrdernr)
+        {
+            CTidRed ct = new CTidRed();
+            return ct.getTimeRep2Weeks(ident, VartOrdernr);
+        }
+
+
+        /// <summary>
+        /// This function shall be called when a contact list for sending timereports is requierd
+        /// It gives a list of earlier contacts and also if the current contact
+        /// (email address) was selected for having a timeReport in history
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="VartOrdernr"></param>
+        /// <returns>List of KundEmailCL or error</returns>
+        /// 2017-10-24 KJBO
+        public List<KundEmailCL> getTimeRecordContactList(string ident, string VartOrdernr)
+        {
+            CTidRed ct = new CTidRed();
+            return ct.getTimeRecordContactList(ident, VartOrdernr);
+        }
+
 
 
 

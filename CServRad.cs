@@ -26,6 +26,7 @@ namespace SManApi
         /// </summary>
         /// <returns>SQL code</returns>
         // 2016-02-08 KJBO  Pergas AB
+        // 2017-10-11 KJBO Added valve open (boolean)
         private string getServradInsertSQL()
         {
 
@@ -33,13 +34,13 @@ namespace SManApi
                          + " , anmarkning, reservdelar, stalldon_kontroll, stalldon_arbete, stalldon_delar "
                          + " , lagesstall_kontroll, lagesstall_arbete, lagesstall_delar, antal_boxpack, boxpackning "
                          + " , boxpack_material, antal_brostpack, brostpackning, brostpack_material, ovr_komment, alternatekey, arbetsordernr "
-                         + ", hos_kund, pa_verkstad, servradKlar, attention "
+                         + ", hos_kund, pa_verkstad, servradKlar, attention, valveOpen "
                          + " )  "
                          + "  values ( :pventil_id, :pvart_ordernr, :pradnr, :pkontroll, :parbete "
                          + " , :panmarkning, :preservdelar, :pstalldon_kontroll, :pstalldon_arbete, :pstalldon_delar "
                          + " , :plagesstall_kontroll, :plagesstall_arbete, :plagesstall_delar, :pantal_boxpack, :pboxpackning "
                          + " , :pboxpack_material, :pantal_brostpack, :pbrostpackning, :pbrostpack_material, :povr_komment, :palternatekey, :parbetsordernr "
-                         + " , :phos_kund, :ppa_verkstad, :pservradKlar, :pAttention "
+                         + " , :phos_kund, :ppa_verkstad, :pservradKlar, :pAttention, :valveOpen "
                          + "  )";  
             return sSql;
         }
@@ -78,6 +79,7 @@ namespace SManApi
                          + ", pa_verkstad = :ppa_verkstad "
                          + ", servradKlar = :pservradKlar "
                          + ", attention = :pAttention "
+                         + ", valveOpen = :valveOpen "
                          + " where vart_ordernr =  :pvart_ordernr"
                          + " and radnr = :pradnr ";
 
@@ -171,6 +173,8 @@ namespace SManApi
                 sSql += getDelimiter(ref bFirst) + " servradKlar = :pservradKlar ";
             if (sr.Attention != orig.Attention)
                 sSql += getDelimiter(ref bFirst) + " attention = :pAttention ";
+            if (sr.valveOpen != orig.valveOpen)
+                sSql += getDelimiter(ref bFirst) + " valveOpen = :valveOpen ";
             sSql += " where vart_ordernr =  :pvart_ordernr"
                   + " and radnr = :pradnr ";
             return sSql;
@@ -250,6 +254,13 @@ namespace SManApi
                 np.Add("pAttention", false);
             else
                 np.Add("pAttention", true);
+            // 2017-10-11 KJBO
+
+            bool valveOpen = (sr.valveOpen == 1);
+            if (sr.valveOpen == 0 || sr.valveOpen == 1)
+                np.Add("valveOpen", valveOpen);
+            else
+                np.Add("valveOpen", DBNull.Value);
         }
 
 
@@ -280,6 +291,21 @@ namespace SManApi
 
         }
 
+
+
+        /// <summary>
+        /// Validate that the valveOpen field has a valid value
+        /// -1 is supposed to be null value. Only 0 and 1 is accepted
+        /// </summary>
+        /// <param name="valveOpen"></param>
+        /// <returns></returns>
+        private bool validateValveOpenNotNull(int valveOpen)
+        {
+            if (valveOpen != 1 && valveOpen != 0)
+                return false;
+            return true;
+        }
+
         /// <summary>
         /// Huv for calling validation functions
         /// </summary>
@@ -287,12 +313,15 @@ namespace SManApi
         /// <param name="err">Reference to error</param>
         /// <returns>1-OK, -1 Ordernr doesnt exist, -2 VentilID doesnt exist</returns>
         // 2016-02-09 KJBO  Pergas AB
+        // 2017-10-11 KJBO  Added validation of valve open field
         private int validateServRad(ServiceRadCL sr, ref string err)
         {
             if (validateVartOrdernr(sr.VartOrdernr, ref err) == 0 || err != "") 
                 return -1;
             if (validateVentilID(sr.VentilID, ref err) == 0 || err != "")
                 return -2;
+            if (!validateValveOpenNotNull(sr.valveOpen))
+                return -3;
             return 1;
         }
 
@@ -392,6 +421,14 @@ namespace SManApi
             {
                 lSr.ErrCode = -1;
                 lSr.ErrMessage = "Felaktigt ventilID (" + sr.VentilID + ") ";
+                return lSr;
+            }
+
+            // Is valveOpen provided and correct
+            if (validate == -3)
+            {
+                lSr.ErrCode = -1;
+                lSr.ErrMessage = "Välj om ventilen är öppen eller stängd före service";
                 return lSr;
             }
 
@@ -767,7 +804,7 @@ namespace SManApi
                         + " sr.reparator, sr.reparator2, sr.reparator3, sr.stalldon_kontroll, sr.stalldon_arbete, sr.stalldon_delar "
                         + " , sr.lagesstall_kontroll, sr.lagesstall_arbete, sr.lagesstall_delar, sr.antal_boxpack, sr.boxpackning "
                         + " , sr.boxpack_material, sr.antal_brostpack, sr.brostpackning, sr.brostpack_material, sr.ovr_komment, "
-                        + " sr.ventil_id, sr.alternatekey, sr.arbetsordernr, sr.hos_kund, sr.pa_verkstad, coalesce(sr.servradKlar,false) servradklar, attention ";
+                        + " sr.ventil_id, sr.alternatekey, sr.arbetsordernr, sr.hos_kund, sr.pa_verkstad, coalesce(sr.servradKlar,false) servradklar, attention, sr.valveOpen ";
             if (AnvID == "")
                 sSql += " from servicerad sr ";
             else
@@ -869,6 +906,15 @@ namespace SManApi
                 sr.Attention = 1;
             else
                 sr.Attention = 0;
+            if (dr["valveOpen"] == DBNull.Value)
+                sr.valveOpen = -1;
+            else
+            {
+                if (Convert.ToBoolean(dr["valveOpen"]) == true)
+                    sr.valveOpen = 1;
+                else
+                    sr.valveOpen = 0;
+            }
             sr.ErrCode = 0;
             sr.ErrMessage = "";
 
@@ -1103,10 +1149,6 @@ namespace SManApi
 
 
             }
-
-
-
-
         }
 
         public void updateFromVentil(string ventilID)
