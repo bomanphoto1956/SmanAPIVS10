@@ -993,13 +993,14 @@ namespace SManApi
 
             string sSql = " SELECT sr.vart_ordernr, sr.radnr, sr.AlternateKey, srt.id servRadRepTidID, tt.TimeTypeID, tt.TimeType, srt.AnvID, r.reparator, "
                         + " ' Position : ' + sr.kundens_pos + ' (' + coalesce(v.fabrikat,'') + ' ' + vk.ventilkategori + ' aonr: ' + coalesce(sr.arbetsordernr,'') + ')' rowDescription "
-                        + " , srt.datum, srt.tid, sr.kundens_pos "
+                        + " , srt.datum, srt.tid, sr.kundens_pos, sal.salartName "
                         + " FROM servicerad sr "
                         + " join ventil v on sr.ventil_id = v.ventil_id "
                         + " join ventilKategori vk on v.ventilkategori = vk.ventilkat_id "
                         + " join servRadRepTid srt on sr.AlternateKey = srt.srAltKey "
                         + " join TimeType tt on srt.TimeTypeID = tt.TimeTypeID "
                         + " join reparator r on srt.AnvID = r.AnvID "
+                        + " left outer join salart sal on srt.salartID = sal.salartID "
                         + " where sr.vart_ordernr = :vart_ordernr ";
 
 
@@ -1046,6 +1047,7 @@ namespace SManApi
                 rtl.datum = Convert.ToDateTime(dr["datum"]);
                 rtl.tid = Convert.ToDecimal(dr["tid"]);
                 rtl.position = dr["kundens_pos"].ToString();
+                rtl.salartName = dr["salartName"].ToString();
                 rtl.ErrCode = 0;
                 rtl.ErrMessage = "";
                 rtls.Add(rtl);

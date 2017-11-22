@@ -1462,7 +1462,7 @@ namespace SManApi
         /// Excuse for the swenglish. Most of the new functionality in the system is
         /// coded in english and the old parts are in Swedish.
         /// </summary>
- 
+        /// SalartName added 2017-11-13 KJBO
         [DataContract]
         public class RepTidListCL
         {
@@ -1516,6 +1516,9 @@ namespace SManApi
             public string position // Position, Also included in rowDescription
             { get; set; }
 
+            [DataMember]
+            public string salartName // Name of salart (Added 2017-11-13 KJBO)
+            { get; set; }
 
             [DataMember]
             public int ErrCode
