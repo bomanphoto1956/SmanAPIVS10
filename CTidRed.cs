@@ -8,26 +8,26 @@ using System.Runtime.InteropServices;
 using System.Globalization;
 
 namespace SManApi
-{    
+{
 
     public class CTidRed
     {
         CDB cdb = null;
 
- /*
-        [DllImport("PTimeRep2.dll",
-        CallingConvention = CallingConvention.StdCall,
-        CharSet = CharSet.Ansi)]
+        /*
+               [DllImport("PTimeRep2.dll",
+               CallingConvention = CallingConvention.StdCall,
+               CharSet = CharSet.Ansi)]
 
-        public static extern int
-            createTimeRep2();
+               public static extern int
+                   createTimeRep2();
 
-        */
+               */
 
 
         public CTidRed()
         {
-            cdb = new CDB(); 
+            cdb = new CDB();
         }
 
         /// <summary>
@@ -53,7 +53,7 @@ namespace SManApi
         /// 2017-03-15 KJBO
         public List<OpenDateCL> getOpenDatesSH(string ident, string vartOrdernr)
         {
-            return getOpenDates(ident, "", true, 2, vartOrdernr);            
+            return getOpenDates(ident, "", true, 2, vartOrdernr);
         }
 
 
@@ -177,8 +177,8 @@ namespace SManApi
             // determine the right timeRegVersion
             if (timeRegVersion == 0)
             {
-               CMisc cm = new CMisc();
-               timeRegVersion = cm.getTimeRegVersion(ident, vart_ordernr);
+                CMisc cm = new CMisc();
+                timeRegVersion = cm.getTimeRegVersion(ident, vart_ordernr);
             }
 
             // If we need validation then check if the current order
@@ -221,8 +221,8 @@ namespace SManApi
                         dateList.Add(d);
                         return dateList;
 
-                    }                    
-                }               
+                    }
+                }
             }
 
 
@@ -285,7 +285,7 @@ namespace SManApi
             return getOpenDates(vart_ordernr);
         }
 
-        
+
 
         /// <summary>
         /// Get a specific TidRed record identified by ID (PK)
@@ -329,7 +329,7 @@ namespace SManApi
             return getServRadRepTidForServiceRad(ident, srAltKey, 0, AnvID);
         }
 
-        
+
         /// <summary>
         /// General function for retrieving one or 
         /// several ServRadTidRep rows
@@ -378,8 +378,8 @@ namespace SManApi
                 }
 
             }
-            
-            
+
+
 
             string errText = "";
 
@@ -445,9 +445,9 @@ namespace SManApi
 
         private string getUpdateSQL()
         {
-            string sSql = " update ServradRepTid "                                                 
+            string sSql = " update ServradRepTid "
                         + " set anvID = :anvID "
-                        + ", datum = :datum "                        
+                        + ", datum = :datum "
                         + ", srAltKey = :srAltKey "
                         + ", tid = :tid "
                         + ", uppdat_dat = :uppdat_dat "
@@ -468,14 +468,14 @@ namespace SManApi
         }
 
 
-        private void setParameters( NxParameterCollection np, ServRadRepTidCL sr, int timeRep2WeekId)
+        private void setParameters(NxParameterCollection np, ServRadRepTidCL sr, int timeRep2WeekId)
         {
-            if (sr.ID != 0)            
-                np.Add("ID", sr.ID);            
-            np.Add("anvID", sr.AnvID);                        
-            np.Add("datum", sr.Datum);                       
-            np.Add("regdat", System.DateTime.Now);            
-            np.Add("srAltKey", sr.SrAltKey);                        
+            if (sr.ID != 0)
+                np.Add("ID", sr.ID);
+            np.Add("anvID", sr.AnvID);
+            np.Add("datum", sr.Datum);
+            np.Add("regdat", System.DateTime.Now);
+            np.Add("srAltKey", sr.SrAltKey);
             np.Add("tid", sr.Tid);
             np.Add("uppdat_dat", System.DateTime.Now);
             np.Add("TimeTypeID", sr.timeTypeID);
@@ -496,14 +496,14 @@ namespace SManApi
         }
 
 
-        private int validateAnvID( string anvID)
+        private int validateAnvID(string anvID)
         {
             CReparator cr = new CReparator();
 
             return cr.getName(anvID).Length;
         }
 
-        private int validateDatum( ServRadRepTidCL srt, string ident, int timeRegVersion)
+        private int validateDatum(ServRadRepTidCL srt, string ident, int timeRegVersion)
         {
             List<OpenDateCL> dateList = getOpenDates(ident, srt.SrAltKey, false, timeRegVersion);
 
@@ -511,12 +511,12 @@ namespace SManApi
 
             dateToCheck.Datum = srt.Datum;
             dateToCheck.ErrCode = 0;
-            dateToCheck.ErrMessage = "";  
-          
+            dateToCheck.ErrMessage = "";
+
             foreach (OpenDateCL od in dateList)
-            {                
-                if (od.Datum == srt.Datum)                                    
-                    return 1;                
+            {
+                if (od.Datum == srt.Datum)
+                    return 1;
             }
 
             return 0;
@@ -558,7 +558,7 @@ namespace SManApi
             return Convert.ToInt32(dt.Rows[0]["antal"]);
         }
 
-        private int validateTid( Decimal tid, int salartId, ref string err)
+        private int validateTid(Decimal tid, int salartId, ref string err)
         {
 
             if (tid < 0)
@@ -578,7 +578,7 @@ namespace SManApi
 
 
 
-        private int validateTimeType( int timeTypeID)
+        private int validateTimeType(int timeTypeID)
         {
             string sSql = " select count(*) antal "
                         + " from TimeType "
@@ -622,9 +622,9 @@ namespace SManApi
         private int validateServRadRepTid(ServRadRepTidCL srt, string ident, ref string err, int timeRegVersion)
         {
             err = "";
-            if (validateAlternateKey(srt.SrAltKey) == 0)            
-                return -1;            
-            if (validateAnvID(srt.AnvID) == 0 )
+            if (validateAlternateKey(srt.SrAltKey) == 0)
+                return -1;
+            if (validateAnvID(srt.AnvID) == 0)
                 return -2;
             if (validateDatum(srt, ident, timeRegVersion) == 0)
                 return -3;
@@ -645,7 +645,7 @@ namespace SManApi
             int valid = csa.validateSalart(SalartID, forServiceDetalj, ref salartCatID);
             if (valid == 1)
                 return 1;
-            return -1;            
+            return -1;
         }
 
         private int validateRepKat(string repKatID)
@@ -657,10 +657,10 @@ namespace SManApi
             return -1;
         }
 
-        private int getLastInserted( string AnvID)
+        private int getLastInserted(string AnvID)
         {
             string sSql = " SELECT coalesce(max(ID),0) as MaxID "
-                        + " FROM ServradRepTid " 
+                        + " FROM ServradRepTid "
                         + " where AnvID = :AnvID ";
             NxParameterCollection pc = new NxParameterCollection();
             pc.Add("AnvID", AnvID);
@@ -670,7 +670,7 @@ namespace SManApi
             return Convert.ToInt32(dt.Rows[0]["MaxID"]);
         }
 
-        
+
         /// <summary>
         /// Validates one ServRadRepTid
         /// If the ID is 0 then this method
@@ -710,13 +710,13 @@ namespace SManApi
             CServiceHuvud ch = new CServiceHuvud();
             string sOpen = ch.isOpen(ident, sVartOrdernr);
             if (sOpen != "1")
-            {                
+            {
                 retSrt.ErrCode = -10;
                 if (sOpen == "-1")
                     retSrt.ErrMessage = "Order är stängd för inmatning";
                 else
                     retSrt.ErrMessage = sOpen;
-                return retSrt;                
+                return retSrt;
             }
 
 
@@ -724,7 +724,7 @@ namespace SManApi
             {
                 retSrt.ErrCode = -10;
                 retSrt.ErrMessage = "Tidredovisning för denna vecka är stängd och kan inte ändras ";
-                return retSrt;                
+                return retSrt;
             }
 
             // Added 2017-03-13 for generation 2 handling
@@ -793,7 +793,7 @@ namespace SManApi
 
 
             if (timeRegVersion == 2)
-            {                
+            {
                 if (srt.SalartID == 0)
                 {
                     retSrt.ErrCode = -1;
@@ -872,10 +872,10 @@ namespace SManApi
             }
             else
                 sSql = getUpdateSQL();
-           
+
             NxParameterCollection np = new NxParameterCollection();
             setParameters(np, srt, tr2WeekId);
-            
+
             string errText = "";
 
             int iRc = cdb.updateData(sSql, ref errText, np);
@@ -911,19 +911,19 @@ namespace SManApi
         /// <param name="AnvID">UserID or empty string for all users</param>
         /// <returns></returns>
         public Decimal SumHoursForServRad(string ident, string srAltKey, string AnvID)
-        {            
+        {
 
             CReparator cr = new CReparator();
             int identOK = cr.checkIdent(ident);
 
-            if (identOK == -1)                            
-                return -1;            
+            if (identOK == -1)
+                return -1;
 
             string sSql = " SELECT coalesce(sum(tid),0) as sum_hours "
                         + " FROM ServradRepTid "
                         + " where srAltKey = :srAltKey ";
             if (AnvID != "")
-               sSql += " and anvID = :anvID ";
+                sSql += " and anvID = :anvID ";
 
 
             NxParameterCollection pc = new NxParameterCollection();
@@ -937,8 +937,8 @@ namespace SManApi
             DataTable dt = cdb.getData(sSql, ref errText, pc);
 
 
-            if (errText == "" && dt.Rows.Count == 0)            
-                return 0;            
+            if (errText == "" && dt.Rows.Count == 0)
+                return 0;
 
 
             if (errText != "")
@@ -983,7 +983,7 @@ namespace SManApi
 
             if (identOK == -1)
             {
-                RepTidListCL rtl = new RepTidListCL();                
+                RepTidListCL rtl = new RepTidListCL();
                 rtl.ErrCode = -10;
                 rtl.ErrMessage = "Ogiltigt login";
                 rtls.Add(rtl);
@@ -1005,8 +1005,8 @@ namespace SManApi
 
 
             NxParameterCollection pc = new NxParameterCollection();
-            pc.Add("vart_ordernr",vartOrdernr);
-            
+            pc.Add("vart_ordernr", vartOrdernr);
+
 
             string errText = "";
 
@@ -1023,7 +1023,7 @@ namespace SManApi
 
             if (errText != "")
             {
-                RepTidListCL rtl = new RepTidListCL();                                
+                RepTidListCL rtl = new RepTidListCL();
                 if (errText.Length > 2000)
                     errText = errText.Substring(1, 2000);
                 rtl.ErrCode = errCode;
@@ -1119,7 +1119,7 @@ namespace SManApi
         /// <param name="paVerkstad"></param>
         /// <param name="all"></param>
         /// <returns></returns>
-        public List<TimeTypeCL> getTimeTypes( string ident, bool hosKund, bool paVerkstad)
+        public List<TimeTypeCL> getTimeTypes(string ident, bool hosKund, bool paVerkstad)
         {
             List<TimeTypeCL> tts = new List<TimeTypeCL>();
 
@@ -1137,7 +1137,7 @@ namespace SManApi
 
 
             string sSql = " select tt.timeTypeID, tt.TimeType "
-                        + " from TimeType tt "                        
+                        + " from TimeType tt "
                         + " where 1 = 1 ";
             if (hosKund && !paVerkstad)
                 sSql += " and tt.TimeTypeBaseID = 1 ";
@@ -1168,7 +1168,7 @@ namespace SManApi
                 tt.TimeType = dr["TimeType"].ToString();
                 tt.ErrCode = 0;
                 tt.ErrMessage = "";
-                tts.Add(tt);            
+                tts.Add(tt);
             }
             return tts;
 
@@ -1183,7 +1183,7 @@ namespace SManApi
         /// <param name="vartOrdernr"></param>
         /// <param name="aDate"></param>
         /// <returns>true for approved, false for not approved</returns>
-        public bool isTime2Approved (string vartOrdernr, DateTime aDate)
+        public bool isTime2Approved(string vartOrdernr, DateTime aDate)
         {
             // Init variables
             int year = 0;
@@ -1204,7 +1204,7 @@ namespace SManApi
 
             string errText = "";
             DataTable dt = cdb.getData(sSql, ref errText, pc);
-            
+
             if (errText == "" && dt.Rows.Count == 0)
             {
                 return false;
@@ -1261,13 +1261,13 @@ namespace SManApi
                         + " and TimeTypeID = :TimeTypeID "
                         + " and SalartID = :SalartID ";
             if (salartTypeCategory == 1)
-                  sSql += " and anvID = :anvID "
-                        + " and rep_kat_id = :rep_kat_id ";
+                sSql += " and anvID = :anvID "
+                      + " and rep_kat_id = :rep_kat_id ";
             if (sht.ID != 0)
                 sSql += " and ID <> :ID ";
 
             NxParameterCollection pc = new NxParameterCollection();
-            pc.Add("vart_ordernr", sht.VartOrdernr);            
+            pc.Add("vart_ordernr", sht.VartOrdernr);
             pc.Add("datum", sht.Datum);
             pc.Add("TimeTypeID", sht.TimeTypeID);
             pc.Add("SalartID", sht.SalartID);
@@ -1277,7 +1277,7 @@ namespace SManApi
                 pc.Add("rep_kat_id", sht.RepKatID);
             }
             if (sht.ID != 0)
-                pc.Add("ID", sht.ID);           
+                pc.Add("ID", sht.ID);
             string er = "";
 
             DataTable dt = cdb.getData(sSql, ref er, pc);
@@ -1308,7 +1308,7 @@ namespace SManApi
             return 0;
         }
 
-        
+
 
 
 
@@ -1369,7 +1369,7 @@ namespace SManApi
         private int getShLastInserted()
         {
             string sSql = " SELECT coalesce(max(ID),0) as MaxID "
-                        + " FROM ServHuvRepTid ";                        
+                        + " FROM ServHuvRepTid ";
 
             string er = "";
             DataTable dt = cdb.getData(sSql, ref er);
@@ -1386,15 +1386,15 @@ namespace SManApi
                 np.Add("uppdat_dat", System.DateTime.Now);
             }
             else
-                np.Add("regdat", System.DateTime.Now);                            
+                np.Add("regdat", System.DateTime.Now);
             np.Add("datum", sr.Datum);
             np.Add("vart_ordernr", sr.VartOrdernr);
-            np.Add("tid", sr.Tid);            
+            np.Add("tid", sr.Tid);
             np.Add("TimeTypeID", sr.TimeTypeID);
             np.Add("SalartID", sr.SalartID);
             if (salartCatID == 1)
             {
-                np.Add("anvID", sr.AnvId);    
+                np.Add("anvID", sr.AnvId);
                 np.Add("rep_kat_id", sr.RepKatID);
             }
             else
@@ -1454,13 +1454,13 @@ namespace SManApi
             // if month is December but the decided week is 1 then this week belongs to the next year
             if (Month == 12 && Week == 1)
                 Year++;
-        } 
+        }
 
 
 
 
 
-        
+
         /// <summary>
         /// Validates one ServHuvRepTid
         /// If the ID is 0 the this method
@@ -1478,7 +1478,7 @@ namespace SManApi
         public ServHuvRepTidCL saveServHuvRepTid(string ident, ServHuvRepTidCL sht)
         {
             // Init variables
-            bool bNew = false;            
+            bool bNew = false;
             bool bDeleted = false;
 
             CReparator cr = new CReparator();
@@ -1499,7 +1499,7 @@ namespace SManApi
                 retSrt.ErrMessage = "Ordernummer saknas";
                 return retSrt;
             }
-            
+
 
             CServiceHuvud ch = new CServiceHuvud();
             string sOpen = ch.isOpen(ident, sht.VartOrdernr);
@@ -1591,7 +1591,7 @@ namespace SManApi
 
             }
 
-            
+
 
 
 
@@ -1635,7 +1635,7 @@ namespace SManApi
                 return retSrt;
             }
 
-            
+
 
             string sSql = "";
 
@@ -1899,10 +1899,10 @@ namespace SManApi
         /// 2017-03-21  KJBO
         /// 2017-09-10 KJBO Added detailed parameter
         /// 2017-10-23 KJBO Added timeRep2WeekIds to determine which weeks to include
-        public TimeRep2ProcessCL generateTimeReg2ReportOld(string ident, TimeRep2ProcessCL p, bool bOverrideExisting, bool approve, List<int> timeRep2WeekIds, List<KundEmailCL> kundEmails )        
+        public TimeRep2ProcessCL generateTimeReg2ReportOld(string ident, TimeRep2ProcessCL p, bool bOverrideExisting, bool approve, List<int> timeRep2WeekIds, List<KundEmailCL> kundEmails)
         {
-            
-            CReparator cr = new CReparator();           
+
+            CReparator cr = new CReparator();
 
             int identOK = cr.checkIdent(ident);
 
@@ -1912,8 +1912,8 @@ namespace SManApi
                 p.ErrMessage = "Ogiltigt login";
                 return p;
             }
-            
-                
+
+
             // Check how many rows matiching the current ordernr
             string sSql = "SELECT count(*) count_rows "
                         + " FROM TimeRep2Process "
@@ -1927,7 +1927,7 @@ namespace SManApi
 
             // Get data
             DataTable dt = cdb.getData(sSql, ref errText, pc);
-            
+
 
             // Check if any result
             if (errText == "" && dt.Rows.Count == 0)
@@ -1982,7 +1982,7 @@ namespace SManApi
                     p.ErrCode = 100;
                     if (rc == -1)
                         p.ErrMessage = "Databasfel vid validering av veckor ";
-                    if (rc >= -2 )
+                    if (rc >= -2)
                         p.ErrMessage = "Veckor för tidrapport felaktiga eller hör till annan order";
                     return p;
                 }
@@ -1995,11 +1995,14 @@ namespace SManApi
                 errText = "";
                 switch (rc)
                 {
-                    case -1: errText = "Fel vid attestering av ServHuvRepTid";
+                    case -1:
+                        errText = "Fel vid attestering av ServHuvRepTid";
                         break;
-                    case -2: errText = "Fel vid kontroll av ServRadRepTid";
+                    case -2:
+                        errText = "Fel vid kontroll av ServRadRepTid";
                         break;
-                    case -3: errText = "Fel vid uppdatering av ServHuvRepTid";
+                    case -3:
+                        errText = "Fel vid uppdatering av ServHuvRepTid";
                         break;
                 }
 
@@ -2070,7 +2073,7 @@ namespace SManApi
                     errText = errText.Substring(1, 2000);
                 p.ErrCode = -100;
                 p.ErrMessage = errText;
-                return p;                
+                return p;
             }
 
             rc = updateKundEmails(p.VartOrdernr, kundEmails, ref errText);
@@ -2080,7 +2083,7 @@ namespace SManApi
                     errText = errText.Substring(1, 2000);
                 p.ErrCode = -100;
                 p.ErrMessage = errText;
-                return p;                
+                return p;
             }
 
 
@@ -2167,11 +2170,14 @@ namespace SManApi
                 errText = "";
                 switch (rc)
                 {
-                    case -1: errText = "Fel vid attestering av ServHuvRepTid";
+                    case -1:
+                        errText = "Fel vid attestering av ServHuvRepTid";
                         break;
-                    case -2: errText = "Fel vid kontroll av ServRadRepTid";
+                    case -2:
+                        errText = "Fel vid kontroll av ServRadRepTid";
                         break;
-                    case -3: errText = "Fel vid uppdatering av ServHuvRepTid";
+                    case -3:
+                        errText = "Fel vid uppdatering av ServHuvRepTid";
                         break;
                 }
 
@@ -2209,9 +2215,9 @@ namespace SManApi
 
             int versionNumber = getNextTimeReg2ReportVersion(p.VartOrdernr);
 
-            
+
             string sSql = getTimeReg2ReportInsertSQL();
-                        
+
             DateTime dtNow = System.DateTime.Now;
             NxParameterCollection pc = new NxParameterCollection();
             pc.Add("vart_ordernr", p.VartOrdernr);
@@ -2289,7 +2295,7 @@ namespace SManApi
         /// <param name="timeRep2WeekIds"></param>
         /// <param name="errText"></param>
         /// <returns>1 = OK, -1 = Check the reference variable errText for details </returns>
-        private int addTimeRep2ProcessWeeks(string vartOrdernr, int versionNumber, List<int>timeRep2WeekIds, ref string errText)
+        private int addTimeRep2ProcessWeeks(string vartOrdernr, int versionNumber, List<int> timeRep2WeekIds, ref string errText)
         {
             // SQL clause
             string sSql = " insert into TimeRep2ProcessVersion ( vart_ordernr, versionNumber, timeRep2WeekID) "
@@ -2303,7 +2309,7 @@ namespace SManApi
             errText = "";
             // Loop through all timeRepWeekIds
             foreach (int timeRep2WeekId in timeRep2WeekIds)
-            {                
+            {
                 // Update parameter
                 pc["timeRep2WeekID"].Value = timeRep2WeekId;
                 // Run SQL
@@ -2372,7 +2378,7 @@ namespace SManApi
                         + " FROM TimeRep2Process "
                         + " where vart_ordernr = :vart_ordernr ";
             NxParameterCollection pc = new NxParameterCollection();
-            pc.Add("vart_ordernr", vartOrdernr);            
+            pc.Add("vart_ordernr", vartOrdernr);
             errText = "";
             DataTable dt = cdb.getData(sSql, ref errText, pc);
 
@@ -2381,7 +2387,7 @@ namespace SManApi
                 errText = "getMxTr2VersionNumber(). Error while reading max versionnumber. Error text : " + errText;
                 return -1;
             }
-            return Convert.ToInt32(dt.Rows[0]["maxVersion"]);            
+            return Convert.ToInt32(dt.Rows[0]["maxVersion"]);
         }
 
 
@@ -2400,8 +2406,8 @@ namespace SManApi
             // 2017-11-01 KJBO
             if (versionNumber == 0)
             {
-                versionNumber = getMaxTr2VersionNumber(VartOrdernr,ref errText);
-                if ( versionNumber == -1)
+                versionNumber = getMaxTr2VersionNumber(VartOrdernr, ref errText);
+                if (versionNumber == -1)
                 {
                     if (errText.Length > 2000)
                         errText = errText.Substring(1, 2000);
@@ -2419,7 +2425,7 @@ namespace SManApi
             NxParameterCollection pc = new NxParameterCollection();
             pc.Add("vart_ordernr", VartOrdernr);
             pc.Add("versionNumber", versionNumber);
-           
+
             // Get data
             DataTable dt = cdb.getData(sSql, ref errText, pc);
 
@@ -2488,8 +2494,8 @@ namespace SManApi
                 p.ErrCode = -10;
                 p.ErrMessage = "Ogiltigt login";
                 return p;
-            }   
-                 
+            }
+
             return getTimeRep2ReportStatus(VartOrdernr, 0);
 
         }
@@ -2504,14 +2510,14 @@ namespace SManApi
         /// 2017-10-27 Only the current weeks are affected
         private int attestAllTime2(string VartOrdernr, bool unattest, List<int> timeRep2WeekIds)
         {
-            
+
             string sSql = "update servHuvRepTid ";
             if (unattest)
                 sSql += "set attesterad = false ";
             else
                 sSql += "set attesterad = true ";
             sSql += ", attestDat = :attestDat "
-            + "where vart_ordernr = :vart_ordernr "                 
+            + "where vart_ordernr = :vart_ordernr "
             + "and timeRep2WeekID in ( ";
             bool bFirst = true;
             foreach (int week in timeRep2WeekIds)
@@ -2522,7 +2528,7 @@ namespace SManApi
                     sSql += ", ";
                 sSql += week.ToString();
             }
-            sSql += ") ";            
+            sSql += ") ";
 
             DateTime ldtNow = DateTime.Now;
             NxParameterCollection np = new NxParameterCollection();
@@ -2534,7 +2540,7 @@ namespace SManApi
             string errText = "";
             int iRc = cdb.updateData(sSql, ref errText, np);
 
-            if (errText != "")            
+            if (errText != "")
                 return -1;
 
             // Get a list of all alternate keys (rows) belonging to
@@ -2542,13 +2548,13 @@ namespace SManApi
             sSql = "select alternateKey "
                 + " from servicerad "
                 + " where vart_ordernr = :vart_ordernr ";
-            
+
             errText = "";
 
             DataTable dt = cdb.getData(sSql, ref errText, np);
-            
 
-            if (errText != "")            
+
+            if (errText != "")
                 return -2;
             string sSqlUpdate = " update servRadRepTid ";
             if (unattest)
@@ -2567,8 +2573,8 @@ namespace SManApi
                     sSqlUpdate += ", ";
                 sSqlUpdate += week.ToString();
             }
-            sSqlUpdate += ") ";            
-                                
+            sSqlUpdate += ") ";
+
             np.Add("srAltKey", DbType.String);
 
             // Loop through and attest all
@@ -2615,7 +2621,7 @@ namespace SManApi
 
 
 
- 
+
 
         /// <summary>
         /// This method shall be called in order to display
@@ -2701,7 +2707,7 @@ namespace SManApi
             string errText = "";
             DataTable dt = cdb.getData(sSql, ref errText, null);
 
-            if (errText != "")            
+            if (errText != "")
                 return -1;
 
             if (timeRep2WeekIds.Count != dt.Rows.Count)
@@ -2733,9 +2739,9 @@ namespace SManApi
             string errText = "";
             cdb.updateData(sSql, ref errText);
             // Return the error message if something goes wrong
-            if (errText != "")            
-                return "Fel vid återställning av selected i timeRep2Week. Felmeddelande : " + errText;            
-            
+            if (errText != "")
+                return "Fel vid återställning av selected i timeRep2Week. Felmeddelande : " + errText;
+
             // Sql clause for "turning on" the selected field
             sSql = " update timeRep2Week "
                 + " set selected = true ";
@@ -2838,7 +2844,7 @@ namespace SManApi
         {
             NxParameterCollection np = new NxParameterCollection();
             np.Add("Kontaktperson", kundEmail.Kontaktperson);
-            np.Add("Email",kundEmail.Email );
+            np.Add("Email", kundEmail.Email);
             np.Add("selectedForTimeReport", kundEmail.SelectedForTR);
             np.Add("uppdaterat", "API");
             np.Add("uppdat_dat", System.DateTime.Now);
@@ -2910,7 +2916,7 @@ namespace SManApi
             }
             // Return the customer number
             return dt.Rows[0]["kund"].ToString();
-  
+
         }
 
         private void getInsertedKundEmailID(KundEmailCL kundEmail, string kundId)
@@ -3010,7 +3016,7 @@ namespace SManApi
         private int updateKundEmails(string VartOrdernr, List<KundEmailCL> kundEmails, ref string errText)
         {
             // Loop through all emails...
-            foreach(KundEmailCL kundEmail in kundEmails)
+            foreach (KundEmailCL kundEmail in kundEmails)
             {
                 //.... Indicates new email
                 if (kundEmail.ID == 0)
@@ -3039,9 +3045,238 @@ namespace SManApi
         }
 
 
+        private DataTable getTimeRep2Weeks(string vart_ordernr, ref string errTxt)
+        {
+            errTxt = "";
+            string sSql = "select id, vart_ordernr, \"year\", week "
+                        + " from timeRep2Week "
+                        + " where vart_ordernr = :vart_ordernr ";
+            errTxt = "";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", vart_ordernr);
+            DataTable dt = cdb.getData(sSql, ref errTxt, pc);
+
+            // Add column to mark which of the weeks that are in use
+            dt.Columns.Add("inUse", Type.GetType("System.Boolean"));
+            foreach (DataRow dr in dt.Rows)
+                dr["inUse"] = false;
+            return dt;
+        }
+
+        private void addWeek(string vart_ordernr, int year, int week, ref string errText)
+        {
+            string sSql = "insert into timeRep2Week (vart_ordernr, \"year\", week, approved, selected) "
+                        + " values(:vart_ordernr, :year, :week, false, false) ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", vart_ordernr);
+            pc.Add("year", year);
+            pc.Add("week", week);
+            errText = "";
+            cdb.updateData(sSql, ref errText, pc);
+        }
+
+        private Boolean isWeekInUse(int id, ref string errTxt)
+        {
+            string sSql = "select count(*) antal "
+                        + " from servHuvRepTid "
+                        + " where timeRep2WeekId = :timeRep2WeekId ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("timeRep2WeekId", id);
+            errTxt = "";
+            DataTable dt = cdb.getData(sSql, ref errTxt, pc);
+
+            if (errTxt != "")
+                return true;
+
+            if (dt.Rows.Count > 0)
+            {
+                return Convert.ToInt32(dt.Rows[0]["antal"]) == 0 ? false : true;
+            }
+            return true;
+        }
+
+        private void deleteWeek(int id, ref string errTxt)
+        {
+            string sSql = " delete from timeRep2Week "
+                        + " where id = " + id.ToString();
+            errTxt = "";
+            cdb.updateData(sSql, ref errTxt);
+            return;
+        }
+
+        private void deleteWeeksNotInUse(DataTable dtWeeks, ref string errTxt)
+        {
+            DataRow[] drs = dtWeeks.Select("inUse = false");
+            if (drs != null)
+            {
+                foreach (DataRow dr in drs)
+                {
+                    errTxt = "";
+                    int id = Convert.ToInt32(dr["id"]);
+                    if (!isWeekInUse(id, ref errTxt))
+                    {
+                        if (errTxt != "")
+                        {
+                            errTxt = "Fel vid kontroll om vecka används. Felmeddlande : " + errTxt;
+                            return;
+                        }
+                        deleteWeek(id, ref errTxt);
+                        if (errTxt != "")
+                        {
+                            errTxt = "Fel vid radering av vecka. Felmeddlande : " + errTxt;
+                            return;
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+
+        public void createTr2Weeks(string vart_ordernr, DateTime dFrom, DateTime dTo, ref string ErrTxt)
+        {
+            ErrTxt = "";
+            bool bFirst = true;
+            int year = 0;
+            int week = 0;
+            DataRow[] drs = null;
+            DataTable dtWeeks = getTimeRep2Weeks(vart_ordernr, ref ErrTxt);
+            int antal = dtWeeks.Rows.Count;
+            if (ErrTxt != "")
+                return;
+            while (dFrom <= dTo)
+            {
+                if (dFrom.DayOfWeek == DayOfWeek.Monday || bFirst)
+                {
+                    GetIso8601WeekOfYear(dFrom, ref year, ref week);
+                    drs = dtWeeks.Select("year = " + year.ToString() + " and week = " + week.ToString());
+                    if (drs.Length > 0)
+                        drs[0]["inUse"] = true;
+                    else
+                        addWeek(vart_ordernr, year, week, ref ErrTxt);
+                    if (ErrTxt != "")
+                        return;
+                    bFirst = false;
+                }
+                dFrom = dFrom.AddDays(1);
+            }
+
+            deleteWeeksNotInUse(dtWeeks, ref ErrTxt);
+
+        }
+
+        private bool canOpenTr2Week(int id)
+        {
+            string sSql = " select vart_ordernr "
+                            + " from timeRep2Week "
+                            + " where id = :id ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("id", id);
+            string dummy = "";
+            DataTable dt = cdb.getData(sSql, ref dummy, pc);
+            if (dt.Rows.Count == 0)
+                return false;
+            string vartOrdernr = dt.Rows[0]["vart_ordernr"].ToString();
+            CServiceHuvud cs = new CServiceHuvud();
+            dt = cs.validateOrderOpenGodkand(vartOrdernr);
+            if (dt.Rows.Count == 0)
+                return false;
+            return !Convert.ToBoolean(dt.Rows[0]["godkand"]);            
+        }
+
+
+        /// <summary>
+        /// Toggle the approve flag for one report week
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="approve"></param>
+        /// <param name="ident"></param>
+        /// <returns></returns>
+        public ErrorCL toggleApprove(int id, Boolean approve, string ident)
+        {
+            ErrorCL err = new ErrorCL();
+            CReparator cr = new CReparator();
+            int identOK = cr.checkIdent(ident);
+            if (identOK == -1)
+            {                
+                err.ErrCode = -10;
+                err.ErrMessage = "Ogiltigt login";
+                return err;
+            }
+
+            if (!approve )
+            {
+                if (!canOpenTr2Week(id))
+                {
+                    err.ErrCode = -12355;
+                    err.ErrMessage = "Ordern är stängd. Veckor kan ej öppnas";
+                    return err;
+                }
+            }
+
+            string sSql = " update timeRep2Week "
+                        + " set approved = :approved "
+                        + " where id = :id ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("approved", approve);
+            pc.Add("id", id);
+            string errStr = "";
+            cdb.updateData(sSql, ref errStr, pc);
+
+            
+            err.ErrCode = 0;
+            err.ErrMessage = "";
+            if (errStr != "")
+            {
+                if (errStr.Length > 2000)
+                    errStr = errStr.Substring(1, 2000);
+                err.ErrCode = -100;
+                err.ErrMessage = errStr;
+            }
+
+            return err;
+
+
+        }
+
+
+        /// <summary>
+        /// Close all weeks for time reporting on
+        /// closing of ServiceOrder
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <returns></returns>
+        /// 2018-05-03 KJBO Indentive AB
+        public ErrorCL closeAllWeeksForOrder(string vartOrdernr)
+        {
+            ErrorCL errCl = new ErrorCL();
+            errCl.ErrCode = 0;
+            errCl.ErrMessage = "";
+
+
+            string sSql = " update timeRep2Week "
+                        + " set approved = true "
+                        + " where vart_ordernr = :vart_ordernr ";
+            string errStr = "";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", vartOrdernr);
+            cdb.updateData(sSql, ref errStr, pc);
+            if (errStr != "")
+            {
+                if (errStr.Length > 2000)
+                    errStr = errStr.Substring(1, 2000);
+                errCl.ErrCode = -100;
+                errCl.ErrMessage = errStr;
+            }
+            return errCl;
+        }
+
+
 
     }
 
 
-    
+
 }

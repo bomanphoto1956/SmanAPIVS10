@@ -13,8 +13,8 @@ namespace SManApi
     // Class for database communication
     public class CDB
     {
-        
-        
+
+
 
         /// <summary>
         /// Get a connection with connection string from web.config
@@ -27,9 +27,38 @@ namespace SManApi
             return cn;
         }
 
-        
-        
-         
+
+        public DataTable getData(string sSql, string ident, ref ErrorCL err, NxParameterCollection pc)
+        {
+
+            CReparator cr = new CReparator();
+            int identOK = cr.checkIdent(ident);
+
+            if (identOK == -1)
+            {
+                err.ErrCode = -10;
+                err.ErrMessage = "Ogiltigt login";
+                return null;
+            }
+
+            string errText = "";
+            DataTable dt = getData(sSql, ref errText, pc);
+            if (errText != "")
+            {
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                err.ErrMessage = errText;
+                err.ErrCode = -100;
+                return null;
+            }
+            return dt;
+        }
+
+
+
+
+
+
 
 
         /// <summary>
@@ -44,7 +73,7 @@ namespace SManApi
         {
             NxConnection cn = getConn();
             NxCommand cm = new NxCommand(sSql, cn);
-            
+
 
             errText = "";
 
@@ -53,7 +82,7 @@ namespace SManApi
                 foreach (NxParameter np in pc)
                 {
                     NxParameter npInsert = (NxParameter)np.Clone();
-                    cm.Parameters.Add(npInsert);                    
+                    cm.Parameters.Add(npInsert);
                 }
             }
 
@@ -68,7 +97,7 @@ namespace SManApi
                 da.Fill(dt);
             }
             catch (Exception ex)
-            {                
+            {
                 errText = ex.Message;
             }
             // return result
@@ -106,7 +135,7 @@ namespace SManApi
         /// <param name="errText">Refernce string that returns error string</param>
         /// <param name="pc">Collection of parameters</param>
         /// <returns>Number of updated rows</returns>
-        public int updateData( string sSql, ref string errText, NxParameterCollection pc)
+        public int updateData(string sSql, ref string errText, NxParameterCollection pc)
         {
             NxConnection cn = getConn();
             NxCommand cm = new NxCommand(sSql, cn);

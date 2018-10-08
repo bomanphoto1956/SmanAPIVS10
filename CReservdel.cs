@@ -7,7 +7,7 @@ using NexusDB.ADOProvider;
 
 namespace SManApi
 {
-    
+
 
     /// <summary>
     /// Reservdel and artikel
@@ -51,6 +51,8 @@ namespace SManApi
                 artlist.Add(art);
                 return artlist;
             }
+
+
 
             // SQL string
             string sSql = " SELECT a.artnr, a.artnamn, a.lev_id, l.levnamn, a.anm1, a.anm2 "
@@ -126,19 +128,20 @@ namespace SManApi
             int identOK = cr.checkIdent(ident);
 
             if (identOK == -1)
-            {                
+            {
                 art.ErrCode = -10;
                 art.ErrMessage = "Ogiltigt login";
                 return art;
             }
 
-            string sSql = " SELECT a.artnr, a.artnamn, a.lev_id, l.levnamn, a.anm1, a.anm2 "
+            string sSql = " SELECT a.artnr, a.artnamn, a.lev_id, l.levnamn, a.anm1, a.anm2, kategori "
                         + " FROM artikel a "
                         + " left outer join leverantor l on a.lev_id = l.lev_id "
-                        + " where a.artnr = :artnr ";
+                        + " where a.artnr = :artnr "
+                        + " and a.visas = true ";
 
             NxParameterCollection np = new NxParameterCollection();
-            np.Add("artnr", Artnr);            
+            np.Add("artnr", Artnr);
 
             string errText = "";
 
@@ -153,11 +156,11 @@ namespace SManApi
             }
 
             if (errText != "")
-            {                
+            {
                 if (errText.Length > 2000)
                     errText = errText.Substring(1, 2000);
                 art.ErrCode = errCode;
-                art.ErrMessage = errText;                        
+                art.ErrMessage = errText;
             }
 
             if (dt.Rows.Count == 1)
@@ -169,7 +172,7 @@ namespace SManApi
                 art.LevNamn = dr["levnamn"].ToString();
                 art.Anm1 = dr["anm1"].ToString();
                 art.Anm2 = dr["anm2"].ToString();
-
+                art.kategori = Convert.ToInt32(dr["kategori"]);
             }
 
 
@@ -228,7 +231,7 @@ namespace SManApi
 
             if (identOK == -1)
             {
-                ReservdelCL res = new ReservdelCL();                
+                ReservdelCL res = new ReservdelCL();
                 res.ErrCode = -10;
                 res.ErrMessage = "Ogiltigt login";
                 reslist.Add(res);
@@ -238,7 +241,7 @@ namespace SManApi
             // Build sql string depending on parameters. -1 as ReservNr means return all reservdel for one
             // ServiceRad. 
             string sSql = " select vart_ordernr, radnr, reserv_nr, antal, artnr, artnamn, faktureras, lev_id, enhet "
-                        + " , reg, regdat, uppdaterat, uppdat_dat, skriv_nu "
+                        + " , reg, regdat, uppdaterat, uppdat_dat, skriv_nu, getFromCS "
                         + " from reservdel "
                         + " where vart_ordernr = :vart_ordernr "
                         + " and radnr = :radnr ";
@@ -283,6 +286,7 @@ namespace SManApi
                 ReservdelCL res = new ReservdelCL();
                 res.Antal = 1;
                 res.Faktureras = true;
+                res.getFromCS = false;
                 res.VartOrdernr = dr["vart_ordernr"].ToString();
                 res.Radnr = Convert.ToInt32(dr["radnr"]);
                 res.ReservNr = Convert.ToInt32(dr["reserv_nr"]);
@@ -292,6 +296,8 @@ namespace SManApi
                 res.ArtNamn = dr["artnamn"].ToString();
                 if (dr["faktureras"] != DBNull.Value)
                     res.Faktureras = Convert.ToBoolean(dr["faktureras"]);
+                if (dr["getFromCS"] != DBNull.Value)
+                    res.getFromCS = Convert.ToBoolean(dr["getFromCS"]);
                 res.LevID = dr["lev_id"].ToString();
                 res.Enhet = dr["enhet"].ToString();
                 reslist.Add(res);
@@ -316,7 +322,7 @@ namespace SManApi
 
             DataTable dt = cdb.getData(sSql, ref errText, pc);
 
-            return Convert.ToInt16(dt.Rows[0][0]); 
+            return Convert.ToInt16(dt.Rows[0][0]);
 
         }
 
@@ -335,16 +341,55 @@ namespace SManApi
 
             string errText = "";
 
-            DataTable dt = cdb.getData(sSql, ref errText, pc);
-
-            return Convert.ToInt16(dt.Rows[0][0]); 
+            DataTable dt = cdb.getData(sSql, ref errText, pc);            
+            return Convert.ToInt16(dt.Rows[0][0]);
         }
+
+
+        private int validateArtikelExists(ReservdelCL r)
+        {
+            String sSql = " SELECT count(artnr) count_artikel "
+                        + " FROM artikel "
+                        + " where artnr = :artnr "
+                        + " and visas = true ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("artnr", r.Artnr);
+            string err = "";
+            DataTable dt = cdb.getData(sSql, ref err, pc);
+            if (err != "")
+                return -1;
+            if (dt.Rows.Count == 0)
+                return 0;
+            return Convert.ToInt16(dt.Rows[0]["count_artikel"]);
+        }
+
+
 
 
         private int validateReservdel(ReservdelCL r)
         {
             if (validateServiceRow(r) == 0)
                 return -1;
+
+            // If this is supposed to point to an existing 
+            // reservdel then check that this reservdel exists
+            // 2018-08-27 KJBO
+            if (r.ReservNr != 0)
+            {
+                if (validateReservdelExists(r) == 0 ) 
+                    return -4;
+            }
+            if (isDotArticle(r.Artnr))
+            {
+                if (r.ArtNamn == null || r.ArtNamn == "")
+                    return -3;
+                return 1;
+            }
+            int rc = validateArtikelExists(r);
+            if (rc == -1)
+                return -10;
+            if (rc == 0)
+                return -2;
             return 1;
         }
 
@@ -373,10 +418,10 @@ namespace SManApi
         {
             return " insert into reservdel ( antal, artnamn, artnr, enhet, faktureras "
              + " , lev_id, radnr, reg, regdat, reserv_nr "
-             + " , skriv_nu, vart_ordernr)  "
+             + " , skriv_nu, vart_ordernr, getFromCS, pyramidExport)  "
              + "  values ( :antal, :artnamn, :artnr, :enhet, :faktureras "
              + " , :lev_id, :radnr, :reg, :regdat, :reserv_nr "
-             + " , :skriv_nu, :vart_ordernr )";           
+             + " , :skriv_nu, :vart_ordernr, :getFromCS, :pyramidExport )";
         }
 
 
@@ -389,13 +434,14 @@ namespace SManApi
              + ", enhet = :enhet "
              + ", faktureras = :faktureras "
              + ", lev_id = :lev_id "
-             
              + ", skriv_nu = :skriv_nu "
              + ", uppdat_dat = :uppdat_dat "
-             + ", uppdaterat = :uppdaterat "             
+             + ", uppdaterat = :uppdaterat "
+             + ", getFromCS = :getFromCS "
+             + ", pyramidExport = :pyramidExport "
              + " where vart_ordernr = :vart_ordernr "
              + " and radnr = :radnr "
-             + " and reserv_nr = :reserv_nr ";                     
+             + " and reserv_nr = :reserv_nr ";
         }
 
         private string getDeleteSQL()
@@ -403,19 +449,19 @@ namespace SManApi
             return "delete from reservdel "
              + " where vart_ordernr = :vart_ordernr "
              + " and radnr = :radnr "
-             + " and reserv_nr = :reserv_nr ";                     
+             + " and reserv_nr = :reserv_nr ";
 
         }
 
-        
-        
+
+
         /// <summary>
         /// Standardize the unit to mixedcase
         /// </summary>
         /// <param name="aUnit"></param>
         /// <returns></returns>
         /// 2017-09-06 KJBO
-        private string standardizeUnit( string aUnit)
+        private string standardizeUnit(string aUnit)
         {
             if (aUnit == "st")
                 return "St";
@@ -426,10 +472,11 @@ namespace SManApi
             return aUnit;
         }
 
-        
+
         private void setParameters(NxParameterCollection np, ReservdelCL r, string AnvID)
         {
-            string sVar = "";            
+            DateTime dtAncient = Convert.ToDateTime("2000-01-01");
+            string sVar = "";
             np.Add("antal", r.Antal);
             sVar = r.ArtNamn;
             np.Add("artnamn", sVar);
@@ -438,6 +485,7 @@ namespace SManApi
             sVar = standardizeUnit(r.Enhet);
             np.Add("enhet", sVar);
             np.Add("faktureras", r.Faktureras);
+            np.Add("getFromCS", r.getFromCS);
             sVar = r.LevID;
             np.Add("lev_id", sVar);
             sVar = AnvID;
@@ -449,7 +497,9 @@ namespace SManApi
             sVar = r.VartOrdernr;
             np.Add("vart_ordernr", sVar);
             np.Add("radnr", r.Radnr);
-             np.Add("reserv_nr", r.ReservNr);
+            np.Add("reserv_nr", r.ReservNr);
+            np.Add("pyramidExport", dtAncient);
+            
         }
 
 
@@ -479,15 +529,15 @@ namespace SManApi
                 {
                     retRes.ErrCode = -10;
                     if (sOpen == "-1")
-                        return "Order är stängd för inmatning";                        
+                        return "Order är stängd för inmatning";
                     else
-                        return sOpen;                    
+                        return sOpen;
                 }
             }
 
-
+           
             int exists = validateReservdelExists(reservdel);
-            
+
             if (exists == 0)
             {
                 return "Reservdel finns ej";
@@ -502,7 +552,10 @@ namespace SManApi
 
             string errText = "";
 
-            int iRc = cdb.updateData(sSql, ref errText, np);
+            AddOrDeleteReservdelPyr(reservdel, true, ref errText);
+
+            if (errText == "")
+                cdb.updateData(sSql, ref errText, np);
 
             if (errText != "")
             {
@@ -517,9 +570,9 @@ namespace SManApi
 
         }
 
-    
 
-        
+
+
         /// <summary>
         /// Saves a reservdel to database.
         /// If ReservNr = 0 then the method
@@ -530,15 +583,15 @@ namespace SManApi
         /// <param name="reservdel">ReservdelCL</param>
         /// <returns>The new created or updated reservdel</returns>
         //  2016-02-10 KJBO
-        public ReservdelCL saveReservdel( string ident, ReservdelCL reservdel)
+        public ReservdelCL saveReservdel(string ident, ReservdelCL reservdel)
         {
-            
+
             CReparator cr = new CReparator();
             int identOK = cr.checkIdent(ident);
 
             ReservdelCL retRes = new ReservdelCL();
             if (identOK == -1)
-            {                
+            {
                 retRes.ErrCode = -10;
                 retRes.ErrMessage = "Ogiltigt login";
                 return retRes;
@@ -567,41 +620,386 @@ namespace SManApi
                 retRes.ErrMessage = "Felaktig serviceorder";
                 return retRes;
             }
+            if (valid == -10)
+            {
+                retRes.ErrCode = -1;
+                retRes.ErrMessage = "Fel vid kontroll av reservdel";
+                return retRes;
+            }
 
-            string sSql = "";            
+            if (valid == -2)
+            {
+                retRes.ErrCode = -1;
+                retRes.ErrMessage = "Reservdel finns inte";
+                return retRes;
 
-            // This is a new ventil
+            }
+
+            if (valid == -3)
+            {
+                retRes.ErrCode = -1;
+                retRes.ErrMessage = "Egen reservdel måste ha en benämning";
+                return retRes;
+            }
+
+            if (valid == -4)
+            {
+                retRes.ErrCode = -1;
+                retRes.ErrMessage = "Det finns ingen reservdel på ordernr : " + reservdel.VartOrdernr + "rad : " + reservdel.Radnr.ToString() + " reservdelsrad : " + reservdel.ReservNr.ToString();
+                return retRes;
+            }
+
+            string sSql = "";
+            string errText = "";
+            int errCode = 0;
+            
+            // This is a new reservdel
             if (reservdel.ReservNr == 0)
             {
                 reservdel.ReservNr = getNextReservNr(reservdel);
-                sSql = getInsertSQL();                
+                sSql = getInsertSQL();
             }
-
-            else
+            else            
                 sSql = getUpdateSQL();
 
+
+            AddOrDeleteReservdelPyr(reservdel, true, ref errText);            
             ReparatorCL rep = cr.getReparator(ident);
             NxParameterCollection np = new NxParameterCollection();
             setParameters(np, reservdel, rep.AnvID);
 
-            string errText = "";
-
             int iRc = cdb.updateData(sSql, ref errText, np);
 
+
+            if (errText == "")
+            {
+                AddOrDeleteReservdelPyr(reservdel, false, ref errText);
+                if (errText != "")
+                {
+                    errText = "Fel vid anrop till addToReservdelPyr. Felmeddelande : " + errText;
+                    errCode = -1303;
+                }
+            }
             if (errText != "")
             {
 
                 if (errText.Length > 2000)
                     errText = errText.Substring(1, 2000);
-
-                retRes.ErrCode = -100;
+                if (errCode == 0)
+                    retRes.ErrCode = -100;
+                else
+                    retRes.ErrCode = errCode;
                 retRes.ErrMessage = errText;
                 return retRes;
             }
 
-            return getReservdel(ident, reservdel.VartOrdernr, reservdel.Radnr, reservdel.ReservNr);            
-           
+            // 2018-05-17 KJBO Check if this is a pyramidOrder
+            CMServHuv shuv = new CMServHuv();
+            if (shuv.isPyramidOrder(reservdel.VartOrdernr))
+            {
+
+
+                ErrorCL errCl = checkOutIfNeeded(ident, reservdel);
+                if (errCl.ErrMessage != "")
+                {
+                    if (errText.Length > 2000)
+                        errText = errText.Substring(1, 2000);
+
+                    retRes.ErrCode = errCl.ErrCode;
+                    retRes.ErrMessage = errCl.ErrMessage;
+                    return retRes;
+
+                }
+
+
+
+                CompactStore.CCompactStore store = new CompactStore.CCompactStore();
+                errCl = store.genCompStoreData(ident, reservdel.VartOrdernr);
+                if (errCl.ErrMessage != "" && errCl.ErrCode != 1)
+                {
+                    if (errText.Length > 2000)
+                        errText = errText.Substring(1, 2000);
+
+                    retRes.ErrCode = errCl.ErrCode;
+                    retRes.ErrMessage = errCl.ErrMessage;
+                    return retRes;
+
+                }
+
+            }
+
+
+
+            return getReservdel(ident, reservdel.VartOrdernr, reservdel.Radnr, reservdel.ReservNr);
+
         }
+
+        private void AddOrDeleteReservdelPyr(ReservdelCL r, bool delete, ref string error)
+        {
+            string sSql = " select artnr, coalesce(artnamn,'') artnamn, antal "
+                        + " from reservdel "
+                        + " where vart_ordernr = :vart_ordernr "
+                        + " and radnr = :radnr "
+                        + " and reserv_nr = :reserv_nr ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr",r.VartOrdernr);
+            pc.Add("radnr",r.Radnr);
+            pc.Add("reserv_nr",r.ReservNr);
+            error = "";
+            DataTable dt = cdb.getData(sSql, ref error, pc);
+            if (error != "")
+                return;
+            if (dt.Rows.Count == 1)
+            {
+                DataRow dr = dt.Rows[0];
+                ReservdelCL res = new ReservdelCL();
+                res.VartOrdernr = r.VartOrdernr;
+                res.Radnr = r.Radnr;
+                res.ReservNr = r.ReservNr;
+                res.Artnr = dr["artnr"].ToString();
+                res.ArtNamn = dr["artnamn"].ToString();                
+                res.Antal = Convert.ToDecimal(dr["antal"]);
+                if (delete)
+                    res.Antal = -res.Antal;
+                if (res.Antal > 0.001M || res.Antal < -0.001M)
+                    addToReservdelPyr(res, ref error);
+            }
+        }
+
+        private Decimal countReservdelNotUsed(ReservdelCL r , ref string error)
+        {
+            string sSql = " select coalesce(sum(antal),0) sumAntal "
+                        + " from reservdel "
+                        + " where vart_ordernr = :vart_ordernr "                        
+                        + " and artnr = :artnr ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr",r.VartOrdernr);
+            pc.Add("artnr", r.Artnr);            
+            error = "";
+            DataTable dt = cdb.getData(sSql, ref error, pc);
+            if (error != "")
+                return 0;
+            return Convert.ToDecimal(dt.Rows[0]["sumAntal"]);
+        }
+
+        private Decimal getNotExportedNotUsedAnymore(ReservdelCL r, ref string error)
+        {
+            string sSql = " SELECT coalesce(sum(antal),0) sumAntal "
+                        + " FROM reservdelPyr "
+                        + " where vart_ordernr = :vart_ordernr "
+                        + " and radnr = :radnr "
+                        + " and reserv_nr = :reserv_nr ";
+                        
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr",r.VartOrdernr);
+            pc.Add("radnr",r.Radnr);
+            pc.Add("reserv_nr",r.ReservNr);
+            error = "";
+            DataTable dt = cdb.getData(sSql, ref error, pc);
+            if (error != "")
+                return 0;
+            return Convert.ToDecimal(dt.Rows[0]["sumAntal"]);
+
+        }
+
+        private void addToReservdelPyr(ReservdelCL r, ref string error)
+        {
+            string sSql = " update reservdelPyr "
+                            + " set antal = antal + :antal "
+                            + " where vart_ordernr = :vart_ordernr "
+                            + " and artnr = :artnr "
+                            + " and artnamn = :artnamn "
+                            + " and PyramidExport is null ";
+
+            error = "";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr",r.VartOrdernr);
+            pc.Add("artnr",r.Artnr);
+            pc.Add("antal",r.Antal);
+            pc.Add("artnamn", r.ArtNamn);
+            int updated = cdb.updateData(sSql, ref error, pc);
+            if (error != "")
+                return;
+            if (updated < 1)
+            {
+                sSql = " insert into reservdelPyr(vart_ordernr, artnr, artnamn, antal) "
+                    + " values (:vart_ordernr, :artnr, :artnamn, :antal) ";
+                cdb.updateData(sSql, ref error, pc);
+            }
+            return;
+        }
+
+        private OrderArtCL checkoutOrderArt(string ident, ReservdelCL res, Decimal coNumber)
+        {
+            ServHuvSrc.COrderArt coa = new ServHuvSrc.COrderArt();
+            OrderArtCL oa = new OrderArtCL();
+            oa.Artnr = res.Artnr;
+            oa.VartOrdernr = res.VartOrdernr;
+            oa.CoAntal = coNumber;
+            oa = coa.checkoutOrderArt(ident, oa);
+            return oa;
+        }
+
+        private ErrorCL checkOutIfNeeded(string ident, ReservdelCL res)
+        {
+            ErrorCL err = new ErrorCL();
+            err.ErrCode = 0;
+            err.ErrMessage = "";
+            Decimal onOrder = 0;
+            Decimal outChecked = 0;
+
+            if (isDotArticle(res.Artnr))            
+                return err;
+            string errStr = "";
+            int kategori = getArtKat(res.Artnr, ref errStr);
+            if (kategori != 1)
+                return err;
+            if (errStr == "")            
+                onOrder = countArtOnOrder(res, ref errStr);
+            if (errStr == "")
+                outChecked = countOutchecked(res, ref errStr);
+            if (errStr != "")
+            {
+                err.ErrMessage = errStr;
+                if (err.ErrMessage != "")
+                    err.ErrCode = 13101;
+                return err;
+            }
+            if (onOrder > outChecked)
+            {
+                OrderArtCL oaCL = checkoutOrderArt(ident, res, onOrder - outChecked);
+                if (oaCL.ErrCode != 0)
+                {
+                    err.ErrMessage = oaCL.ErrMessage;
+                    err.ErrCode = oaCL.ErrCode;
+                    return err;
+                }
+
+
+                // Added 2018-08-27. Reservdel shall now be confirmed in Pyramid
+                if (!res.getFromCS)
+                {
+                    List<ArticleCommit.CArticleCommitData> acList = new List<ArticleCommit.CArticleCommitData>();
+                    ArticleCommit.CArticleCommitData ac = new ArticleCommit.CArticleCommitData();
+                    ac.articleNumber = res.Artnr;
+                    ac.orderNumber = res.VartOrdernr;
+                    ac.quantity = onOrder - outChecked;
+                    ac.orderArtID = oaCL.OrderArtId;
+                    acList.Add(ac);
+                    ArticleCommit.CArticleCommit acCommit = new ArticleCommit.CArticleCommit();
+                    err = acCommit.generateFile(acList,"1");
+                    //ac.sav
+                }
+
+                // Removed 2018-08-27 and replaced by the code above.
+
+                //if (!res.getFromCS)
+                //{
+                //    CompactStore.updateOAStorageData data = new CompactStore.updateOAStorageData();
+                //    data.orderArtId = oaCL.OrderArtId;
+                //    //data.stockToSend = Convert.ToInt32(oaCL.OrdAntal);
+                //    data.stockToSend = res.Antal;
+                //    data.error = "";
+                //    CompactStore.CCompactStore cs = new CompactStore.CCompactStore();
+                //    string result = cs.updateDbWithoutSend(data, "x");
+                //}
+            }
+            return err;
+        }
+
+        
+
+
+        /// <summary>
+        /// Count the number of this article on this order
+        /// </summary>
+        /// <param name="r"></param>
+        /// <param name="err"></param>
+        /// <returns></returns>
+        //  2018-04-30 Indentive AB Kjbo
+        private Decimal countArtOnOrder(ReservdelCL r, ref String err)
+        {
+            String sSql = "select coalesce(sum(antal),0) sum_antal "
+                        + " from reservdel "
+                        + " where vart_ordernr = :vart_ordernr "
+                        + " and artnr = :artnr ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr",r.VartOrdernr);
+            pc.Add("artnr",r.Artnr);
+            err = "";
+            DataTable dt = cdb.getData(sSql, ref err, pc);
+
+            if (err != "")
+                return -1;
+            return Convert.ToDecimal(dt.Rows[0]["sum_antal"]);
+        }
+
+
+        /// <summary>
+        /// Count the number of outchecked articles
+        /// </summary>
+        /// <param name="r"></param>
+        /// <param name="err"></param>
+        /// <returns></returns>
+        // 2018-04-30 Indentive AB Kjbo
+        private Decimal countOutchecked(ReservdelCL r, ref String err)
+        {
+            String sSql = " select coalesce(sum(coAntal),0) - coalesce(sum(ciAntal),0) sum_outchecked "
+                        + " from orderArt "
+                        + " where vart_ordernr = :vart_ordernr "
+                        + " and artnr = :artnr ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", r.VartOrdernr);
+            pc.Add("artnr", r.Artnr);
+            err = "";
+            DataTable dt = cdb.getData(sSql, ref err, pc);
+
+            if (err != "")
+                return -1;
+            return Convert.ToDecimal(dt.Rows[0]["sum_outchecked"]);
+        }
+
+
+
+        /// <summary>
+        /// Check if this is a dot article (owner defined)
+        /// Must have at least 2 characters and the last one
+        /// shall be a dot.
+        /// </summary>
+        /// <param name="artnr"></param>
+        /// <returns></returns>
+        private bool isDotArticle(string artnr)
+        {
+            if (artnr.Length < 2)
+                return false;
+            if (artnr.Substring(artnr.Length - 1) == ".")
+                return true;
+            return false;
+        }
+
+        private int getArtKat(string artnr, ref string err)
+        {
+            string sSql = " SELECT coalesce(kategori,0) kategori "
+                        + " FROM artikel "
+                        + " where artnr = :artnr "
+                        + " and visas = true ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("artnr",artnr);
+            err = "";
+            DataTable dt = cdb.getData(sSql, ref err, pc);
+            if (err != "")
+            {
+                return 0;
+            }
+            if (dt.Rows.Count == 0)
+            {
+                err = "Artikelnr : " + artnr + " finns ej/är ej aktiv";
+                return 0;
+            }
+            return Convert.ToInt32(dt.Rows[0]["kategori"]);
+
+        }
+
 
 
     }

@@ -307,6 +307,55 @@ namespace SManApi
         }
 
         /// <summary>
+        /// Validate that the positionsnr (retrieved from the current ventil)
+        /// does not exist on any other row on the current order
+        /// </summary>
+        /// <param name="sr"></param>
+        /// <returns>True = Validate OK, False = This valve is already in use in this order</returns>
+        private bool validatePositionsnrOld(ServiceRadCL sr)
+        {
+            CVentil cv = new CVentil();
+
+            VentilCL v = cv.getVentil("", sr.VentilID, false);
+
+            string sSql = " select count(*) count_rows "
+                        + " from servicerad "
+                        + " where vart_ordernr = :vart_ordernr "
+                        + " and kundens_pos = :kundens_pos ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", sr.VartOrdernr);
+            pc.Add("kundens_pos", v.Position);
+            string error = "";
+            DataTable dt = cdb.getData(sSql, ref error, pc);
+            return Convert.ToInt32(dt.Rows[0]["count_rows"]) == 0;
+
+        }
+
+
+
+        /// <summary>
+        /// Validate that the positionsnr (retrieved from the current ventil)
+        /// does not exist on any other row on the current order
+        /// </summary>
+        /// <param name="sr"></param>
+        /// <returns>True = Validate OK, False = This valve is already in use in this order</returns>
+        private bool validateValveUnique(ServiceRadCL sr)
+        {
+            string sSql = " select count(*) count_rows "
+                        + " from servicerad "
+                        + " where vart_ordernr = :vart_ordernr "
+                        + " and ventil_id = :ventil_id "
+                        + " and radnr <> :radnr ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", sr.VartOrdernr);
+            pc.Add("ventil_id", sr.VentilID);
+            pc.Add("radnr", sr.Radnr);
+            string error = "";
+            DataTable dt = cdb.getData(sSql, ref error, pc);
+            return Convert.ToInt32(dt.Rows[0]["count_rows"]) == 0;
+        }
+
+        /// <summary>
         /// Huv for calling validation functions
         /// </summary>
         /// <param name="sr">ServiceradCL to be validate</param>
@@ -314,6 +363,7 @@ namespace SManApi
         /// <returns>1-OK, -1 Ordernr doesnt exist, -2 VentilID doesnt exist</returns>
         // 2016-02-09 KJBO  Pergas AB
         // 2017-10-11 KJBO  Added validation of valve open field
+        // 2018-05-23 KJBO  Added validation of position (according to Simon)
         private int validateServRad(ServiceRadCL sr, ref string err)
         {
             if (validateVartOrdernr(sr.VartOrdernr, ref err) == 0 || err != "") 
@@ -322,6 +372,9 @@ namespace SManApi
                 return -2;
             if (!validateValveOpenNotNull(sr.valveOpen))
                 return -3;
+            if (!validateValveUnique(sr))
+                return -4;
+
             return 1;
         }
 
@@ -429,6 +482,13 @@ namespace SManApi
             {
                 lSr.ErrCode = -1;
                 lSr.ErrMessage = "Välj om ventilen är öppen eller stängd före service";
+                return lSr;
+            }
+            // The current valve is already entered in this order
+            if (validate == -4)
+            {
+                lSr.ErrCode = -1;
+                lSr.ErrMessage = "Aktuell ventil är redan inmatad på denna order";
                 return lSr;
             }
 
@@ -804,7 +864,7 @@ namespace SManApi
                         + " sr.reparator, sr.reparator2, sr.reparator3, sr.stalldon_kontroll, sr.stalldon_arbete, sr.stalldon_delar "
                         + " , sr.lagesstall_kontroll, sr.lagesstall_arbete, sr.lagesstall_delar, sr.antal_boxpack, sr.boxpackning "
                         + " , sr.boxpack_material, sr.antal_brostpack, sr.brostpackning, sr.brostpack_material, sr.ovr_komment, "
-                        + " sr.ventil_id, sr.alternatekey, sr.arbetsordernr, sr.hos_kund, sr.pa_verkstad, coalesce(sr.servradKlar,false) servradklar, attention, sr.valveOpen ";
+                        + " sr.ventil_id, sr.alternatekey, sr.arbetsordernr, coalesce(sr.hos_kund,false) hos_kund , coalesce(sr.pa_verkstad,false) pa_verkstad, coalesce(sr.servradKlar,false) servradklar, attention, sr.valveOpen ";
             if (AnvID == "")
                 sSql += " from servicerad sr ";
             else
@@ -956,7 +1016,7 @@ namespace SManApi
 
             string sSql = " SELECT s.vart_ordernr, s.radnr, s.anlaggningsnr, s.kundens_pos, vk.ventilkategori, v.ventiltyp, v.fabrikat, v.id_nr, s.kontroll, "
                         + " s.arbete, s.anmarkning, v.dn, v.dn2, v.pn, v.pn2, s.reparator, s.reparator2, s.reparator3, s.avdelning, s.arbetsordernr "
-                        + ", s.hos_kund, s.pa_verkstad, coalesce(s.servradKlar,false) servradklar "
+                        + ", coalesce(s.hos_kund, false) hos_kund, coalesce(s.pa_verkstad, false) pa_verkstad, coalesce(s.servradKlar,false) servradklar "
                         + " FROM servicerad s join ventil v on s.ventil_id = v.ventil_id join ventilkategori vk on v.ventilkategori = vk.ventilkat_id "
                         + " where s.vart_ordernr = :pVartOrdernr ";
 
@@ -1361,7 +1421,32 @@ namespace SManApi
             }
         }
 
+        public string createFirstRow(string vartOrdernr, string kundNr)
+        {
+            string sSql = " insert into servicerad (vart_ordernr, radnr, kundens_pos, kontroll, arbete, ventil_id, AlternateKey, attention, attentionHandled, valveOpen, pa_verkstad, servradKlar, hos_kund) "
+                    + " values(:vart_ordernr, 1, 'Order', 'x', 'x', :ventil_id, :AlternateKey, false, false, false, true, true, false) ";
+            string err = "";
+            CVentil v = new CVentil();
+            string valveId = v.getOrCreateOrderValve(kundNr, ref err);
 
+            if (err != "")
+                return err;
+            string AlternateKey = Guid.NewGuid().ToString();
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", vartOrdernr);
+            pc.Add("ventil_id",valveId);
+            pc.Add("AlternateKey", AlternateKey);
+
+            int rc = cdb.updateData(sSql, ref err, pc);
+            if (err != "")
+            {
+                    if (err.Length > 2000)
+                        err = err.Substring(1, 1900);
+                err = "Fel vid skapande av första rad på order. Felmeddelande : " + err;
+                return err;                
+            }
+            return "";
+        }
 
     }
 }

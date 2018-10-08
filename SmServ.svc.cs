@@ -6,6 +6,7 @@ using System.ServiceModel;
 using System.Text;
 using System.IO;
 
+
 namespace SManApi
 {
     // NOTE: You can use the "Rename" command on the "Refactor" menu to change the class name "SmServ" in code, svc and config file together.
@@ -824,13 +825,46 @@ namespace SManApi
             return ct.getTimeRecordContactList(ident, VartOrdernr);
         }
 
+        /// <summary>
+        /// Get all reparators 
+        /// or just the reparator with AnvID
+        /// </summary>
+        /// <returns>List of reparators</returns>
+        /// 2018-08-21 KJBO
+        public List<ReparatorCL> gGetReparators(string ident, string AnvID)
+        {
+            CReparator rep = new CReparator();
+            return rep.getReparators(ident, AnvID);
+        }
+
+        /// <summary>
+        /// Returns the selectable gasket levels
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <returns></returns>
+        /// 2018-08-21 KJBO
+        public List<KeyValuePair<int, string>> gGetGasketLevels(string ident)
+        {
+            CReparator rep = new CReparator();
+            return rep.gGetGasketLevels(ident);
+        }
+
+        /// <summary>
+        /// Save access level for gasket handling
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="reparator"></param>
+        /// <returns></returns>
+        /// 2018-08-21 KJBO
+        public ReparatorCL saveGasketLevel(string ident, ReparatorCL reparator)
+        {
+            CReparator rep = new CReparator();
+            return rep.saveGasketLevel(ident, reparator);
+        }
 
 
 
 
 
-
-
-
+        }
     }
-}

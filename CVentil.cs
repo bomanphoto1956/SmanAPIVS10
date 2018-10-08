@@ -630,5 +630,42 @@ namespace SManApi
         }
 
 
+
+        /// <summary>
+        /// Creates a dummy valve to add as first row to an order
+        /// </summary>
+        /// <param name="kundId"></param>
+        /// <param name="errSt"></param>
+        /// <returns></returns>
+        /// 2018-08-23 KJBO
+        public string getOrCreateOrderValve(string kundId, ref string errSt)
+        {
+            string sSql = "SELECT ventil_id "
+                        + " FROM ventil "
+                        + " where kund_id = :kund_id "
+                        + " and \"position\" = 'order' ";
+            errSt = "";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("kund_id", kundId);
+            DataTable dt = cdb.getData(sSql, ref errSt, pc);
+            if (errSt != "")
+                return "";
+            if (dt.Rows.Count > 0)
+                return dt.Rows[0]["ventil_id"].ToString();
+
+            string ventilID = Guid.NewGuid().ToString();
+            sSql = " insert into ventil (ventil_id, ventilkategori, kund_id, reg, regdat, \"position\") "
+                + " values(:ventil_id, 3, :kund_id, 'API', :regdat, 'order') ";
+            pc.Add("ventil_id",ventilID);
+            pc.Add("kund_id",kundId);
+            pc.Add("regdat",DateTime.Now);
+
+            int rc = cdb.updateData(sSql, ref errSt, pc);
+            if (errSt != "")
+                return "";
+            return ventilID;
+        }
+
+
     }
 }
