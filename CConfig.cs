@@ -47,7 +47,25 @@ namespace SManApi
                 return Convert.ToDateTime(ConfigurationManager.AppSettings["startDateForCoList"]);
             }
         }
-        
+
+        public static bool validateReservation
+        {
+            get
+            {
+                bool validReserv = false;
+                try
+                {
+                    validReserv = Convert.ToBoolean(ConfigurationManager.AppSettings["validateReservation"] == "1");
+                }
+                catch (Exception ex)
+                {
+                    validReserv = false;
+                }
+                return validReserv;
+            }
+        }
+
+
 
     }
 }

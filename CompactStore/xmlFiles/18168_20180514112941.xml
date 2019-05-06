@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<TRANSACTION xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Company>1</Company>
+  <Date>180514</Date>
+  <Time>2018-05-14 11:29:41</Time>
+  <ORDERLINES>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18168</OrderNo>
+      <OrderlineNo>100</OrderlineNo>
+      <ItemNo>34908083</ItemNo>
+      <ItemDescription>NAF sätesring Stellite/PTFE 878xxx -01-05-07 DN80</ItemDescription>
+      <ReqQuantity>5</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18168</OrderNo>
+      <OrderlineNo>200</OrderlineNo>
+      <ItemNo>30022</ItemNo>
+      <ItemDescription>AES CarboStar 375 22mm</ItemDescription>
+      <ReqQuantity>4</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18168</OrderNo>
+      <OrderlineNo>300</OrderlineNo>
+      <ItemNo>10015</ItemNo>
+      <ItemDescription>Donit Grafilit IQ Dn15 Pn10-40</ItemDescription>
+      <ReqQuantity>3</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18168</OrderNo>
+      <OrderlineNo>400</OrderlineNo>
+      <ItemNo>10016</ItemNo>
+      <ItemDescription>Donit Grafilit IQ Dn15 Pn63</ItemDescription>
+      <ReqQuantity>3</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18168</OrderNo>
+      <OrderlineNo>500</OrderlineNo>
+      <ItemNo>10033</ItemNo>
+      <ItemDescription>Donit Grafilit IQ Dn32 Pn63</ItemDescription>
+      <ReqQuantity>2</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18168</OrderNo>
+      <OrderlineNo>600</OrderlineNo>
+      <ItemNo>10040</ItemNo>
+      <ItemDescription>Donit Grafilit IQ Dn40 Pn10-40</ItemDescription>
+      <ReqQuantity>1</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18168</OrderNo>
+      <OrderlineNo>700</OrderlineNo>
+      <ItemNo>30003</ItemNo>
+      <ItemDescription>AES CarboStar 375 3mm</ItemDescription>
+      <ReqQuantity>4</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18168</OrderNo>
+      <OrderlineNo>800</OrderlineNo>
+      <ItemNo>0030025</ItemNo>
+      <ItemDescription>AES CarboStar 375 25mm</ItemDescription>
+      <ReqQuantity>2</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+  </ORDERLINES>
+</TRANSACTION>

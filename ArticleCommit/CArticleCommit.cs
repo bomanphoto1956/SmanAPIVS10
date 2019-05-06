@@ -5,6 +5,7 @@ using System.Web;
 using System.IO;
 using System.Text;
 using SManApi.CompactStore;
+using SManApi.ExportToPyramid;
 
 namespace SManApi.ArticleCommit
 {
@@ -100,6 +101,20 @@ namespace SManApi.ArticleCommit
                 dataList.Add(oasData);
             }
             cs.updateDbFromArticleCommit(dataList, fileName, "");
+
+
+            /*
+            if (extens == "3")
+            {
+                CExportToPyramid expPyr = new CExportToPyramid();
+                expPyr.addToPyramidOrder()
+                addToPyramidOrder
+
+            }
+            */
+
+
+
             //UpdateDB
             return error;
         }

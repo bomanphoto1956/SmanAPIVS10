@@ -341,7 +341,7 @@ namespace SManApi
 
             string errText = "";
 
-            DataTable dt = cdb.getData(sSql, ref errText, pc);            
+            DataTable dt = cdb.getData(sSql, ref errText, pc);
             return Convert.ToInt16(dt.Rows[0][0]);
         }
 
@@ -376,7 +376,7 @@ namespace SManApi
             // 2018-08-27 KJBO
             if (r.ReservNr != 0)
             {
-                if (validateReservdelExists(r) == 0 ) 
+                if (validateReservdelExists(r) == 0)
                     return -4;
             }
             if (isDotArticle(r.Artnr))
@@ -499,7 +499,7 @@ namespace SManApi
             np.Add("radnr", r.Radnr);
             np.Add("reserv_nr", r.ReservNr);
             np.Add("pyramidExport", dtAncient);
-            
+
         }
 
 
@@ -535,7 +535,7 @@ namespace SManApi
                 }
             }
 
-           
+
             int exists = validateReservdelExists(reservdel);
 
             if (exists == 0)
@@ -652,18 +652,18 @@ namespace SManApi
             string sSql = "";
             string errText = "";
             int errCode = 0;
-            
+
             // This is a new reservdel
             if (reservdel.ReservNr == 0)
             {
                 reservdel.ReservNr = getNextReservNr(reservdel);
                 sSql = getInsertSQL();
             }
-            else            
+            else
                 sSql = getUpdateSQL();
 
 
-            AddOrDeleteReservdelPyr(reservdel, true, ref errText);            
+            AddOrDeleteReservdelPyr(reservdel, true, ref errText);
             ReparatorCL rep = cr.getReparator(ident);
             NxParameterCollection np = new NxParameterCollection();
             setParameters(np, reservdel, rep.AnvID);
@@ -734,6 +734,14 @@ namespace SManApi
 
         }
 
+
+        public string AddReservdelPyr(ReservdelCL r)
+        {
+            string result = "";
+            AddOrDeleteReservdelPyr(r, false, ref result);
+            return result;
+        }
+
         private void AddOrDeleteReservdelPyr(ReservdelCL r, bool delete, ref string error)
         {
             string sSql = " select artnr, coalesce(artnamn,'') artnamn, antal "
@@ -742,9 +750,9 @@ namespace SManApi
                         + " and radnr = :radnr "
                         + " and reserv_nr = :reserv_nr ";
             NxParameterCollection pc = new NxParameterCollection();
-            pc.Add("vart_ordernr",r.VartOrdernr);
-            pc.Add("radnr",r.Radnr);
-            pc.Add("reserv_nr",r.ReservNr);
+            pc.Add("vart_ordernr", r.VartOrdernr);
+            pc.Add("radnr", r.Radnr);
+            pc.Add("reserv_nr", r.ReservNr);
             error = "";
             DataTable dt = cdb.getData(sSql, ref error, pc);
             if (error != "")
@@ -757,7 +765,7 @@ namespace SManApi
                 res.Radnr = r.Radnr;
                 res.ReservNr = r.ReservNr;
                 res.Artnr = dr["artnr"].ToString();
-                res.ArtNamn = dr["artnamn"].ToString();                
+                res.ArtNamn = dr["artnamn"].ToString();
                 res.Antal = Convert.ToDecimal(dr["antal"]);
                 if (delete)
                     res.Antal = -res.Antal;
@@ -766,15 +774,15 @@ namespace SManApi
             }
         }
 
-        private Decimal countReservdelNotUsed(ReservdelCL r , ref string error)
+        private Decimal countReservdelNotUsed(ReservdelCL r, ref string error)
         {
             string sSql = " select coalesce(sum(antal),0) sumAntal "
                         + " from reservdel "
-                        + " where vart_ordernr = :vart_ordernr "                        
+                        + " where vart_ordernr = :vart_ordernr "
                         + " and artnr = :artnr ";
             NxParameterCollection pc = new NxParameterCollection();
-            pc.Add("vart_ordernr",r.VartOrdernr);
-            pc.Add("artnr", r.Artnr);            
+            pc.Add("vart_ordernr", r.VartOrdernr);
+            pc.Add("artnr", r.Artnr);
             error = "";
             DataTable dt = cdb.getData(sSql, ref error, pc);
             if (error != "")
@@ -789,11 +797,11 @@ namespace SManApi
                         + " where vart_ordernr = :vart_ordernr "
                         + " and radnr = :radnr "
                         + " and reserv_nr = :reserv_nr ";
-                        
+
             NxParameterCollection pc = new NxParameterCollection();
-            pc.Add("vart_ordernr",r.VartOrdernr);
-            pc.Add("radnr",r.Radnr);
-            pc.Add("reserv_nr",r.ReservNr);
+            pc.Add("vart_ordernr", r.VartOrdernr);
+            pc.Add("radnr", r.Radnr);
+            pc.Add("reserv_nr", r.ReservNr);
             error = "";
             DataTable dt = cdb.getData(sSql, ref error, pc);
             if (error != "")
@@ -804,6 +812,7 @@ namespace SManApi
 
         private void addToReservdelPyr(ReservdelCL r, ref string error)
         {
+
             string sSql = " update reservdelPyr "
                             + " set antal = antal + :antal "
                             + " where vart_ordernr = :vart_ordernr "
@@ -813,9 +822,9 @@ namespace SManApi
 
             error = "";
             NxParameterCollection pc = new NxParameterCollection();
-            pc.Add("vart_ordernr",r.VartOrdernr);
-            pc.Add("artnr",r.Artnr);
-            pc.Add("antal",r.Antal);
+            pc.Add("vart_ordernr", r.VartOrdernr);
+            pc.Add("artnr", r.Artnr);
+            pc.Add("antal", r.Antal);
             pc.Add("artnamn", r.ArtNamn);
             int updated = cdb.updateData(sSql, ref error, pc);
             if (error != "")
@@ -848,13 +857,13 @@ namespace SManApi
             Decimal onOrder = 0;
             Decimal outChecked = 0;
 
-            if (isDotArticle(res.Artnr))            
+            if (isDotArticle(res.Artnr))
                 return err;
             string errStr = "";
             int kategori = getArtKat(res.Artnr, ref errStr);
             if (kategori != 1)
                 return err;
-            if (errStr == "")            
+            if (errStr == "")
                 onOrder = countArtOnOrder(res, ref errStr);
             if (errStr == "")
                 outChecked = countOutchecked(res, ref errStr);
@@ -887,7 +896,7 @@ namespace SManApi
                     ac.orderArtID = oaCL.OrderArtId;
                     acList.Add(ac);
                     ArticleCommit.CArticleCommit acCommit = new ArticleCommit.CArticleCommit();
-                    err = acCommit.generateFile(acList,"1");
+                    err = acCommit.generateFile(acList, "1");
                     //ac.sav
                 }
 
@@ -907,7 +916,7 @@ namespace SManApi
             return err;
         }
 
-        
+
 
 
         /// <summary>
@@ -924,8 +933,8 @@ namespace SManApi
                         + " where vart_ordernr = :vart_ordernr "
                         + " and artnr = :artnr ";
             NxParameterCollection pc = new NxParameterCollection();
-            pc.Add("vart_ordernr",r.VartOrdernr);
-            pc.Add("artnr",r.Artnr);
+            pc.Add("vart_ordernr", r.VartOrdernr);
+            pc.Add("artnr", r.Artnr);
             err = "";
             DataTable dt = cdb.getData(sSql, ref err, pc);
 
@@ -984,7 +993,7 @@ namespace SManApi
                         + " where artnr = :artnr "
                         + " and visas = true ";
             NxParameterCollection pc = new NxParameterCollection();
-            pc.Add("artnr",artnr);
+            pc.Add("artnr", artnr);
             err = "";
             DataTable dt = cdb.getData(sSql, ref err, pc);
             if (err != "")
@@ -1005,7 +1014,7 @@ namespace SManApi
     }
 }
 
-            
+
 
 
 

@@ -863,6 +863,47 @@ namespace SManApi
         }
 
 
+        /// <summary>
+        /// Save a new fabrikat to the database
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="f"></param>
+        /// <returns></returns>
+        /// 2019-04-03 KJBO
+        public FabrikatCL saveFabrikat(string ident, FabrikatCL f)
+        {
+            Basdata.CFabrikat fabr = new Basdata.CFabrikat();
+            return fabr.saveFabrikat(ident, f);
+        }
+
+
+        /// <summary>
+        /// Saves a new DN value to the database
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="d"></param>
+        /// <returns></returns>
+        public DnCL saveDn(string ident, DnCL d)
+        {
+            Basdata.CDn dn = new Basdata.CDn();
+            return dn.saveDn(ident, d);
+        }
+
+        /// <summary>
+        /// Saves a new PN to the database
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        /// 2019-04-04 KJBO
+        public PnCL savePn(string ident, PnCL p)
+        {
+            Basdata.CPn pn = new Basdata.CPn();
+            return pn.savePn(ident, p);
+        }
+
+
+
 
 
 

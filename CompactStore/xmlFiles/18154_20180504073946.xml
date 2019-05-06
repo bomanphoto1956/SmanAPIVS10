@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<TRANSACTION xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Company>1</Company>
+  <Date>180504</Date>
+  <Time>2018-05-04 07:39:46</Time>
+  <ORDERLINES>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18154</OrderNo>
+      <OrderlineNo>100</OrderlineNo>
+      <ItemNo>500018306</ItemNo>
+      <ItemDescription>Grafitring 18x30x6mm 1,6g/cc IQ</ItemDescription>
+      <ReqQuantity>1</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+  </ORDERLINES>
+</TRANSACTION>

@@ -4,3 +4,12 @@ H:\Git\ServManAppServer\SManApi\SManApi\bin\SManApi.pdb
 H:\Git\ServManAppServer\SManApi\SManApi\obj\Release\SManApi.csprojResolveAssemblyReference.cache
 H:\Git\ServManAppServer\SManApi\SManApi\obj\Release\SManApi.dll
 H:\Git\ServManAppServer\SManApi\SManApi\obj\Release\SManApi.pdb
+H:\Git\ServManAppServer\SManApi\SManApi\bin\NexusDB.ADOProvider.dll
+C:\Projects\SManApi\SManApi\bin\SManApi.dll.config
+C:\Projects\SManApi\SManApi\bin\SManApi.dll
+C:\Projects\SManApi\SManApi\bin\SManApi.pdb
+C:\Projects\SManApi\SManApi\bin\NexusDB.ADOProvider.dll
+C:\Projects\SManApi\SManApi\obj\Release\SManApi.csproj.CoreCompileInputs.cache
+C:\Projects\SManApi\SManApi\obj\Release\SManApi.csproj.CopyComplete
+C:\Projects\SManApi\SManApi\obj\Release\SManApi.dll
+C:\Projects\SManApi\SManApi\obj\Release\SManApi.pdb

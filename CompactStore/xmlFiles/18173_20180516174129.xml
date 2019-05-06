@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<TRANSACTION xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Company>1</Company>
+  <Date>180516</Date>
+  <Time>2018-05-16 17:41:29</Time>
+  <ORDERLINES>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18173</OrderNo>
+      <OrderlineNo>100</OrderlineNo>
+      <ItemNo>10051</ItemNo>
+      <ItemDescription>Donit Grafilit IQ Dn50 Pn63</ItemDescription>
+      <ReqQuantity>10</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+  </ORDERLINES>
+</TRANSACTION>

@@ -27,7 +27,7 @@ namespace SManApi
         }
 
 
-        private string getUploadDirectory(string fileName)
+        public string getUploadDirectory(string fileName)
         {
             return Path.Combine(getUplDir(), fileName);
 
@@ -40,7 +40,7 @@ namespace SManApi
         /// </summary>
         /// <param name="pictIdent"></param>
         /// <returns></returns>
-        private bool validatePictIdent(string pictIdent)
+        public bool validatePictIdent(string pictIdent)
         {
             string fileAndPath = getUploadDirectory(pictIdent);
             if (File.Exists(fileAndPath))
@@ -296,7 +296,7 @@ namespace SManApi
         }
 
 
-        private void deletePict(string pictIdent)
+        public void deletePict(string pictIdent)
         {
             string path = getUploadDirectory(pictIdent);
 

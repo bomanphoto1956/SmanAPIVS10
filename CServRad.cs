@@ -490,7 +490,7 @@ namespace SManApi
                 lSr.ErrCode = -1;
                 lSr.ErrMessage = "Aktuell ventil är redan inmatad på denna order";
                 return lSr;
-            }
+            }            
 
 
             // Start building SQL clause

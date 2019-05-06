@@ -173,7 +173,7 @@ namespace SManApi.ExportToPyramid
             }
             if (dt.Rows.Count > 0)
             {
-                PyramidServ.ServiceSoapClient pyramid = new PyramidServ.ServiceSoapClient();
+                //PyramidServ.ServiceSoapClient pyramid = new PyramidServ.ServiceSoapClient();
                 foreach (DataRow dr in dt.Rows)
                 {
                     string message = "";
@@ -197,7 +197,7 @@ namespace SManApi.ExportToPyramid
                     if (Convert.ToDecimal(sum_antal) >= 0.001M || Convert.ToDecimal(sum_antal) <= -0.001M)
                         message = pyOrderRow(vartOrdernr, orderRow);                    
                     errCl = updateReservdel(vartOrdernr, artnr, message);
-                    addToPyramidOrder(vartOrdernr, artnr, Convert.ToDecimal(sum_antal), orderRow.MyArtName);
+                    addToPyramidOrder(vartOrdernr, artnr, Convert.ToDecimal(sum_antal), orderRow.MyArtName,"","");
                 }
             }
             return errCl;
@@ -382,7 +382,7 @@ namespace SManApi.ExportToPyramid
                     orderRow.MyArtName = "";
                     message = pyOrderRow(vartOrdernr, orderRow);
                     errCl = markShExported(vartOrdernr, artnr, message);
-                    addToPyramidOrder(vartOrdernr, artnr, Convert.ToDecimal(sumTid), orderRow.MyArtName);
+                    addToPyramidOrder(vartOrdernr, artnr, Convert.ToDecimal(sumTid), orderRow.MyArtName,"","");
                 }
             }
             return errCl;
@@ -541,7 +541,7 @@ namespace SManApi.ExportToPyramid
                     orderRow.MyArtName = "";
                     message = pyOrderRow(vartOrdernr, orderRow);
                     errCl = markSrExported(vartOrdernr, artnr, message);
-                    addToPyramidOrder(vartOrdernr, artnr, Convert.ToDecimal(sumTid), orderRow.MyArtName);
+                    addToPyramidOrder(vartOrdernr, artnr, Convert.ToDecimal(sumTid), orderRow.MyArtName,"","");
                 }
             }
             return errCl;
@@ -665,8 +665,30 @@ namespace SManApi.ExportToPyramid
         }
 
 
-        private void addToPyramidOrder(string vartOrdernr, string artnr, Decimal antal, string artnamn)
+        private void insertPyramidExport(string vartOrdernr, string artnr, Decimal antal, string artnamn, string filnamn, string notering)
         {
+            string sSql = " insert into pyramidExport (vart_ordernr, artnr, antal, artnamn, filnamn, dateAndTime, notering) "
+                        + " values(:vart_ordernr, :artnr, :antal, :artnamn, :filnamn, :dateAndTime, :notering) ";
+            NxParameterCollection pc = new NxParameterCollection();            
+            pc.Add("vart_ordernr", vartOrdernr);            
+            pc.Add("artnr", artnr);
+             pc.Add("antal", antal);
+            pc.Add("artnamn", artnamn);
+            pc.Add("filnamn", filnamn);
+            pc.Add("notering", notering);
+            pc.Add("dateAndTime", DateTime.Now);
+            string dummy = "";
+            cdb.updateData(sSql, ref dummy, pc);
+        }
+
+
+
+        public void addToPyramidOrder(string vartOrdernr, string artnr, Decimal antal, string artnamn, string filnamn, string notering)
+        {
+            insertPyramidExport(vartOrdernr, artnr, antal, artnamn, filnamn, notering);
+            return;
+
+
             string sSql = " SELECT vart_ordernr, radnr, artnr, antal "
                         + " FROM PyramidOrderPris "
                         + " where vart_ordernr = '" + vartOrdernr + "' ";
@@ -674,6 +696,8 @@ namespace SManApi.ExportToPyramid
             int row = 0;
             DataTable dt = cdb.getData(sSql, ref dummy);
             DataRow[] drs = dt.Select("artnr = '" + artnr + "'");
+            // Always add a new row
+            drs = null;
             if (drs != null && drs.Length > 0)
             {
                 DataRow dr = drs[0];
@@ -753,10 +777,26 @@ namespace SManApi.ExportToPyramid
             return 0;
         }
 
+
+
+        /// <summary>
+        /// Public function created in order to handle resetExport
+        /// </summary>
+        /// <param name="orderArtId"></param>
+        /// <param name="antal"></param>
+        /// <returns></returns>
+        /// 2018-11-02 KJBO
+        public string createReservation(int orderArtId, decimal antal)
+        {
+            string errText = "";
+            createReservation(orderArtId, antal, ref errText);
+            return errText;
+        }
+
         private void createReservation(int orderArtId, decimal antal, ref string errTxt)
         {
             string vartOrdernr = "";
-            DataTable dtArtikelRows = getArtikelFromOA(orderArtId, ref errTxt);
+            DataTable dtArtikelRows = getArtikelFromOA(orderArtId, ref errTxt);            
             if (errTxt == "")
             {
 
@@ -765,20 +805,21 @@ namespace SManApi.ExportToPyramid
                     errTxt = "Kan ej hitta artikel för att uppdatera Pyramid";
                     return;
                 }
-            }
-            if (errTxt == "")
+            }            
+            if (errTxt == "" && Convert.ToBoolean(dtArtikelRows.Rows[0]["visas"]) == true)
             {
                 DataRow dr = dtArtikelRows.Rows[0];
                 vartOrdernr = dr["vart_ordernr"].ToString();
                 PyramidServ.MyOrderRow or = new PyramidServ.MyOrderRow();
                 or.MyArtCode = dr["artikelkod"].ToString();
+                or.MyArtCode = or.MyArtCode;
                 or.MyQty = antal.ToString();
                 // 2018-05-29 KJBO
                 //or.MyArtName = dr["artnamn"].ToString();
                 or.MyArtName = "";
                 errTxt = pyOrderRow(vartOrdernr, or);
                 markOrderArtExported(orderArtId, antal, ref errTxt);
-                addToPyramidOrder(vartOrdernr, or.MyArtCode, antal, or.MyArtName);
+                addToPyramidOrder(vartOrdernr, or.MyArtCode, antal, or.MyArtName,"","");
             }
             return;
         }
@@ -810,7 +851,7 @@ namespace SManApi.ExportToPyramid
 
         private DataTable getArtikelFromOA(int orderArtId, ref string errTxt)
         {
-            string sSql = " SELECT oa.vart_ordernr, a.artnr, a.artikelkod, a.artnamn "
+            string sSql = " SELECT oa.vart_ordernr, a.artnr, a.artikelkod, a.artnamn, a.visas "
                         + " FROM orderArt oa "
                         + " join artikel a on oa.artnr = a.artnr "
                         + " where oa.orderArtId = :orderArtId ";
@@ -908,8 +949,11 @@ namespace SManApi.ExportToPyramid
             List<CArticleCommitData> acDataList = new List<CArticleCommitData>();
             foreach (DataRow dr in dt.Rows)
             {
+                // Start with checking the number of outchecked
                 decimal countOutchecked = coa.countOutcheckedArt(vartOrdernr, dr["artnr"].ToString());
+                // How many is ordered
                 decimal sumAntal = Convert.ToDecimal(dr["sum_antal"]);                
+                // Check if the number of outchecked is to low
                 if (sumAntal > countOutchecked)
                 {
 
@@ -1210,6 +1254,7 @@ namespace SManApi.ExportToPyramid
             { 
                 PyramidServ.ServiceSoapClient client = new PyramidServ.ServiceSoapClient();
                 status = client.PyStatus("S");
+                client.Close();
             }
             catch (Exception ex)
             {
@@ -1217,6 +1262,203 @@ namespace SManApi.ExportToPyramid
             }
             return rc;
         }
+
+
+        public ErrorCL addToPyramidChange(string vartOrdernr, string AnvId, int changeTypeId)
+        {
+            ErrorCL err = new ErrorCL();
+            err.ErrCode = 0;
+            err.ErrMessage = "";
+
+
+            string sSql = " insert into pyramidChange (vart_ordernr, ChangeTypeId, reg, regdate) "
+                    + " values(:vart_ordernr, :ChangeTypeId, :reg, :regdate) ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr",vartOrdernr);
+            pc.Add("ChangeTypeId", changeTypeId);
+            pc.Add("reg",AnvId);
+            pc.Add("regdate",DateTime.Now);
+            string error = "";
+            cdb.updateData(sSql, ref error, pc);
+
+            return err;
+        }
+
+
+
+        /// <summary>
+        /// Returns a list of order changes for the current ordernr
+        /// Returns open/close/reset events for the order
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <returns></returns>
+        /// 2018-11-09
+        public List<pyramidChangeCL> getPyramidChange(string ident, string vartOrdernr)
+        {
+            List<pyramidChangeCL> pyrChList = new List<pyramidChangeCL>();
+
+            CReparator cr = new CReparator();
+            int identOK = cr.checkIdent(ident);
+            if (identOK == -1)
+            {
+                pyramidChangeCL p = new pyramidChangeCL();
+                p.ErrCode = -10;
+                p.ErrMessage = "Ogiltigt login";
+                pyrChList.Add(p);
+                return pyrChList;
+            }
+
+            string sSql = " SELECT vart_ordernr, ChangeTypeId, reg, regdate "
+                        + " FROM pyramidChange "
+                        + " where vart_ordernr = :vart_ordernr ";
+            string err = "";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", vartOrdernr);
+            DataTable dt = cdb.getData(sSql, ref err, pc);
+            if (err != "")
+            {
+                pyramidChangeCL p = new pyramidChangeCL();
+                p.ErrCode = -1;
+                p.ErrMessage = "Fel vid listning av orderstatusändringar. Felmeddelande : " + err;
+                pyrChList.Add(p);
+                return pyrChList;
+            }
+            foreach (DataRow dr in dt.Rows)
+            {
+                pyramidChangeCL p = new pyramidChangeCL();
+                p.ChangeTypeId = Convert.ToInt32(dr["ChangeTypeId"]);
+                p.ChangeTypeName = getChangeTypeName(p.ChangeTypeId);
+                p.reg = dr["reg"].ToString();
+                p.regdate = Convert.ToDateTime(dr["regdate"]);
+                p.regName = cr.getName(p.reg);
+                p.ErrCode = 0;
+                p.ErrMessage = "";
+                pyrChList.Add(p);
+            }
+            return pyrChList;
+        }
+
+        private string getChangeTypeName(int changeTypeId)
+        {
+            switch (changeTypeId)
+            {
+                case 0: return "Öppen";                    
+                case 1: return "Stängd";
+                case 3: return "Nollställd";
+            }
+            return "";
+        }
+
+        private Decimal countOutchecked(int orderArtId, ref string error)
+        {
+            string sSql = "select coalesce(sum(coAntal),0) checkout "
+                        + " from orderArt "
+                        + " where orderArtId = :orderArtId ";
+            error = "";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("orderArtId", orderArtId);
+            DataTable dt = cdb.getData(sSql, ref error, pc);
+            if (dt.Rows.Count == 1)
+                return Convert.ToDecimal(dt.Rows[0]["checkout"]);
+            return 0;
+        }
+
+        private Decimal countReservedInPyr( int orderArtId, ref string error)
+        {
+            string sSql = " select coalesce(sum(antal),0) pyrCheckout "
+                        + " from oaPyramid "
+                        + " where orderArtId = :orderArtId ";
+            error = "";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("orderArtId", orderArtId);
+            DataTable dt = cdb.getData(sSql, ref error, pc);
+            if (dt.Rows.Count == 1)
+                return Convert.ToDecimal(dt.Rows[0]["pyrCheckout"]);
+            return 0;
+        }
+
+
+
+
+        /// <summary>
+        /// Checks all orderArt for this order
+        /// If any reservation to Pyramid has failed with an error
+        /// then this reservation will be checked again and
+        /// recreated
+        /// </summary>
+        /// <param name="vartOrdernr"></param>
+        /// <returns></returns>
+        /// 2018-11-09 KJBO
+        public ErrorCL ensureOrderArtIsReserved(string vartOrdernr)
+        {
+            ErrorCL err = new ErrorCL();
+            err.ErrCode = 0;
+            err.ErrMessage = "";
+
+            string sSql = " select distinct oap.orderArtId, oap.resultDescr "
+                        + " from oaPyramid oap "
+                        + " join orderArt oa on oap.orderArtId = oa.orderArtId "
+                        + " where coalesce(oap.resultDescr, '') <> '' "
+                        + " and oa.vart_ordernr = :vart_ordernr ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", vartOrdernr);
+            string ErrMessage = "";
+            DataTable dtSelect = cdb.getData(sSql, ref ErrMessage, pc);
+            if (ErrMessage != "")
+            {
+                err.ErrCode = -24101;
+                err.ErrMessage = "Error when checking for checout errors. ErrMessage : " + ErrMessage;
+                return err;
+            }
+
+            foreach (DataRow drSelect in dtSelect.Rows)
+            {
+                int orderArtId = Convert.ToInt32(drSelect["orderArtId"]);
+                Decimal outchecked = countOutchecked(orderArtId, ref ErrMessage);
+                if (ErrMessage != "")
+                {
+                    err.ErrCode = -24102;
+                    err.ErrMessage = "Error when counting outchecked articles. ErrMessage : " + ErrMessage;
+                    return err;
+                }
+                Decimal reservedInPyr = countReservedInPyr(orderArtId, ref ErrMessage);
+                if (ErrMessage != "")
+                {
+                    err.ErrCode = -24103;
+                    err.ErrMessage = "Error when counting articles reported to Pyramid. ErrMessage : " + ErrMessage;
+                    return err;
+                }
+
+                if (outchecked > reservedInPyr)
+                {
+                    createReservation(orderArtId, outchecked - reservedInPyr, ref ErrMessage);
+                    // Added 2019-04-29 KJBO
+                    if (CConfig.validateReservation)
+                    {
+                        if (ErrMessage != "")
+                        {
+                            err.ErrCode = -24104;
+                            err.ErrMessage = "Error when creating reservation for article. ErrMessage : " + ErrMessage;
+                            return err;
+                        }
+                    }
+                }                
+            }
+            return err;
+        }
+
+        public string resetPyramidExport(string vartOrdernr)
+        {
+            string sSql = " delete from pyramidExport "
+                        + " where vart_ordernr = :vart_ordernr ";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("vart_ordernr", vartOrdernr);
+            string err = "";
+            cdb.updateData(sSql, ref err, pc);
+            return err;
+        }
+
 
     }
 }

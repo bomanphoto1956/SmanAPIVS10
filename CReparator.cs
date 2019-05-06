@@ -173,7 +173,7 @@ namespace SManApi
             pc.Add("pPwd", login.pwd);
 
             // Create SQL clause
-            string sSql = " select reparator, rep_kat_id from reparator "
+            string sSql = " select reparator, rep_kat_id, coalesce(canResetPyramid,false) canResetPyramid from reparator "
                         + " where anvID = :pAnvID "
                         + " and pwd = :pPwd "
                         + " and visas = true ";
@@ -210,6 +210,7 @@ namespace SManApi
             la.ident = UpdateAuthenticate(login.AnvID);
             la.pwd = "";
             la.reparator = dr["reparator"].ToString();
+            la.canResetPyramid = Convert.ToBoolean(dr["canResetPyramid"]);
             la.ErrCode = 0;
             la.ErrMessage = "";
 

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<TRANSACTION xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Company>1</Company>
+  <Date>180425</Date>
+  <Time>2018-04-25 20:36:25</Time>
+  <ORDERLINES>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18148</OrderNo>
+      <OrderlineNo>100</OrderlineNo>
+      <ItemNo>30011</ItemNo>
+      <ItemDescription>AES CarboStar 375 11mm</ItemDescription>
+      <ReqQuantity>3</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18148</OrderNo>
+      <OrderlineNo>200</OrderlineNo>
+      <ItemNo>1590122</ItemNo>
+      <ItemDescription>NAF backseal 888x75/76/77 DN250</ItemDescription>
+      <ReqQuantity>8</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18148</OrderNo>
+      <OrderlineNo>300</OrderlineNo>
+      <ItemNo>R-79-S250RKB</ItemNo>
+      <ItemDescription>Tätningssats Automax S/B250</ItemDescription>
+      <ReqQuantity>4</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18148</OrderNo>
+      <OrderlineNo>400</OrderlineNo>
+      <ItemNo>50011012012</ItemNo>
+      <ItemDescription>Grafitring 110x120x12mm 1,6g/cc IQ</ItemDescription>
+      <ReqQuantity>4</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+  </ORDERLINES>
+</TRANSACTION>

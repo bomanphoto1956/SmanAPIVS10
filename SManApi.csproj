@@ -86,6 +86,9 @@
   <ItemGroup>
     <Compile Include="ArticleCommit\CArticleCommit.cs" />
     <Compile Include="ArticleCommit\CArticleCommitData.cs" />
+    <Compile Include="Basdata\CDn.cs" />
+    <Compile Include="Basdata\CFabrikat.cs" />
+    <Compile Include="Basdata\CPn.cs" />
     <Compile Include="CComboValues.cs" />
     <Compile Include="CCommonFunc.cs" />
     <Compile Include="CConfig.cs" />
@@ -117,7 +120,9 @@
     <Compile Include="CTidRed.cs" />
     <Compile Include="CVentil.cs" />
     <Compile Include=".cs" />
+    <Compile Include="Drawing\CDrawing.cs" />
     <Compile Include="ExportToPyramid\CExportToPyramid.cs" />
+    <Compile Include="ExportToPyramid\CResetExport.cs" />
     <Compile Include="Gasket\CGasket.cs" />
     <Compile Include="Gasket\CMaterial.cs" />
     <Compile Include="Gasket\CMaterialSize.cs" />

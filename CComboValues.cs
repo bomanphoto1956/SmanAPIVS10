@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Data;
+using NexusDB.ADOProvider;
 
 namespace SManApi
 {
 
-    
+
     public class CComboValues
     {
 
@@ -20,27 +21,39 @@ namespace SManApi
 
         public List<FabrikatCL> getFabrikat(string ident)
         {
+            return getFabrikat(ident, "");
+        }
+
+
+        public List<FabrikatCL> getFabrikat(string ident, string fabrikat)
+        {
             List<FabrikatCL> lf = new List<FabrikatCL>();
-
-            CReparator cr = new CReparator();
-            int identOK = cr.checkIdent(ident);
-
-            if (identOK == -1)
+            if (ident != "")
             {
-                FabrikatCL f = new FabrikatCL();                
-                f.ErrCode = -10;
-                f.ErrMessage = "Ogiltigt login";
-                lf.Add(f);
-                return lf;
+                CReparator cr = new CReparator();
+                int identOK = cr.checkIdent(ident);
+
+                if (identOK == -1)
+                {
+                    FabrikatCL f = new FabrikatCL();
+                    f.ErrCode = -10;
+                    f.ErrMessage = "Ogiltigt login";
+                    lf.Add(f);
+                    return lf;
+                }
             }
 
             string sSql = " select fabrikat "
-                        + " from fabrikat "
-                        + " order by fabrikat ";
+                        + " from fabrikat ";
+            if (fabrikat != "")
+                sSql += " where fabrikat = :fabrikat ";
+            sSql += " order by fabrikat ";
 
-                        string errText = "";
-
-            DataTable dt = cdb.getData(sSql, ref errText);
+            string errText = "";
+            NxParameterCollection pc = new NxParameterCollection();
+            if (fabrikat != "")
+                pc.Add("fabrikat", fabrikat);
+            DataTable dt = cdb.getData(sSql, ref errText, pc);
 
             int errCode = -100;
 
@@ -55,7 +68,7 @@ namespace SManApi
 
                 if (errText.Length > 2000)
                     errText = errText.Substring(1, 2000);
-                FabrikatCL f = new FabrikatCL();                
+                FabrikatCL f = new FabrikatCL();
                 f.ErrCode = errCode;
                 f.ErrMessage = errText;
                 lf.Add(f);
@@ -74,30 +87,43 @@ namespace SManApi
             return lf;
         }
 
-
         public List<DnCL> getDn(string ident)
         {
-            List<DnCL> ld = new List<DnCL>();
-            CReparator cr = new CReparator();
-            int identOK = cr.checkIdent(ident);
+            return getDn(ident, "");
+        }
 
-            if (identOK == -1)
+
+
+        public List<DnCL> getDn(string ident, string aDn)
+        {
+            List<DnCL> ld = new List<DnCL>();
+            if (ident != "")
             {
-                DnCL d = new DnCL();
-                
-                d.ErrCode = -10;
-                d.ErrMessage = "Ogiltigt login";
-                ld.Add(d);                
-                return ld;
+                CReparator cr = new CReparator();
+                int identOK = cr.checkIdent(ident);
+
+                if (identOK == -1)
+                {
+                    DnCL d = new DnCL();
+
+                    d.ErrCode = -10;
+                    d.ErrMessage = "Ogiltigt login";
+                    ld.Add(d);
+                    return ld;
+                }
             }
 
             string sSql = " select dn "
-                        + " from dn "
-                        + " order by dn ";
-                        string errText = "";
+                        + " from dn ";
+            if (aDn != "")
+                sSql += " where dn = :dn ";
+            sSql += " order by dn ";
+            string errText = "";
+            NxParameterCollection pc = new NxParameterCollection();
+            if (aDn != "")
+                pc.Add("dn", aDn);
+            DataTable dt = cdb.getData(sSql, ref errText, pc);
 
-            DataTable dt = cdb.getData(sSql, ref errText);
-            
             int errCode = -100;
 
             if (errText == "" && dt.Rows.Count == 0)
@@ -110,7 +136,7 @@ namespace SManApi
             {
 
                 if (errText.Length > 2000)
-                    errText = errText.Substring(1, 2000);                
+                    errText = errText.Substring(1, 2000);
                 DnCL d = new DnCL();
                 d.ErrCode = errCode;
                 d.ErrMessage = errText;
@@ -129,30 +155,40 @@ namespace SManApi
             return ld;
         }
 
+        public List<PnCL> getPn(string ident)
+        {
+            return getPn(ident, "");
+        }
 
-         public List<PnCL> getPn(string ident)
+        public List<PnCL> getPn(string ident, string aPn)
         {
             List<PnCL> lp = new List<PnCL>();
-            CReparator cr = new CReparator();
-            int identOK = cr.checkIdent(ident);
+            if (ident != "")
+            {
+                CReparator cr = new CReparator();
+                int identOK = cr.checkIdent(ident);
 
-            if (identOK == -1)
-            {                
-                PnCL p = new PnCL();
-                p.ErrCode = -10;
-                p.ErrMessage = "Ogiltigt login";
-                lp.Add(p);                
-                return lp;
+                if (identOK == -1)
+                {
+                    PnCL p = new PnCL();
+                    p.ErrCode = -10;
+                    p.ErrMessage = "Ogiltigt login";
+                    lp.Add(p);
+                    return lp;
+                }
             }
 
             string sSql = " select pn "
-                        + " from pn "
-                        + " order by pn ";
-                        
-            string errText = "";
+                        + " from pn ";
+            if (aPn != "")
+                sSql += " where pn = :pn ";
+            sSql += " order by pn ";
 
-            DataTable dt = cdb.getData(sSql, ref errText);
-            
+            string errText = "";
+            NxParameterCollection pc = new NxParameterCollection();
+            pc.Add("pn", aPn);
+            DataTable dt = cdb.getData(sSql, ref errText, pc);
+
             int errCode = -100;
 
             if (errText == "" && dt.Rows.Count == 0)
@@ -175,7 +211,7 @@ namespace SManApi
 
 
             foreach (DataRow dr in dt.Rows)
-            {                
+            {
                 PnCL p = new PnCL();
                 p.Pn = dr["pn"].ToString();
                 p.ErrCode = 0;
@@ -205,7 +241,7 @@ namespace SManApi
                 ls.Add(s);
                 return ls;
             }
-            
+
 
             string sSql = " SELECT SalartID, SalartTypeID, SalartName, enhet "
                         + " FROM Salart ";
@@ -213,7 +249,7 @@ namespace SManApi
                 sSql += "where SalartTypeID = 1";
             else
                 sSql += "where SalartTypeID > 1";
-                        
+
 
             string errText = "";
 

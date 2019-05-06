@@ -358,6 +358,16 @@ namespace SManApi.ServHuvSrc
 
         public OrderArtCL checkoutOrderArt(OrderArtCL oa, string id, bool acceptGodkand)
         {
+            ExportToPyramid.CExportToPyramid pyExport = new ExportToPyramid.CExportToPyramid();
+            string exportErr = pyExport.checkPyramidAPIAvailable();
+            if (exportErr != "")
+            {
+                OrderArtCL oacl = new OrderArtCL();
+                oacl.ErrCode = -18250;
+                oacl.ErrMessage = exportErr;
+                return oacl;
+            }
+
             ReparatorCL rep = null;
             if (id == "")
             {
@@ -492,7 +502,7 @@ namespace SManApi.ServHuvSrc
                 oaRet.ErrMessage = "Error when retrieving orderArt";
                 return oaRet;
             }
-            ExportToPyramid.CExportToPyramid pyExport = new ExportToPyramid.CExportToPyramid();
+            
             ErrorCL errCl = pyExport.reserveArticle(oaList[0].OrderArtId);
             //pyExport.retryAllOrders();
             return oaList[0];

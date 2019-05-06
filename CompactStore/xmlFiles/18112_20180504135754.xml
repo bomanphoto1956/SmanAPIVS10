@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<TRANSACTION xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Company>1</Company>
+  <Date>180504</Date>
+  <Time>2018-05-04 13:57:54</Time>
+  <ORDERLINES>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18112</OrderNo>
+      <OrderlineNo>100</OrderlineNo>
+      <ItemNo>004-0630-36</ItemNo>
+      <ItemDescription>Neles bröstpackning MBV DN100 Graphite+AISI 316</ItemDescription>
+      <ReqQuantity>1</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18112</OrderNo>
+      <OrderlineNo>200</OrderlineNo>
+      <ItemNo>0030006</ItemNo>
+      <ItemDescription>AES CarboStar 375 6mm</ItemDescription>
+      <ReqQuantity>2</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+  </ORDERLINES>
+</TRANSACTION>

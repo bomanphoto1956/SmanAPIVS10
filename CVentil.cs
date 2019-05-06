@@ -324,8 +324,36 @@ namespace SManApi
             return Convert.ToInt16(dt.Rows[0][0]); 
         }
 
+        private bool positionHasChanged(VentilCL v)
+        {
+            string sSql = " select \"position\" "
+                        + " from ventil "
+                        + " where ventil_id = :ventil_id ";
+            NxParameterCollection np = new NxParameterCollection();
+            np.Add("ventil_id", v.VentilID);
+            string err = "";
+            DataTable dt = cdb.getData(sSql, ref err, np);
+            if (dt.Rows.Count == 0)
+                return false;
+            string savedVentil = dt.Rows[0]["position"].ToString();
+            if (savedVentil != v.Position)
+                return true;
+            return false;
+        }
+
+
         private int duplicateExists(VentilCL v)
         {
+
+            // 2019-04-29 KJBO
+            // Problems when other properties has changed than position
+            // Only do a duplicate check if position has changed
+            if (v.VentilID != "")
+            {
+                if (!positionHasChanged(v))
+                    return 0;
+            }
+
 
             string sSql = " select count(*) as antal "
                         + " from ventil "
@@ -345,9 +373,7 @@ namespace SManApi
 
             if (dt.Rows.Count == 0)
                 return 0;
-
             return Convert.ToInt32(dt.Rows[0]["antal"]);
-
         }
 
 
@@ -537,6 +563,15 @@ namespace SManApi
             {                
                 vc.ErrCode = -10;
                 vc.ErrMessage = "Ogiltigt login";
+                return vc;
+            }
+
+            // 2018-11-09 Samtal med Simon
+
+            if (v.Position == "")
+            {
+                vc.ErrCode = -1;
+                vc.ErrMessage = "Positionsnr måste anges";
                 return vc;
             }
 

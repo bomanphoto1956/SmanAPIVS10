@@ -183,6 +183,7 @@ namespace SManApi
         [OperationContract]
         List<FabrikatCL> getFabrikat(string ident);
 
+
         /// <summary>
         /// Get a list of dn to be used for Comboboxes
         /// for ventil when selecting dn/dn2
@@ -829,12 +830,41 @@ namespace SManApi
         ReparatorCL saveGasketLevel(string ident, ReparatorCL reparator);
 
 
+        /// <summary>
+        /// Save a new fabrikat to the database
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="f"></param>
+        /// <returns></returns>
+        /// 2019-04-03 KJBO
+        [OperationContract]
+        FabrikatCL saveFabrikat(string ident, FabrikatCL f);
+
+        /// <summary>
+        /// Saves a new DN value to the database
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="d"></param>
+        /// <returns></returns>
+        /// 2019-04-04 KJBO
+        [OperationContract]
+        DnCL saveDn(string ident, DnCL d);
+
+        /// <summary>
+        /// Saves a new PN to the database
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        /// 2019-04-04 KJBO
+        [OperationContract]
+        PnCL savePn(string ident, PnCL p);
 
 
 
 
 
-    }
+        }
 
 
     // Use a data contract as illustrated in the sample below to add composite types to service operations.
@@ -906,6 +936,11 @@ namespace SManApi
         [DataMember]
         public string OrderAdminNamn
         { get; set; }
+
+        [DataMember]
+        public string OrderLabel
+        { get; set; }
+
 
         [DataMember]
         public int ErrCode
@@ -1319,9 +1354,8 @@ namespace SManApi
     public class FabrikatCL
     {
         [DataMember]
-        public string Fabrikat // 20
+        public string Fabrikat 
         { get; set; }
-
 
         [DataMember]
         public int ErrCode
@@ -1330,8 +1364,6 @@ namespace SManApi
         [DataMember]
         public string ErrMessage
         { get; set; }
-
-
     }
 
     /// Class to feed comboboxes when selecting dn/dn2
@@ -1347,7 +1379,6 @@ namespace SManApi
         [DataMember]
         public string Dn // 10
         { get; set; }
-
 
         [DataMember]
         public int ErrCode
@@ -2064,6 +2095,44 @@ namespace SManApi
     }
 
 
+    [DataContract]
+    public class DrawingCL
+    {
+        [DataMember]
+        public string ventil_id
+        { get; set; }
+
+        [DataMember]
+        public int DrawingNo // int 
+        { get; set; }
+
+        [DataMember]
+        public string DrawingIdent // 60
+        { get; set; }
+
+        [DataMember]
+        public string Description // 100
+        { get; set; }
+
+        [DataMember]
+        public long DrawingSize // long
+        { get; set; }
+
+        [DataMember]
+        public string FileType // 10
+        { get; set; }
+
+        [DataMember]
+        public int ErrCode
+        { get; set; }
+
+        [DataMember]
+        public string ErrMessage
+        { get; set; }
+
+    }
+
 
 
 }
+

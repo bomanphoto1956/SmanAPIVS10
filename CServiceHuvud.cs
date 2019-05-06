@@ -39,7 +39,7 @@ namespace SManApi
             }
 
             string sSql = " SELECT sh.vart_ordernr, sh.ert_ordernr, sh.kund, c.kund as kundnamn, sh.datum, sh.orderAdmin, "
-                        + " r.reparator, sh.allrep "
+                        + " r.reparator, sh.allrep, coalesce(sh.orderLabel,'') orderLabel "
                         + " FROM ServiceHuvud sh "
                         + " join kund c on sh.kund = c.kund_id "
                         + " left outer join reparator r on sh.orderAdmin = r.AnvID "
@@ -87,6 +87,7 @@ namespace SManApi
             sh.OrderDatum = Convert.ToDateTime(dr["datum"]);
             sh.OrderAdminID = dr["orderAdmin"].ToString();
             sh.OrderAdminNamn = dr["reparator"].ToString();
+            sh.OrderLabel = dr["orderLabel"].ToString();            
             sh.ErrCode = 0;
             sh.ErrMessage = "";
             return sh;
@@ -117,7 +118,7 @@ namespace SManApi
 
 
             string sSql = " SELECT sh.vart_ordernr, sh.ert_ordernr, sh.kund, c.kund as kundnamn, sh.datum, sh.orderAdmin, "
-                        + " r.reparator, sh.allrep "
+                        + " r.reparator, sh.allrep, coalesce(sh.orderLabel,'') orderLabel "
                         + " FROM ServiceHuvud sh "
                         + " join kund c on sh.kund = c.kund_id "
                         + " left outer join reparator r on sh.orderAdmin = r.AnvID "
@@ -171,6 +172,7 @@ namespace SManApi
                 sh.OrderDatum = Convert.ToDateTime(dr["datum"]);
                 sh.OrderAdminID = dr["orderAdmin"].ToString();
                 sh.OrderAdminNamn = dr["reparator"].ToString();
+                sh.OrderLabel = dr["orderLabel"].ToString();                
                 sh.ErrCode = 0;
                 sh.ErrMessage = "";
 
@@ -287,16 +289,16 @@ namespace SManApi
 
             string sSql = "SELECT ";
             if (selType == 0)
-                sSql += "top 10 ";
+                sSql += "top 30 ";
             sSql += "sh.vart_ordernr, sh.ert_ordernr, sh.datum, k.kund + ', ' + coalesce(k.stad,'') + ', ' + k.foretagskod kund, sh.regdat "
-                        + " , sh.AllRep, coalesce(sh.sentToPyramid,false) sentToPyramid, coalesce(sh.pyramidError,'') pyramidError "
+                        + " , sh.AllRep, coalesce(sh.sentToPyramid,false) sentToPyramid, coalesce(sh.pyramidError,'') pyramidError, coalesce(sh.orderLabel,'') orderLabel "
                         + " FROM ServiceHuvud sh "
                         + " join kund k on sh.kund = k.kund_id "
                         + " where sh.openForApp = true "
                         + " and sentToPyramid is not null ";
             if (selType == 2)
                 sSql += " and sh.godkand = false ";
-            sSql += " group by sh.vart_ordernr, sh.ert_ordernr, sh.datum, k.kund, k.stad, k.kund_id, sh.regdat, sh.AllRep, k.foretagskod, sh.sentToPyramid, sh.pyramidError "
+            sSql += " group by sh.vart_ordernr, sh.ert_ordernr, sh.datum, k.kund, k.stad, k.kund_id, sh.regdat, sh.AllRep, k.foretagskod, sh.sentToPyramid, sh.pyramidError, orderLabel  "
                         + " order by sh.regdat desc ";
 
             string errText = "";
@@ -320,9 +322,11 @@ namespace SManApi
                 sh.ert_ordernr = dr["ert_ordernr"].ToString();
                 sh.kund = dr["kund"].ToString();
                 sh.orderDate = Convert.ToDateTime(dr["datum"]).ToShortDateString();
+                // 2018-11-09
+                sh.orderLabel = dr["orderLabel"].ToString();
                 sh.ErrCode = 0;
                 sh.ErrMessage = "";
-                sh.reparator_msg = "1";
+                sh.reparator_msg = "1";                
                 if (Convert.ToBoolean(dr["AllRep"]) == false)
                 {
                     int antal = countReparator(sh.vart_ordernr);

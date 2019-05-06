@@ -313,7 +313,7 @@ namespace SManApi.CompactStore
             return errorTxt;
         }
 
-        public string updateDbWithoutSend(updateOAStorageData data, string filename)
+        public string updateDbWithoutSend2(updateOAStorageData data, string filename)
         {
             List<updateOAStorageData> list = new List<updateOAStorageData>();
             list.Add(data);

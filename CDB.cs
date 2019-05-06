@@ -14,8 +14,6 @@ namespace SManApi
     public class CDB
     {
 
-
-
         /// <summary>
         /// Get a connection with connection string from web.config
         /// </summary>

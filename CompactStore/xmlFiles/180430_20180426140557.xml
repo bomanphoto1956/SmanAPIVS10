@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<TRANSACTION xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Company>1</Company>
+  <Date>180426</Date>
+  <Time>2018-04-26 14:05:57</Time>
+  <ORDERLINES>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>180430</OrderNo>
+      <OrderlineNo>100</OrderlineNo>
+      <ItemNo>18504000</ItemNo>
+      <ItemDescription>Hattmutter FZB 6.0 M4</ItemDescription>
+      <ReqQuantity>20</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+  </ORDERLINES>
+</TRANSACTION>

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.Text;
+using SManApi.ExportToPyramid;
 using SManApi.Gasket;
 
 
@@ -655,7 +656,54 @@ namespace SManApi
             return cr.getReusablePercentage(ident, innerSize);
         }
 
+        /// <summary>
+        /// Reset export all Pyramid export 
+        /// settings for an order
+        /// </summary>
+        /// <param name="aVart_ordernr"></param>
+        /// <param name="ident"></param>
+        /// <returns>ErrorCL</returns>
+        /// 2018-11-02 KJBO
+        public ErrorCL resetExport(string aVart_ordernr, string ident)
+        {
+            CResetExport cre = new CResetExport();
+            return cre.resetExport(aVart_ordernr, ident);
+        }
+
+        /// <summary>
+        /// When recreating reservation for "products in stock" = orderArt
+        /// then we need to send "some at the time" because of timouts in
+        /// the communication with Pyramid
+        /// This means that this function is repetedly called until
+        /// the return value total_handled equals to total_count then
+        /// all orderArt rows for one order is resent
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="aVart_ordernr"></param>
+        /// <param name="noToResend"></param>
+        /// <returns></returns>
+        /// 2018-11-07 KJBO
+        public resendOrderArtCL resendxOrderArt(string aVart_ordernr, int noToResend, string ident )
+        {
+            CResetExport cre = new CResetExport();
+            return cre.resendxOrderArt( aVart_ordernr, noToResend, ident);
+        }
+
+        /// <summary>
+        /// Returns a list of order changes for the current ordernr
+        /// Returns open/close/reset events for the order
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <returns></returns>
+        /// 2018-11-09
+        public List<pyramidChangeCL> getPyramidChange(string ident, string vartOrdernr)
+        {
+            CExportToPyramid cp = new CExportToPyramid();
+            return cp.getPyramidChange(ident, vartOrdernr);
+        }
 
 
+
+        }
     }
-}

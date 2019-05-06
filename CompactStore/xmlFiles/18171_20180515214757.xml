@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<TRANSACTION xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Company>1</Company>
+  <Date>180515</Date>
+  <Time>2018-05-15 21:47:57</Time>
+  <ORDERLINES>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18171</OrderNo>
+      <OrderlineNo>100</OrderlineNo>
+      <ItemNo>400150C</ItemNo>
+      <ItemDescription>Neles sätesring MBV DN150 C</ItemDescription>
+      <ReqQuantity>1</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18171</OrderNo>
+      <OrderlineNo>200</OrderlineNo>
+      <ItemNo>0060014</ItemNo>
+      <ItemDescription>AES Chemtec 2001 14mm</ItemDescription>
+      <ReqQuantity>3</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18171</OrderNo>
+      <OrderlineNo>300</OrderlineNo>
+      <ItemNo>1590122</ItemNo>
+      <ItemDescription>NAF backseal 888x75/76/77 DN250</ItemDescription>
+      <ReqQuantity>4</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18171</OrderNo>
+      <OrderlineNo>400</OrderlineNo>
+      <ItemNo>178460</ItemNo>
+      <ItemDescription>Neles lager 80,4x32,5 PTFE +</ItemDescription>
+      <ReqQuantity>2</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+  </ORDERLINES>
+</TRANSACTION>

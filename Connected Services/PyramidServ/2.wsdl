@@ -1,0 +1,623 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:tns="http://www.unikum.se/pws" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="http://www.unikum.se/pws" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xsd:schema elementFormDefault="qualified" targetNamespace="http://www.unikum.se/pws">
+      <xsd:element name="ExampleGetArtNameRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="ArtCode" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="ExampleGetSuppliersArtNameRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="ArtCode" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="CreateOrderRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="CustomerCode" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="SupplierStore" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="YourOrder" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="YourRef" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="DeliveryWeek" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="DeliveryAddress1" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="DeliveryAddress2" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="DeliveryAddress3" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="DeliveryAddress4" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="DeliveryAddress5" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="DeliveryAddress6" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="CountryCode" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="OrderRows" type="tns:ArrayOfOrderRows" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="ConfirmPurchaseRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="Command" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="Purchase" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="PurchaseRow" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="Week" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="PbsCreateSupportCaseRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="Command" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="SupportType" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="DesignStudio" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="TechDepartment" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="TechInfo" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="MachineInfo" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="CompanyType" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="ApplicationCurrency" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="ApplicationLanguage" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="UserNumber" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="LicensedTo" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="CompanyName" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="Version" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="ServicePack" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="Runtime" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="DataVersion" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="Name" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="Email" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="EmailCC" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="Phone" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="Mobile" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="ModuleId" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="DialogNo" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="ErrorMessage" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="Subject" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="Message" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="PbsInstIni" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="PyramidStartupPath" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="OtherInfo" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="HaveSecureDatabase" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="Enclosure" type="tns:Enclosure" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="PBSWebServiceTestRequest">
+        <xsd:complexType />
+      </xsd:element>
+      <xsd:element name="ArtGetStockRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="itemNo" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="ArtGetPriceRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="custNo" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="itemNo" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="PyCreateOrderRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="CustomerCode" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="OrderNumber" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="ProjectType" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="ProjectName" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="Status" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="YourOrder" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="YourRef" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="VatCode" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="DeliveryAddress1" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="DeliveryAddress2" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="DeliveryAddress3" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="DeliveryAddress4" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="DeliveryAddress5" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="DeliveryAddress6" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="MyOrderRows" type="tns:MyOrderRows" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="PyOrderRowRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="OrderNumber" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="MyOrderRows" type="tns:MyOrderRows" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="PyOrderRowExRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="OrderNumber" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="MyOrderRows" type="tns:MyOrderRows" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="PyOrderSetStatusRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="OrderNumber" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="Status" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="PyStatusRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="Status" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="ExampleGetArtNameResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="ArtCode" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="ArtName" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="ExampleGetSuppliersArtNameResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="Supplier" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="ArtCode" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="ArtName" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="SupplierArtNames" type="tns:ArrayOfSupplierArtName" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="CreateOrderResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="OrderNo" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="ConfirmPurchaseResponse">
+        <xsd:complexType />
+      </xsd:element>
+      <xsd:element name="PbsCreateSupportCaseResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="Result" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="PbsSupportCaseReferenceIdentification" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="Message" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="PBSWebServiceTestResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="Version" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="Runtime" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="Database" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="PyDir" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="DataDir" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="RepDir" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="License" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="WebServicePrograms" type="tns:ArrayOfWebServiceProgram" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="ArtGetStockResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="itemNo" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="itemStock" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="ArtGetPriceResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="itemNo" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="itemName" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="itemPrice" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="PyCreateOrderResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="OrderNumber" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="PyOrderRowResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="Status" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="Message" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="PyOrderRowExResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="Status" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="Message" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="PyOrderSetStatusResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="Status" type="xsd:string" />
+            <xsd:element minOccurs="0" maxOccurs="1" name="Message" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="PyStatusResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element minOccurs="0" maxOccurs="1" name="Message" type="xsd:string" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="AuthHeader" type="tns:AuthHeader" />
+      <xsd:complexType name="AuthHeader">
+        <xsd:sequence>
+          <xsd:element minOccurs="0" maxOccurs="1" name="Id" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="Routine" type="xsd:string" />
+        </xsd:sequence>
+        <xsd:anyAttribute />
+      </xsd:complexType>
+      <xsd:complexType name="SupplierArtName">
+        <xsd:sequence>
+          <xsd:element minOccurs="0" maxOccurs="1" name="Supplier" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="ArtCode" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="ArtName" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:element name="SupplierArtName" type="tns:SupplierArtName" />
+      <xsd:complexType name="OrderRow">
+        <xsd:sequence>
+          <xsd:element minOccurs="0" maxOccurs="1" name="RowType" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="ArtCode" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="Quantity" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="OrdererOrderNo" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="OrdererOrderRow" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="DeliveryWeekRow" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="Text" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:element name="OrderRow" type="tns:OrderRow" />
+      <xsd:complexType name="Enclosure">
+        <xsd:sequence>
+          <xsd:element minOccurs="0" maxOccurs="1" name="FileNameOri" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="FileNameZip" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="EnclosureType" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="FileMimeCode" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="FileCreationDateTime" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="FileMD5" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="EncodingFormat" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="EncodedData" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:element name="Enclosure" type="tns:Enclosure" />
+      <xsd:complexType name="Recording">
+        <xsd:sequence>
+          <xsd:element minOccurs="0" maxOccurs="1" name="RecFileName" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="RecMimeCode" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="RecCreationDateTime" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="RecMD5" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="RecEncodingFormat" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="RecEncodedData" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:element name="Recording" type="tns:Recording" />
+      <xsd:complexType name="WebService">
+        <xsd:sequence>
+          <xsd:element minOccurs="0" maxOccurs="1" name="WebService" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:element name="WebService" type="tns:WebService" />
+      <xsd:complexType name="WebServiceProgram">
+        <xsd:sequence>
+          <xsd:element minOccurs="0" maxOccurs="1" name="Program" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="WebServices" type="tns:ArrayOfWebService" />
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:element name="WebServiceProgram" type="tns:WebServiceProgram" />
+      <xsd:complexType name="MyOrderRow">
+        <xsd:sequence>
+          <xsd:element minOccurs="0" maxOccurs="1" name="MyArtCode" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="MyQty" type="xsd:string" />
+          <xsd:element minOccurs="0" maxOccurs="1" name="MyArtName" type="xsd:string" />
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:element name="MyOrderRow" type="tns:MyOrderRow" />
+      <xsd:complexType name="ArrayOfSupplierArtName">
+        <xsd:sequence>
+          <xsd:element minOccurs="0" maxOccurs="unbounded" name="SupplierArtName" nillable="true" type="tns:SupplierArtName" />
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:element name="ArrayOfSupplierArtName" type="tns:ArrayOfSupplierArtName" />
+      <xsd:complexType name="ArrayOfOrderRows">
+        <xsd:sequence>
+          <xsd:element minOccurs="0" maxOccurs="unbounded" name="OrderRow" nillable="true" type="tns:OrderRow" />
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:element name="ArrayOfOrderRows" type="tns:ArrayOfOrderRows" />
+      <xsd:complexType name="ArrayOfWebService">
+        <xsd:sequence>
+          <xsd:element minOccurs="0" maxOccurs="unbounded" name="WebService" nillable="true" type="tns:WebService" />
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:element name="ArrayOfWebService" type="tns:ArrayOfWebService" />
+      <xsd:complexType name="ArrayOfWebServiceProgram">
+        <xsd:sequence>
+          <xsd:element minOccurs="0" maxOccurs="unbounded" name="WebServiceProgram" nillable="true" type="tns:WebServiceProgram" />
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:element name="ArrayOfWebServiceProgram" type="tns:ArrayOfWebServiceProgram" />
+      <xsd:complexType name="MyOrderRows">
+        <xsd:sequence>
+          <xsd:element minOccurs="0" maxOccurs="unbounded" name="MyOrderRow" nillable="true" type="tns:MyOrderRow" />
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:element name="MyOrderRows" type="tns:MyOrderRows" />
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="ExampleGetArtNameRequest">
+    <wsdl:part name="parameters" element="tns:ExampleGetArtNameRequest" />
+  </wsdl:message>
+  <wsdl:message name="ExampleGetArtNameResponse">
+    <wsdl:part name="parameters" element="tns:ExampleGetArtNameResponse" />
+  </wsdl:message>
+  <wsdl:message name="ExampleGetSuppliersArtNameRequest">
+    <wsdl:part name="parameters" element="tns:ExampleGetSuppliersArtNameRequest" />
+  </wsdl:message>
+  <wsdl:message name="ExampleGetSuppliersArtNameResponse">
+    <wsdl:part name="parameters" element="tns:ExampleGetSuppliersArtNameResponse" />
+  </wsdl:message>
+  <wsdl:message name="CreateOrderRequest">
+    <wsdl:part name="parameters" element="tns:CreateOrderRequest" />
+  </wsdl:message>
+  <wsdl:message name="CreateOrderResponse">
+    <wsdl:part name="parameters" element="tns:CreateOrderResponse" />
+  </wsdl:message>
+  <wsdl:message name="ConfirmPurchaseRequest">
+    <wsdl:part name="parameters" element="tns:ConfirmPurchaseRequest" />
+  </wsdl:message>
+  <wsdl:message name="ConfirmPurchaseResponse">
+    <wsdl:part name="parameters" element="tns:ConfirmPurchaseResponse" />
+  </wsdl:message>
+  <wsdl:message name="PbsCreateSupportCaseRequest">
+    <wsdl:part name="parameters" element="tns:PbsCreateSupportCaseRequest" />
+  </wsdl:message>
+  <wsdl:message name="PbsCreateSupportCaseResponse">
+    <wsdl:part name="parameters" element="tns:PbsCreateSupportCaseResponse" />
+  </wsdl:message>
+  <wsdl:message name="PBSWebServiceTestRequest">
+    <wsdl:part name="parameters" element="tns:PBSWebServiceTestRequest" />
+  </wsdl:message>
+  <wsdl:message name="PBSWebServiceTestResponse">
+    <wsdl:part name="parameters" element="tns:PBSWebServiceTestResponse" />
+  </wsdl:message>
+  <wsdl:message name="ArtGetStockRequest">
+    <wsdl:part name="parameters" element="tns:ArtGetStockRequest" />
+  </wsdl:message>
+  <wsdl:message name="ArtGetStockResponse">
+    <wsdl:part name="parameters" element="tns:ArtGetStockResponse" />
+  </wsdl:message>
+  <wsdl:message name="ArtGetPriceRequest">
+    <wsdl:part name="parameters" element="tns:ArtGetPriceRequest" />
+  </wsdl:message>
+  <wsdl:message name="ArtGetPriceResponse">
+    <wsdl:part name="parameters" element="tns:ArtGetPriceResponse" />
+  </wsdl:message>
+  <wsdl:message name="PyCreateOrderRequest">
+    <wsdl:part name="parameters" element="tns:PyCreateOrderRequest" />
+  </wsdl:message>
+  <wsdl:message name="PyCreateOrderResponse">
+    <wsdl:part name="parameters" element="tns:PyCreateOrderResponse" />
+  </wsdl:message>
+  <wsdl:message name="PyOrderRowRequest">
+    <wsdl:part name="parameters" element="tns:PyOrderRowRequest" />
+  </wsdl:message>
+  <wsdl:message name="PyOrderRowResponse">
+    <wsdl:part name="parameters" element="tns:PyOrderRowResponse" />
+  </wsdl:message>
+  <wsdl:message name="PyOrderRowExRequest">
+    <wsdl:part name="parameters" element="tns:PyOrderRowExRequest" />
+  </wsdl:message>
+  <wsdl:message name="PyOrderRowExResponse">
+    <wsdl:part name="parameters" element="tns:PyOrderRowExResponse" />
+  </wsdl:message>
+  <wsdl:message name="PyOrderSetStatusRequest">
+    <wsdl:part name="parameters" element="tns:PyOrderSetStatusRequest" />
+  </wsdl:message>
+  <wsdl:message name="PyOrderSetStatusResponse">
+    <wsdl:part name="parameters" element="tns:PyOrderSetStatusResponse" />
+  </wsdl:message>
+  <wsdl:message name="PyStatusRequest">
+    <wsdl:part name="parameters" element="tns:PyStatusRequest" />
+  </wsdl:message>
+  <wsdl:message name="PyStatusResponse">
+    <wsdl:part name="parameters" element="tns:PyStatusResponse" />
+  </wsdl:message>
+  <wsdl:portType name="ServiceSoap">
+    <wsdl:operation name="ExampleGetArtName">
+      <wsdl:input message="tns:ExampleGetArtNameRequest" />
+      <wsdl:output message="tns:ExampleGetArtNameResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="ExampleGetSuppliersArtName">
+      <wsdl:input message="tns:ExampleGetSuppliersArtNameRequest" />
+      <wsdl:output message="tns:ExampleGetSuppliersArtNameResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="CreateOrder">
+      <wsdl:input message="tns:CreateOrderRequest" />
+      <wsdl:output message="tns:CreateOrderResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="ConfirmPurchase">
+      <wsdl:input message="tns:ConfirmPurchaseRequest" />
+      <wsdl:output message="tns:ConfirmPurchaseResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="PbsCreateSupportCase">
+      <wsdl:input message="tns:PbsCreateSupportCaseRequest" />
+      <wsdl:output message="tns:PbsCreateSupportCaseResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="PBSWebServiceTest">
+      <wsdl:input message="tns:PBSWebServiceTestRequest" />
+      <wsdl:output message="tns:PBSWebServiceTestResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="ArtGetStock">
+      <wsdl:input message="tns:ArtGetStockRequest" />
+      <wsdl:output message="tns:ArtGetStockResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="ArtGetPrice">
+      <wsdl:input message="tns:ArtGetPriceRequest" />
+      <wsdl:output message="tns:ArtGetPriceResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="PyCreateOrder">
+      <wsdl:input message="tns:PyCreateOrderRequest" />
+      <wsdl:output message="tns:PyCreateOrderResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="PyOrderRow">
+      <wsdl:input message="tns:PyOrderRowRequest" />
+      <wsdl:output message="tns:PyOrderRowResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="PyOrderRowEx">
+      <wsdl:input message="tns:PyOrderRowExRequest" />
+      <wsdl:output message="tns:PyOrderRowExResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="PyOrderSetStatus">
+      <wsdl:input message="tns:PyOrderSetStatusRequest" />
+      <wsdl:output message="tns:PyOrderSetStatusResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="PyStatus">
+      <wsdl:input message="tns:PyStatusRequest" />
+      <wsdl:output message="tns:PyStatusResponse" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="ServiceSoap" type="tns:ServiceSoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="ExampleGetArtName">
+      <soap:operation soapAction="ExampleGetArtName" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ExampleGetSuppliersArtName">
+      <soap:operation soapAction="ExampleGetSuppliersArtName" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CreateOrder">
+      <soap:operation soapAction="CreateOrder" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ConfirmPurchase">
+      <soap:operation soapAction="ConfirmPurchase" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="PbsCreateSupportCase">
+      <soap:operation soapAction="PbsCreateSupportCase" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="PBSWebServiceTest">
+      <soap:operation soapAction="PBSWebServiceTest" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ArtGetStock">
+      <soap:operation soapAction="ArtGetStock" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ArtGetPrice">
+      <soap:operation soapAction="ArtGetPrice" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="PyCreateOrder">
+      <soap:operation soapAction="PyCreateOrder" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="PyOrderRow">
+      <soap:operation soapAction="PyOrderRow" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="PyOrderRowEx">
+      <soap:operation soapAction="PyOrderRowEx" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="PyOrderSetStatus">
+      <soap:operation soapAction="PyOrderSetStatus" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="PyStatus">
+      <soap:operation soapAction="PyStatus" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="PyramidService">
+    <wsdl:port name="ServiceSoap" binding="tns:ServiceSoap">
+      <soap:address location="http://192.168.2.201/wtswstest/2?WSQUERY" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

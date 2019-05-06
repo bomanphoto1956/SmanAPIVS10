@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<TRANSACTION xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Company>1</Company>
+  <Date>180827</Date>
+  <Time>2018-08-27 10:44:20</Time>
+  <ORDERLINES>
+    <ORDERLINE>
+      <AssignmentTypeId>1</AssignmentTypeId>
+      <OrderNo>2586374</OrderNo>
+      <OrderlineNo>199</OrderlineNo>
+      <ItemNo>806302</ItemNo>
+      <ItemDescription>Neles låsfjäder R1LA/RAA Dn300</ItemDescription>
+      <ReqQuantity>5</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+  </ORDERLINES>
+</TRANSACTION>

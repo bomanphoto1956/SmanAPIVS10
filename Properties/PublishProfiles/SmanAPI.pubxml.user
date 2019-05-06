@@ -7,5 +7,74 @@ by editing this MSBuild file. In order to learn more about this please visit htt
   <PropertyGroup>
     <TimeStampOfAssociatedLegacyPublishXmlFile />
     <EncryptedPassword />
+    <_PublishTargetUrl>C:\Projects\SManApi\SManApi\Deploy</_PublishTargetUrl>
   </PropertyGroup>
+  <ItemGroup>
+    <File Include="bin/NexusDB.ADOProvider.dll">
+      <publishTime>06/03/2016 23:36:06</publishTime>
+    </File>
+    <File Include="bin/SManApi.dll">
+      <publishTime>04/30/2019 12:09:24</publishTime>
+    </File>
+    <File Include="bin/SManApi.pdb">
+      <publishTime>04/30/2019 12:09:24</publishTime>
+    </File>
+    <File Include="Connected Services/PyramidServ/SManApi.PyramidServ.ArtGetPriceResponse.datasource">
+      <publishTime>09/21/2018 10:48:39</publishTime>
+    </File>
+    <File Include="Connected Services/PyramidServ/SManApi.PyramidServ.ArtGetStockResponse.datasource">
+      <publishTime>09/21/2018 10:48:39</publishTime>
+    </File>
+    <File Include="Connected Services/PyramidServ/SManApi.PyramidServ.ConfirmPurchaseResponse.datasource">
+      <publishTime>09/21/2018 10:48:39</publishTime>
+    </File>
+    <File Include="Connected Services/PyramidServ/SManApi.PyramidServ.CreateOrderResponse.datasource">
+      <publishTime>09/21/2018 10:48:39</publishTime>
+    </File>
+    <File Include="Connected Services/PyramidServ/SManApi.PyramidServ.ExampleGetArtNameResponse.datasource">
+      <publishTime>09/21/2018 10:48:39</publishTime>
+    </File>
+    <File Include="Connected Services/PyramidServ/SManApi.PyramidServ.ExampleGetSuppliersArtNameResponse.datasource">
+      <publishTime>09/21/2018 10:48:39</publishTime>
+    </File>
+    <File Include="Connected Services/PyramidServ/SManApi.PyramidServ.PbsCreateSupportCaseResponse.datasource">
+      <publishTime>09/21/2018 10:48:39</publishTime>
+    </File>
+    <File Include="Connected Services/PyramidServ/SManApi.PyramidServ.PBSWebServiceTestResponse.datasource">
+      <publishTime>09/21/2018 10:48:39</publishTime>
+    </File>
+    <File Include="Connected Services/PyramidServ/SManApi.PyramidServ.PyCreateOrderResponse.datasource">
+      <publishTime>09/21/2018 10:48:39</publishTime>
+    </File>
+    <File Include="Connected Services/PyramidServ/SManApi.PyramidServ.PyOrderRowExResponse.datasource">
+      <publishTime>09/21/2018 10:48:39</publishTime>
+    </File>
+    <File Include="Connected Services/PyramidServ/SManApi.PyramidServ.PyOrderRowResponse.datasource">
+      <publishTime>09/21/2018 10:48:39</publishTime>
+    </File>
+    <File Include="Connected Services/PyramidServ/SManApi.PyramidServ.PyOrderSetStatusResponse.datasource">
+      <publishTime>09/21/2018 10:48:39</publishTime>
+    </File>
+    <File Include="Connected Services/PyramidServ/SManApi.PyramidServ.PyStatusResponse.datasource">
+      <publishTime>09/21/2018 10:48:39</publishTime>
+    </File>
+    <File Include="Connected Services/PyramidServ/SManApi.PyramidServ.SupplierArtName.datasource">
+      <publishTime>09/21/2018 10:48:39</publishTime>
+    </File>
+    <File Include="Connected Services/PyramidServ/SManApi.PyramidServ.WebServiceProgram.datasource">
+      <publishTime>09/21/2018 10:48:39</publishTime>
+    </File>
+    <File Include="Service1.svc">
+      <publishTime>02/02/2016 08:46:00</publishTime>
+    </File>
+    <File Include="SmManager.svc">
+      <publishTime>01/18/2018 13:48:23</publishTime>
+    </File>
+    <File Include="SmServ.svc">
+      <publishTime>02/02/2016 09:33:38</publishTime>
+    </File>
+    <File Include="Web.config">
+      <publishTime>04/30/2019 12:09:46</publishTime>
+    </File>
+  </ItemGroup>
 </Project>

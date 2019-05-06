@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<TRANSACTION xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Company>1</Company>
+  <Date>180518</Date>
+  <Time>2018-05-18 16:14:13</Time>
+  <ORDERLINES>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18173</OrderNo>
+      <OrderlineNo>1</OrderlineNo>
+      <ItemNo>11414025</ItemNo>
+      <ItemDescription>Sexkantsskruv FZB 8.8 M14x25</ItemDescription>
+      <ReqQuantity>5</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18173</OrderNo>
+      <OrderlineNo>2</OrderlineNo>
+      <ItemNo>0030003</ItemNo>
+      <ItemDescription>AES CarboStar 375 3mm</ItemDescription>
+      <ReqQuantity>3</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18173</OrderNo>
+      <OrderlineNo>3</OrderlineNo>
+      <ItemNo>R-79-BAR62910044</ItemNo>
+      <ItemDescription>Tätningssats BAR GTD/E 250</ItemDescription>
+      <ReqQuantity>42</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+  </ORDERLINES>
+</TRANSACTION>

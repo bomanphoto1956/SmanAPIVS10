@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<TRANSACTION xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Company>1</Company>
+  <Date>180702</Date>
+  <Time>2018-07-02 21:32:30</Time>
+  <ORDERLINES>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18210</OrderNo>
+      <OrderlineNo>64</OrderlineNo>
+      <ItemNo>0030010</ItemNo>
+      <ItemDescription>AES CarboStar 375 10mm</ItemDescription>
+      <ReqQuantity>2,4</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18210</OrderNo>
+      <OrderlineNo>65</OrderlineNo>
+      <ItemNo>0030011</ItemNo>
+      <ItemDescription>AES CarboStar 375 11mm</ItemDescription>
+      <ReqQuantity>3</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+  </ORDERLINES>
+</TRANSACTION>

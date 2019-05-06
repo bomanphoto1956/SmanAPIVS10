@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<TRANSACTION xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Company>1</Company>
+  <Date>180425</Date>
+  <Time>2018-04-25 20:40:04</Time>
+  <ORDERLINES>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18147</OrderNo>
+      <OrderlineNo>100</OrderlineNo>
+      <ItemNo>002-1715-9J</ItemNo>
+      <ItemDescription>Neles sätesring PTFE xtreme MBV DN80</ItemDescription>
+      <ReqQuantity>5</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18147</OrderNo>
+      <OrderlineNo>200</OrderlineNo>
+      <ItemNo>004-0590-36</ItemNo>
+      <ItemDescription>Neles bröstpackning MBV DN200 Graphite+AISI 316</ItemDescription>
+      <ReqQuantity>2</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18147</OrderNo>
+      <OrderlineNo>300</OrderlineNo>
+      <ItemNo>1588245</ItemNo>
+      <ItemDescription>NAF sätestätning EPDM 878xxx-02 Dn100</ItemDescription>
+      <ReqQuantity>8</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>2</AssignmentTypeId>
+      <OrderNo>18147</OrderNo>
+      <OrderlineNo>400</OrderlineNo>
+      <ItemNo>11503000</ItemNo>
+      <ItemDescription>Mutter FZB 8.8 M3</ItemDescription>
+      <ReqQuantity>22</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+  </ORDERLINES>
+</TRANSACTION>

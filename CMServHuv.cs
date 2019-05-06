@@ -398,9 +398,8 @@ namespace SManApi
                 return shc;
             }
 
-            CExportToPyramid expPyr = new CExportToPyramid();
-            bool shallThisOrderBeSentToPyr = (CConfig.sendToPyramid == 1) && shallSendToPyramid(sh.Vart_ordernr);
-            if (shallThisOrderBeSentToPyr)
+            CExportToPyramid expPyr = new CExportToPyramid();            
+            if (CConfig.sendToPyramid == 1)
             {
                 shc.ErrMessage = expPyr.checkPyramidAPIAvailable();
                 if (shc.ErrMessage != "")
@@ -452,7 +451,7 @@ namespace SManApi
             log.log("Före sendToPyramid", "0");
             log.log("sentToPyramid returnerar " + CConfig.sendToPyramid.ToString(), "0");
 
-            if (shallThisOrderBeSentToPyr)
+            if (CConfig.sendToPyramid == 1 && shallSendToPyramid(sh.Vart_ordernr))
             {
                 ErrorCL errCl = null;
                 log.log("Före  exportToPyramid", "0");
@@ -471,6 +470,16 @@ namespace SManApi
                 // 2018-05-17
                 if (sh.Godkand && isPyramidOrder(sh.Vart_ordernr))
                 {
+                    // 2018-11-09
+                    // To be sure that all possible errors when creating reservation to Pyramid
+                    // is handled and resent if possible
+                    errCl = expPyr.ensureOrderArtIsReserved(sh.Vart_ordernr);
+                    if (errCl.ErrCode != 0)
+                    {
+                        shc.ErrCode = errCl.ErrCode;
+                        shc.ErrMessage = errCl.ErrMessage;
+                        return shc;
+                    }
 
                     errCl = expPyr.exportTime(sh.Vart_ordernr);
                     if (errCl.ErrCode != 0)
@@ -500,6 +509,8 @@ namespace SManApi
                 }
 
                 expPyr.setOrderStatus(sh.Vart_ordernr);
+                int newStatus = sh.Godkand ? 1 : 0;
+                expPyr.addToPyramidChange(sh.Vart_ordernr, repIdent.AnvID, newStatus);
                 resendToPyramid();
             }
 

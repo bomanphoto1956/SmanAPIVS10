@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<TRANSACTION xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Company>1</Company>
+  <Date>180522</Date>
+  <Time>2018-05-22 17:38:59</Time>
+  <ORDERLINES>
+    <ORDERLINE>
+      <AssignmentTypeId>1</AssignmentTypeId>
+      <OrderNo>18173</OrderNo>
+      <OrderlineNo>11</OrderlineNo>
+      <ItemNo>0030025</ItemNo>
+      <ItemDescription>AES CarboStar 375 25mm</ItemDescription>
+      <ReqQuantity>2</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>1</AssignmentTypeId>
+      <OrderNo>18173</OrderNo>
+      <OrderlineNo>12</OrderlineNo>
+      <ItemNo>11406010</ItemNo>
+      <ItemDescription>Sexkantsskruv FZB 8.8 M6x10</ItemDescription>
+      <ReqQuantity>5</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+    <ORDERLINE>
+      <AssignmentTypeId>1</AssignmentTypeId>
+      <OrderNo>18173</OrderNo>
+      <OrderlineNo>13</OrderlineNo>
+      <ItemNo>10051</ItemNo>
+      <ItemDescription>Donit Grafilit IQ Dn50 Pn63</ItemDescription>
+      <ReqQuantity>10</ReqQuantity>
+      <Status>0</Status>
+    </ORDERLINE>
+  </ORDERLINES>
+</TRANSACTION>
