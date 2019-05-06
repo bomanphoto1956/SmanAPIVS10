@@ -234,6 +234,13 @@ namespace SManApi.Drawing
             return sSql;
         }
 
+
+        /// <summary>
+        /// Set parameters function
+        /// </summary>
+        /// <param name="np"></param>
+        /// <param name="d"></param>
+        /// <param name="retrieveDrawing"></param>
         private void setParameters(NxParameterCollection np, DrawingCL d, Boolean retrieveDrawing)
         {
             long fileSize = 0;
