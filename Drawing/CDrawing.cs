@@ -12,9 +12,11 @@ namespace SManApi.Drawing
     {
 
         CDB cdb = null;
+        CPicture cpict = null;
         public CDrawing()
         {
             cdb = new CDB();
+            cpict = new CPicture();
         }
 
         private string saveDrawingToToFile(MemoryStream m, ref string error, ref long fileSize)
@@ -25,10 +27,8 @@ namespace SManApi.Drawing
             {
                 // Get the file name from GUID
                 fileName = Guid.NewGuid().ToString() + ".pdf";
-                // Get the upload directory (both for upload and download)
-                CPicture cp = new CPicture();
-                path = cp.getUploadDirectory(fileName);
-
+                // Get the upload directory (both for upload and download)                
+                path = cpict.getUploadDirectory(fileName);
                 using (FileStream file = new FileStream(path, FileMode.Create, FileAccess.Write))
                 {
                     byte[] bytes = new byte[m.Length];
@@ -53,9 +53,8 @@ namespace SManApi.Drawing
         {
             string fileName = Guid.NewGuid().ToString() + ".pdf";
             try
-            {
-                CPicture cp = new CPicture();
-                string path = cp.getUploadDirectory(fileName);
+            {                
+                string path = cpict.getUploadDirectory(fileName);
 
                 const int bufferSize = 2048;
                 byte[] buffer = new byte[bufferSize];
@@ -80,8 +79,7 @@ namespace SManApi.Drawing
 
         public DrawingCL saveDrawing(string ident, DrawingCL d)
         {
-
-            CPicture cp = new CPicture();
+            
             CReparator cr = new CReparator();
             int identOK = cr.checkIdent(ident);
 
@@ -90,7 +88,7 @@ namespace SManApi.Drawing
             if (identOK == -1)
             {
 
-                cp.deletePict(d.DrawingIdent);
+                cpict.deletePict(d.DrawingIdent);
                 cdRet.ErrCode = -10;
                 cdRet.ErrMessage = "Ogiltigt login";
                 return cdRet;
@@ -98,10 +96,10 @@ namespace SManApi.Drawing
 
             // Init variable
             string err = "";
-            int valid = validateDrawing(d, false, false, ref err, cp);         
+            int valid = validateDrawing(d, false, false, ref err);         
             if (valid == -1 || valid == -4)
             {
-                cp.deletePict(d.DrawingIdent);
+                cpict.deletePict(d.DrawingIdent);
                 cdRet.ErrCode = -1;
                 cdRet.ErrMessage = "VentilId saknas eller felaktigt";
                 return cdRet;
@@ -127,7 +125,7 @@ namespace SManApi.Drawing
             else
                 sSql = getUpdateSQL(true);
             NxParameterCollection np = new NxParameterCollection();
-            setParameters(np, p, true);
+            setParameters(np, d, true);
 
             string errText = "";
 
@@ -137,12 +135,12 @@ namespace SManApi.Drawing
             {
                 if (errText.Length > 2000)
                     errText = errText.Substring(1, 2000);
-                pN.ErrCode = -100;
-                pN.ErrMessage = errText;
-                return pN;
+                cdRet.ErrCode = -100;
+                cdRet.ErrMessage = errText;
+                return cdRet;
             }
-            deletePict(p.PictIdent);
-            return p;
+            cpict.deletePict(d.DrawingIdent);
+            return d;
 
 
         }
@@ -165,7 +163,7 @@ namespace SManApi.Drawing
 
         }
 
-        private int validateDrawing(DrawingCL d, bool forDelete, bool forUpdateMeta, ref string err, CPicture cp)
+        private int validateDrawing(DrawingCL d, bool forDelete, bool forUpdateMeta, ref string err)
         {
             
             if (string.IsNullOrEmpty(d.ventil_id))
@@ -189,7 +187,7 @@ namespace SManApi.Drawing
             }
             if (!forDelete)
             {
-                if (!cp.validatePictIdent(d.DrawingIdent))
+                if (!cpict.validatePictIdent(d.DrawingIdent))
                     return -5;
             }
 
@@ -250,11 +248,29 @@ namespace SManApi.Drawing
             np.Add("fileType", d.FileType);
             if (retrieveDrawing)
             {
-                np.Add("bild", getPhoto(p.PictIdent, ref fileSize));
-                np.Add("pictSize", fileSize);
-                p.pictSize = fileSize;
+                np.Add("drawing", getDrawing(d.DrawingIdent, ref fileSize));
+                np.Add("drawingSize", fileSize);
+                d.DrawingSize = fileSize;
             }
         }
+
+        private byte[] getDrawing(string drawingIdent, ref long fileSize)
+        {
+            string filePath = cpict.getUploadDirectory(drawingIdent);
+            FileInfo f = new FileInfo(filePath);
+            fileSize = f.Length;
+            FileStream stream = new FileStream(
+                filePath, FileMode.Open, FileAccess.Read);
+            BinaryReader reader = new BinaryReader(stream);
+
+            byte[] drawing = reader.ReadBytes((int)stream.Length);
+
+            reader.Close();
+            stream.Close();
+
+            return drawing;
+        }
+
 
 
 
