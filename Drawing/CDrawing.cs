@@ -19,7 +19,7 @@ namespace SManApi.Drawing
             cpict = new CPicture();
         }
 
-        private string saveDrawingToToFile(MemoryStream m, ref string error, ref long fileSize)
+        private string saveDrawingToFile(MemoryStream m, ref string error, ref long fileSize)
         {
             string path = "";
             string fileName = "";
@@ -49,6 +49,12 @@ namespace SManApi.Drawing
 
 
 
+        /// <summary>
+        /// Upload a drawing from client to server
+        /// </summary>
+        /// <param name="sPict"></param>
+        /// <returns></returns>
+        /// 2019-05-06 KJBO
         public string uploadDrawing(Stream sPict)
         {
             string fileName = Guid.NewGuid().ToString() + ".pdf";
@@ -77,6 +83,13 @@ namespace SManApi.Drawing
             return fileName;
         }
 
+
+        /// <summary>
+        /// Save a previous uploaded drawing to database
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="d"></param>
+        /// <returns></returns>
         public DrawingCL saveDrawing(string ident, DrawingCL d)
         {
             
@@ -270,6 +283,125 @@ namespace SManApi.Drawing
 
             return drawing;
         }
+
+
+
+
+
+
+
+        /// <summary>
+        /// Get a drawing from the database identified by
+        /// primary key (ventil_id, drawingNo)
+        /// Returns a DrawingCL object with the drawingIdent
+        /// field with a file name to the file being extracted
+        /// by the server.
+        /// If the fileName is empty or begins with -1 then
+        /// there is an error while extracting the picture from
+        /// the database to the temporary storage
+        /// 
+        /// After this function is called there has to be a call
+        /// to downloadDrawing with the drawingIdent as parameter
+        /// This function returns the drawing to the caller as
+        /// a memoryStream
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="ventilId"></param>
+        /// <param name="ritningNo"></param>
+        /// <returns></returns>
+        public DrawingCL getDrawing(string ident, string ventilId, int ritningNo)
+        {
+
+            DrawingCL d = new DrawingCL();            
+            CReparator cr = new CReparator();
+
+            int identOK = cr.checkIdent(ident);
+
+            if (identOK == -1)
+            {
+                d.ErrCode = -10;
+                d.ErrMessage = "Ogiltigt login";
+                return d;
+            }
+
+            string sSql = "SELECT ventil_id, drawingNo, drawing, drawingDescr, drawingSize, fileType "
+                        + "  FROM valveDrawing "
+                        + " where ventil_id = :ventil_id "
+                        + " and drawingNo = :drawingNo ";
+
+
+            NxParameterCollection np = new NxParameterCollection();
+            np.Add("ventil_id", ventilId);
+            np.Add("drawingNo", ritningNo);
+
+            string errText = "";
+
+            DataTable dt = cdb.getData(sSql, ref errText, np);
+
+            int errCode = -100;
+
+            if (errText == "" && dt.Rows.Count == 0)
+            {
+                errText = "Felaktig ritningsidentitet";
+                errCode = 0;
+            }
+
+
+            if (errText != "")
+            {
+
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                d.ErrCode = errCode;
+                d.ErrMessage = errText;
+                return d;
+            }
+
+
+            DataRow dr = dt.Rows[0];
+            d.ErrCode = 0;
+            d.ErrMessage = "";
+            string error = "";
+            long fileSize = 0;
+            if (dr["drawing"] != DBNull.Value)
+            {
+                byte[] data = (byte[])dr["drawing"];
+                MemoryStream ms = new MemoryStream(data);
+                d.DrawingIdent = saveDrawingToFile(ms, ref error, ref fileSize);
+            }
+            if (error != "")
+            {
+                d.ErrCode = -1;
+                d.ErrMessage = error;
+                return d;
+            }
+            d.Description = dr["drawingDescr"].ToString();
+            d.DrawingNo = Convert.ToInt32(dr["drawingNo"]);
+            d.DrawingSize = Convert.ToInt64(dr["drawingSize"]);
+            d.FileType = dr["fileType"].ToString();
+            d.ventil_id = dr["ventil_id"].ToString();
+            return d;
+
+        }
+
+
+
+        /// The downLoadDrawing method accept a drawingIdent parameter as well
+        /// as a reference to an error string
+        /// The method calls downLoadPict on CPicture class and return the stream
+        /// If and error occurs then the stream is null and an error
+        /// message is writtent to the error parameter
+        /// 
+        /// This method shall be called after a call to getDrawing. When getDrawing
+        /// is called it will store a copy of the picture on the server and also return
+        /// a drawingCL object with the drawingIdent. This identity is used when this 
+        /// method is called.
+        public Stream downLoadDrawing(string drawingIdent, ref string error)
+        {
+            return cpict.downLoadPict(drawingIdent, ref error);
+        }
+
+
 
 
 

@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.Text;
 using System.IO;
-
+using SManApi.Drawing;
 
 namespace SManApi
 {
@@ -27,7 +27,7 @@ namespace SManApi
 
             return cr.getReparator(ident);
 
-        }        
+        }
 
         public List<ReparatorCL> getReparators(string ident)
         {
@@ -69,7 +69,7 @@ namespace SManApi
         {
             CServRad cr = new CServRad();
 
-            return cr.saveServRad(sr,ident);
+            return cr.saveServRad(sr, ident);
         }
 
 
@@ -112,7 +112,7 @@ namespace SManApi
             CComboValues cc = new CComboValues();
             return cc.getDn(ident);
         }
-        
+
         public List<PnCL> getPn(string ident)
         {
             CComboValues cc = new CComboValues();
@@ -193,7 +193,7 @@ namespace SManApi
         /// <param name="reservdel">ReservdelCL</param>
         /// <returns>The new created or updated reservdel</returns>
         //  2016-02-10 KJBO
-        public ReservdelCL saveReservdel( string ident, ReservdelCL reservdel)
+        public ReservdelCL saveReservdel(string ident, ReservdelCL reservdel)
         {
             CReservdel cr = new CReservdel();
             return cr.saveReservdel(ident, reservdel);
@@ -224,7 +224,7 @@ namespace SManApi
         public List<OpenDateCL> getOpenDatesSH(string ident, string vartOrdernr)
         {
             CTidRed ct = new CTidRed();
-            return ct.getOpenDatesSH(ident, vartOrdernr);            
+            return ct.getOpenDatesSH(ident, vartOrdernr);
         }
 
 
@@ -344,7 +344,7 @@ namespace SManApi
 
 
 
-         /// <summary>
+        /// <summary>
         /// Stores a picture or an image to the
         /// local directory "UpLoads"
         /// The name of the picture is a GUID
@@ -412,7 +412,7 @@ namespace SManApi
         /// <param name="bildNr"></param>
         /// <returns></returns>
         /// 2016-03-09 KJBO
-        public PictureCL getPicture( string ident, string vartOrdernr, int radnr, int bildNr)
+        public PictureCL getPicture(string ident, string vartOrdernr, int radnr, int bildNr)
         {
             CPicture cp = new CPicture();
             return cp.getPicture(ident, vartOrdernr, radnr, bildNr);
@@ -435,7 +435,7 @@ namespace SManApi
         /// <param name="error"></param>
         /// <returns></returns>
         /// 2016-03-10 KJBO Pergas AB
-        public Stream downLoadPict( string pictIdent )
+        public Stream downLoadPict(string pictIdent)
         {
             string error = "";
             CPicture cp = new CPicture();
@@ -771,7 +771,7 @@ namespace SManApi
         /// 2017-10-24 KJBO Added timeRep2WeekIds which is a list of integer
         /// representing primary key of timeRep2Week. This is the weeks that shall be reported this time        
         public TimeRep2ProcessCL generateTimeReg2Report(string ident, TimeRep2ProcessCL p, bool bOverrideExisting, bool approve, List<int> timeRep2WeekIds, List<KundEmailCL> kundEmails)
-        {            
+        {
             CTidRed ct = new CTidRed();
             return ct.generateTimeReg2Report(ident, p, bOverrideExisting, approve, timeRep2WeekIds, kundEmails);
         }
@@ -902,10 +902,75 @@ namespace SManApi
             return pn.savePn(ident, p);
         }
 
-
-
-
-
-
+        /// <summary>
+        /// Upload a drawing from client to server
+        /// </summary>
+        /// <param name="sPict"></param>
+        /// <returns></returns>
+        /// 2019-05-06 KJBO
+        public string uploadDrawing(Stream sPict)
+        {
+            CDrawing cd = new CDrawing();
+            return cd.uploadDrawing(sPict);
         }
+
+        /// <summary>
+        /// Save a previous uploaded drawing to database
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="d"></param>
+        /// <returns></returns>
+        public DrawingCL saveDrawing(string ident, DrawingCL d)
+        {
+            CDrawing cd = new CDrawing();
+            return cd.saveDrawing(ident, d);
+        }
+
+        /// <summary>
+        /// Get a drawing from the database identified by
+        /// primary key (ventil_id, drawingNo)
+        /// Returns a DrawingCL object with the drawingIdent
+        /// field with a file name to the file being extracted
+        /// by the server.
+        /// If the fileName is empty or begins with -1 then
+        /// there is an error while extracting the picture from
+        /// the database to the temporary storage
+        /// 
+        /// After this function is called there has to be a call
+        /// to downloadDrawing with the drawingIdent as parameter
+        /// This function returns the drawing to the caller as
+        /// a memoryStream
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="ventilId"></param>
+        /// <param name="ritningNo"></param>
+        /// <returns></returns>
+        /// 2019-05-08 KJBO
+        public DrawingCL getDrawing(string ident, string ventilId, int ritningNo)
+        {
+            CDrawing cd = new CDrawing();
+            return cd.getDrawing(ident, ventilId, ritningNo);
+        }
+
+
+        /// The downLoadDrawing method accept a drawingIdent parameter as well
+        /// as a reference to an error string
+        /// The method calls downLoadPict on CPicture class and return the stream
+        /// If and error occurs then the stream is null and an error
+        /// message is writtent to the error parameter
+        /// 
+        /// This method shall be called after a call to getDrawing. When getDrawing
+        /// is called it will store a copy of the picture on the server and also return
+        /// a drawingCL object with the drawingIdent. This identity is used when this 
+        /// method is called.
+        public Stream downLoadDrawing(string drawingIdent)
+        {
+            string error = "";
+            CDrawing cd = new CDrawing();
+            return cd.downLoadDrawing(drawingIdent, ref error);            
+        }
+
+
+
     }
+}

@@ -860,6 +860,67 @@ namespace SManApi
         [OperationContract]
         PnCL savePn(string ident, PnCL p);
 
+        /// <summary>
+        /// Upload a drawing from client to server
+        /// See notes for uploadPict
+        /// </summary>
+        /// <param name="sPict"></param>
+        /// <returns></returns>
+        /// 2019-05-06 KJBO
+        [OperationContract]
+        string uploadDrawing(Stream sPict);
+
+
+        /// <summary>
+        /// Save a previous uploaded drawing to database
+        /// See savePict comments
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="d"></param>
+        /// <returns></returns>
+        /// 2019-05-06 KJBO
+        [OperationContract]
+        DrawingCL saveDrawing(string ident, DrawingCL d);
+
+        /// <summary>
+        /// Get a drawing from the database identified by
+        /// primary key (ventil_id, drawingNo)
+        /// Returns a DrawingCL object with the drawingIdent
+        /// field with a file name to the file being extracted
+        /// by the server.
+        /// If the fileName is empty or begins with -1 then
+        /// there is an error while extracting the picture from
+        /// the database to the temporary storage
+        /// 
+        /// After this function is called there has to be a call
+        /// to downloadDrawing with the drawingIdent as parameter
+        /// This function returns the drawing to the caller as
+        /// a memoryStream
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="ventilId"></param>
+        /// <param name="ritningNo"></param>
+        /// <returns></returns>
+        /// 2019-05-08 KJBO
+        [OperationContract]
+        DrawingCL getDrawing(string ident, string ventilId, int ritningNo);
+
+        /// The downLoadDrawing method accept a drawingIdent parameter as well
+        /// as a reference to an error string
+        /// The method calls downLoadPict on CPicture class and return the stream
+        /// If and error occurs then the stream is null and an error
+        /// message is writtent to the error parameter
+        /// 
+        /// This method shall be called after a call to getDrawing. When getDrawing
+        /// is called it will store a copy of the picture on the server and also return
+        /// a drawingCL object with the drawingIdent. This identity is used when this 
+        /// method is called.
+        [OperationContract]
+        Stream downLoadDrawing(string drawingIdent);
+
+
+
+
 
 
 
