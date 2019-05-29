@@ -109,7 +109,7 @@ namespace SManApi.Drawing
 
             // Init variable
             string err = "";
-            int valid = validateDrawing(d, false, false, ref err);         
+            int valid = validateDrawing(d, false, ref err);         
             if (valid == -1 || valid == -4)
             {
                 cpict.deletePict(d.DrawingIdent);
@@ -176,7 +176,7 @@ namespace SManApi.Drawing
 
         }
 
-        private int validateDrawing(DrawingCL d, bool forDelete, bool forUpdateMeta, ref string err)
+        private int validateDrawing(DrawingCL d, bool forDelete, ref string err)
         {
             
             if (string.IsNullOrEmpty(d.ventil_id))
@@ -233,14 +233,14 @@ namespace SManApi.Drawing
         private string getUpdateSQL(bool imageUpdate)
         {
             string sSql = " update valveDrawing "                        
-                        + ", drawingDescr = :drawingDescr "
+                        + " set drawingDescr = :drawingDescr "
                         + ", fileType = :fileType ";
             if (imageUpdate)
             {
                 sSql += ", drawing = :drawing "
                     + ", drawingSize = :drawingSize ";
             }
-            sSql = " where ventil_id = :ventil_id "
+            sSql += " where ventil_id = :ventil_id "
                 + " and drawingNo = :drawingNo ";
             return sSql;
         }
@@ -399,6 +399,240 @@ namespace SManApi.Drawing
         public Stream downLoadDrawing(string drawingIdent, ref string error)
         {
             return cpict.downLoadPict(drawingIdent, ref error);
+        }
+
+
+        /// <summary>
+        /// Deletes a drawing from the database. The drawing is
+        /// identified by ventil_id and drawingNo (PK).
+        /// Return value is a DrawingCl with errCode = 0
+        /// and errMessage as an empty string. On error
+        /// the errCode is not 0 and the errMessage tells 
+        /// what was going wrong
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="d"></param>
+        /// <returns></returns>
+        /// 2019-05-15 KJBO
+        public DrawingCL deleteDrawing(string ident, DrawingCL d)
+        {
+            CReparator cr = new CReparator();
+            int identOK = cr.checkIdent(ident);
+
+            // Creates a class to return an error
+            DrawingCL drRet = new DrawingCL();             
+            if (identOK == -1)
+            {
+                drRet.ErrCode = -10;
+                drRet.ErrMessage = "Ogiltigt login";
+                return drRet;
+            }
+
+            // Init variable
+            string err = "";
+            int valid = validateDrawing(d, true, ref err);
+            if (valid == -1 || valid == -2)
+            {
+                drRet.ErrCode = -1;
+                drRet.ErrMessage = "Both ventilId and drawingNo must be provided";
+                return drRet;
+            }
+
+            if (valid == -3)
+            {
+                drRet.ErrCode = -1;
+                drRet.ErrMessage = "Drawing not found";
+                return drRet;
+            }
+
+
+            string sSql = " delete from valveDrawing "
+                         + " where ventil_id = :ventil_id "
+                         + " and drawingNo = :drawingNo ";
+
+            NxParameterCollection np = new NxParameterCollection();
+            setParameters(np, d, false);
+
+            string errText = "";
+
+            int iRc = cdb.updateData(sSql, ref errText, np);
+
+            if (errText != "")
+            {
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                drRet.ErrCode = -100;
+                drRet.ErrMessage = errText;
+                return drRet;
+            }
+            d.Description = "";
+            d.DrawingIdent = "";
+            d.DrawingNo = 0;
+            d.DrawingSize = 0;
+            d.ErrCode = 0;
+            d.ErrMessage = "";
+            d.FileType = "";
+            d.ventil_id = "";
+            return d;
+        }
+
+
+        /// <summary>
+        /// This method returns all drawings for one ventil
+        /// Note that you dont get the actual drawing nor the
+        /// drawingIdent. Instead you use this method for getting a
+        /// list of available drawings (and also gets the drawing
+        /// description).
+        /// After that you have to call GetDrawing and DownloadDrawing
+        /// in turn in order to get each individual drawing.
+        /// The reason for this is performance. This method gives
+        /// a fast list of available drawings only.
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <param name="radnr"></param>
+        /// <returns></returns>
+        /// 2016-03-11 Pergas AB kjbo           
+        public List<DrawingCL> getDrawingsForVentil(string ident, string ventilId)
+        {
+            List<DrawingCL> dList = new List<DrawingCL>();
+
+            CReparator cr = new CReparator();
+
+            int identOK = cr.checkIdent(ident);
+
+            if (identOK == -1)
+            {
+                DrawingCL d = new DrawingCL();
+                d.ErrCode = -10;
+                d.ErrMessage = "Ogiltigt login";
+                dList.Add(d);
+                return dList;
+            }
+
+
+            string sSql = "SELECT ventil_id, drawingNo, drawingDescr, drawingSize, fileType "
+                        + "  FROM valveDrawing "
+                        + " where ventil_id = :ventil_id ";                        
+
+            NxParameterCollection np = new NxParameterCollection();
+            np.Add("ventil_id", ventilId);            
+
+            string errText = "";
+
+            DataTable dt = cdb.getData(sSql, ref errText, np);
+
+            int errCode = -100;
+
+            if (errText == "" && dt.Rows.Count == 0)
+            {
+                errText = "Det finns inga ritningar för aktuell ventil";
+                errCode = 0;
+            }
+
+
+            if (errText != "")
+            {
+                DrawingCL d = new DrawingCL();                
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                d.ErrCode = errCode;
+                d.ErrMessage = errText;
+                dList.Add(d);
+                return dList;
+            }
+
+
+            foreach (DataRow dr in dt.Rows)
+            {
+                DrawingCL d = new DrawingCL();
+                d.Description = dr["drawingDescr"].ToString();
+                d.DrawingNo = Convert.ToInt32(dr["drawingNo"]);
+                d.DrawingSize = Convert.ToInt64(dr["drawingSize"]);
+                d.ErrCode = 0;
+                d.ErrMessage = "";
+                d.FileType = dr["fileType"].ToString();
+                d.ventil_id = dr["ventil_id"].ToString();
+                d.DrawingIdent = "";
+                dList.Add(d);
+            }
+
+            return dList;
+
+        }
+
+
+
+
+        /// <summary>
+        /// Updates the drawing metadata.
+        /// Note that the drawing must exist, identified
+        /// by the following properties in the drawing class:
+        /// ventil_id, DrawingNo.
+        /// For performance reason this method does not evaluate
+        /// the drawing size.
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="d"></param>
+        /// <returns></returns>
+        /// 2019-05-27 KJBO
+        public DrawingCL updateDrawingMetaData(string ident, DrawingCL d)
+        {
+            CReparator cr = new CReparator();
+            int identOK = cr.checkIdent(ident);
+
+            // Creates a class to return an error
+            DrawingCL cdRet = new DrawingCL();
+            if (identOK == -1)
+            {
+
+                cpict.deletePict(d.DrawingIdent);
+                cdRet.ErrCode = -10;
+                cdRet.ErrMessage = "Ogiltigt login";
+                return cdRet;
+            }
+
+            // Init variable
+            string err = "";
+            int valid = validateDrawing(d, true, ref err);
+            if (valid == -1 || valid == -4)
+            {
+                cpict.deletePict(d.DrawingIdent);
+                cdRet.ErrCode = -1;
+                cdRet.ErrMessage = "VentilId saknas eller felaktigt";
+                return cdRet;
+            }
+
+            if (valid == -2 || valid == -3)
+            {
+                cdRet.ErrCode = -1;
+                cdRet.ErrMessage = "Ritningsnummer saknas eller är felaktigt";
+                return cdRet;
+            }
+
+
+
+
+            string sSql = "";
+
+            sSql = getUpdateSQL(false);
+            NxParameterCollection np = new NxParameterCollection();
+            setParameters(np, d, false);
+
+            string errText = "";
+
+            int iRc = cdb.updateData(sSql, ref errText, np);
+
+            if (errText != "")
+            {
+                if (errText.Length > 2000)
+                    errText = errText.Substring(1, 2000);
+                cdRet.ErrCode = -100;
+                cdRet.ErrMessage = errText;
+                return cdRet;
+            }            
+            return d;
+
         }
 
 

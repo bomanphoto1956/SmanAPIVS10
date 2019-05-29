@@ -22,3 +22,4 @@ H:\Git\ServManAppServer\SManApiVS10\SManApi\obj\Debug\SManApi.csproj.CoreCompile
 H:\Git\ServManAppServer\SManApiVS10\SManApi\obj\Debug\SManApi.csproj.CopyComplete
 H:\Git\ServManAppServer\SManApiVS10\SManApi\obj\Debug\SManApi.dll
 H:\Git\ServManAppServer\SManApiVS10\SManApi\obj\Debug\SManApi.pdb
+H:\Git\ServManAppServer\SManApiVS10\SManApi\obj\Debug\SManApi.csprojAssemblyReference.cache

@@ -970,7 +970,67 @@ namespace SManApi
             return cd.downLoadDrawing(drawingIdent, ref error);            
         }
 
+        /// <summary>
+        /// Deletes a drawing from the database. The drawing is
+        /// identified by ventil_id and drawingNo (PK).
+        /// Return value is a DrawingCl with errCode = 0
+        /// and errMessage as an empty string. On error
+        /// the errCode is not 0 and the errMessage tells 
+        /// what was going wrong
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="d"></param>
+        /// <returns></returns>
+        /// 2019-05-15 KJBO
+        public DrawingCL deleteDrawing(string ident, DrawingCL d)
+        {
+            CDrawing cd = new CDrawing();
+            return cd.deleteDrawing(ident, d);
+        }
 
 
+        /// <summary>
+        /// This method returns all drawings for one ventil
+        /// Note that you dont get the actual drawing nor the
+        /// drawingIdent. Instead you use this method for getting a
+        /// list of available drawings (and also gets the drawing
+        /// description).
+        /// After that you have to call GetDrawing and DownloadDrawing
+        /// in turn in order to get each individual drawing.
+        /// The reason for this is performance. This method gives
+        /// a fast list of available drawings only.
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="vartOrdernr"></param>
+        /// <param name="radnr"></param>
+        /// <returns></returns>
+        /// 2016-03-11 Pergas AB kjbo           
+        public List<DrawingCL> getDrawingsForVentil(string ident, string ventilId)
+        {
+            CDrawing cd = new CDrawing();
+            return cd.getDrawingsForVentil(ident, ventilId);
+        }
+
+        /// <summary>
+        /// Updates the drawing metadata.
+        /// Note that the drawing must exist, identified
+        /// by the following properties in the drawing class:
+        /// ventil_id, DrawingNo.
+        /// For performance reason this method does not evaluate
+        /// the drawing size.
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="d"></param>
+        /// <returns></returns>
+        /// 2019-05-27 KJBO
+        public DrawingCL updateDrawingMetaData(string ident, DrawingCL d)
+        {
+            CDrawing cd = new CDrawing();
+            return cd.updateDrawingMetaData(ident, d);
+        }
+
+
+
+
+        }
     }
-}

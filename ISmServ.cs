@@ -860,25 +860,47 @@ namespace SManApi
         [OperationContract]
         PnCL savePn(string ident, PnCL p);
 
-        /// <summary>
-        /// Upload a drawing from client to server
-        /// See notes for uploadPict
-        /// </summary>
-        /// <param name="sPict"></param>
-        /// <returns></returns>
-        /// 2019-05-06 KJBO
+        /// Stores an image to the
+        /// local directory "UpLoads" on the server.
+        /// The name of the picture is a GUID
+        /// which is returned to the caller on success
+        /// Note that this function doesn't have any 
+        /// identity provided. This is because of limitation
+        /// of this Rest API where a method that receives a stream
+        /// as parameter can not have any other parameters.
+        /// Immidiate after uploadDrawing the saveDrawing
+        /// function shall be called. The DrawingCL parameter
+        /// has a DataMember called DrawingIdent and that
+        /// parameter has to be set to the result from uploadDrawing.
+        /// Note that this version only supports pdf files.
+        /// <param name="sPict">Picture as stream</param>
+        /// <returns>The name of the picture (that has to be referred in
+        /// future calls when this picture shall be stored with metadata
+        /// If an error occurs then the return string is -1 followed by an
+        /// error message</returns>
+        /// 2019-05-15 KJBO        
         [OperationContract]
         string uploadDrawing(Stream sPict);
 
 
         /// <summary>
-        /// Save a previous uploaded drawing to database
-        /// See savePict comments
+        /// Saves a (previously uploaded) drawing to the database
+        /// This method shall be called directory after
+        /// a call to uploadDrawing
+        /// The UploadDrawing gives you (upon success)
+        /// an identity (=filename) to the upoaded file
+        /// This identity (DrawingIdent) is provided to this function
+        /// in the DrawingCL class
+        /// Note that the DrawingNo field in the Drawing CL Class
+        /// shall always be 0 indicating that this is a
+        /// new drawing to be stored. There is no way
+        /// to update a drawing. In that case you need to delete
+        /// the drawing and, after that, add a new one
         /// </summary>
         /// <param name="ident"></param>
-        /// <param name="d"></param>
+        /// <param name="p"></param>
         /// <returns></returns>
-        /// 2019-05-06 KJBO
+        /// 2019-05-15 KJBO
         [OperationContract]
         DrawingCL saveDrawing(string ident, DrawingCL d);
 
@@ -889,7 +911,7 @@ namespace SManApi
         /// field with a file name to the file being extracted
         /// by the server.
         /// If the fileName is empty or begins with -1 then
-        /// there is an error while extracting the picture from
+        /// there is an error while extracting the drawing from
         /// the database to the temporary storage
         /// 
         /// After this function is called there has to be a call
@@ -901,27 +923,74 @@ namespace SManApi
         /// <param name="ventilId"></param>
         /// <param name="ritningNo"></param>
         /// <returns></returns>
-        /// 2019-05-08 KJBO
+        /// 2019-05-15 KJBO
         [OperationContract]
         DrawingCL getDrawing(string ident, string ventilId, int ritningNo);
 
         /// The downLoadDrawing method accept a drawingIdent parameter as well
         /// as a reference to an error string
-        /// The method calls downLoadPict on CPicture class and return the stream
-        /// If and error occurs then the stream is null and an error
+        /// The method return a stream with the drawing from server to the client
+        /// If an error occurs then the stream is null and an error
         /// message is writtent to the error parameter
         /// 
         /// This method shall be called after a call to getDrawing. When getDrawing
         /// is called it will store a copy of the picture on the server and also return
         /// a drawingCL object with the drawingIdent. This identity is used when this 
         /// method is called.
+        /// 2019-05-15 KJBO
         [OperationContract]
         Stream downLoadDrawing(string drawingIdent);
 
+        /// <summary>
+        /// Deletes a drawing from the database. The drawing is
+        /// identified by ventil_id and drawingNo (PK).
+        /// Return value is a DrawingCl with errCode = 0
+        /// and errMessage as an empty string. On error
+        /// the errCode is not 0 and the errMessage tells 
+        /// what was going wrong
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="d"></param>
+        /// <returns></returns>
+        /// 2019-05-15 KJBO
+        [OperationContract]
+        DrawingCL deleteDrawing(string ident, DrawingCL d);
 
 
+        /// <summary>
+        /// This method returns all drawings for one ventil
+        /// Note that you dont get the actual drawing nor the
+        /// drawingIdent. Instead you use this method for getting a
+        /// list of available drawings (and also gets the drawing
+        /// description).
+        /// After that you have to call GetDrawing and DownloadDrawing
+        /// in turn in order to get each individual drawing.
+        /// The reason for this is performance. This method gives
+        /// a fast list of available drawings only.
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="ventilId"></param>        
+        /// <returns></returns>
+        /// 2019-05-15 Pergas AB kjbo           
+        [OperationContract]
+        List<DrawingCL> getDrawingsForVentil(string ident, string ventilId);
 
 
+        /// <summary>
+        /// Updates the drawing metadata.
+        /// Note that the drawing must exist, identified
+        /// by the following properties in the drawing class:
+        /// ventil_id, DrawingNo.
+        /// For performance reason this method does not evaluate
+        /// the drawing size.
+        /// Change comment
+        /// </summary>
+        /// <param name="ident"></param>
+        /// <param name="d"></param>
+        /// <returns></returns>
+        /// 2019-05-27 KJBO
+        [OperationContract]
+        DrawingCL updateDrawingMetaData(string ident, DrawingCL d);
 
 
 
