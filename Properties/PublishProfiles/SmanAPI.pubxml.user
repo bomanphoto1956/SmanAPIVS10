@@ -14,10 +14,10 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>06/03/2016 23:36:06</publishTime>
     </File>
     <File Include="bin/SManApi.dll">
-      <publishTime>05/29/2019 08:54:34</publishTime>
+      <publishTime>06/05/2019 10:27:02</publishTime>
     </File>
     <File Include="bin/SManApi.pdb">
-      <publishTime>05/29/2019 08:54:34</publishTime>
+      <publishTime>06/05/2019 10:27:02</publishTime>
     </File>
     <File Include="Connected Services/PyramidServ/SManApi.PyramidServ.ArtGetPriceResponse.datasource">
       <publishTime>09/21/2018 10:48:39</publishTime>
@@ -74,7 +74,7 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>02/02/2016 09:33:38</publishTime>
     </File>
     <File Include="Web.config">
-      <publishTime>05/29/2019 08:54:44</publishTime>
+      <publishTime>06/05/2019 10:27:05</publishTime>
     </File>
   </ItemGroup>
 </Project>
